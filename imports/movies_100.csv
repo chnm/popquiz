@@ -1,0 +1,101 @@
+title,year,imdb_id,imdb_url,poster_url
+The Shawshank Redemption,1994,tt0111161,https://www.imdb.com/title/tt0111161/,https://m.media-amazon.com/images/M/MV5BMDAyY2FhYjctNDc5OS00MDNlLThiMGUtY2UxYWVkNGY2ZjljXkEyXkFqcGc@._V1_.jpg
+The Godfather,1972,tt0068646,https://www.imdb.com/title/tt0068646/,https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtM2QwZWQ2NjdhZTE5XkEyXkFqcGc@._V1_.jpg
+The Dark Knight,2008,tt0468569,https://www.imdb.com/title/tt0468569/,https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_.jpg
+The Godfather Part II,1974,tt0071562,https://www.imdb.com/title/tt0071562/,https://m.media-amazon.com/images/M/MV5BMDIxMzBlZDktZjMxNy00ZGI4LTgxNDEtYWRlNzRjMjJmOGQ1XkEyXkFqcGc@._V1_.jpg
+12 Angry Men,1957,tt0050083,https://www.imdb.com/title/tt0050083/,https://m.media-amazon.com/images/M/MV5BYjE4NzdmOTYtYjc5Yi00YzBiLWEzNDEtNTgxZGQ2MWVkN2NiXkEyXkFqcGc@._V1_.jpg
+Schindler's List,1993,tt0108052,https://www.imdb.com/title/tt0108052/,https://m.media-amazon.com/images/M/MV5BNjM1ZDQxYWUtMzQyZS00MTE1LWJmZGYtNGUyNTdlYjM3ZmVmXkEyXkFqcGc@._V1_.jpg
+The Lord of the Rings: The Return of the King,2003,tt0167260,https://www.imdb.com/title/tt0167260/,https://m.media-amazon.com/images/M/MV5BMTZkMjBjNWMtZGI5OC00MGU0LTk4ZTItODg2NWM3NTVmNWQ4XkEyXkFqcGc@._V1_.jpg
+Pulp Fiction,1994,tt0110912,https://www.imdb.com/title/tt0110912/,https://m.media-amazon.com/images/M/MV5BYTViYTE3ZGQtNDBlMC00ZTAyLTkyODMtZGRiZDg0MjA2YThkXkEyXkFqcGc@._V1_.jpg
+The Lord of the Rings: The Fellowship of the Ring,2001,tt0120737,https://www.imdb.com/title/tt0120737/,https://m.media-amazon.com/images/M/MV5BNzIxMDQ2YTctNDY4MC00ZTRhLTk4ODQtMTVlOWY4NTdiYmMwXkEyXkFqcGc@._V1_.jpg
+The Good the Bad and the Ugly,1966,tt0060196,https://www.imdb.com/title/tt0060196/,https://m.media-amazon.com/images/M/MV5BMWM5ZjQxM2YtNDlmYi00ZDNhLWI4MWUtN2VkYjBlMTY1ZTkwXkEyXkFqcGc@._V1_.jpg
+Forrest Gump,1994,tt0109830,https://www.imdb.com/title/tt0109830/,https://m.media-amazon.com/images/M/MV5BNDYwNzVjMTItZmU5YS00YjQ5LTljYjgtMjY2NDVmYWMyNWFmXkEyXkFqcGc@._V1_.jpg
+Fight Club,1999,tt0137523,https://www.imdb.com/title/tt0137523/,https://m.media-amazon.com/images/M/MV5BOTgyOGQ1NDItNGU3Ny00MjU3LTg2YWEtNmEyYjBiMjI1Y2M5XkEyXkFqcGc@._V1_.jpg
+Inception,2010,tt1375666,https://www.imdb.com/title/tt1375666/,https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg
+The Lord of the Rings: The Two Towers,2002,tt0167261,https://www.imdb.com/title/tt0167261/,https://m.media-amazon.com/images/M/MV5BMGQxMDdiOWUtYjc1Ni00YzM1LWE2NjMtZTg3Y2JkMjEzMTJjXkEyXkFqcGc@._V1_.jpg
+Star Wars: Episode V - The Empire Strikes Back,1980,tt0080684,https://www.imdb.com/title/tt0080684/,https://m.media-amazon.com/images/M/MV5BMTkxNGFlNDktZmJkNC00MDdhLTg0MTEtZjZiYWI3MGE5NWIwXkEyXkFqcGc@._V1_.jpg
+The Matrix,1999,tt0133093,https://www.imdb.com/title/tt0133093/,https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_.jpg
+Goodfellas,1990,tt0099685,https://www.imdb.com/title/tt0099685/,https://m.media-amazon.com/images/M/MV5BN2E5NzI2ZGMtY2VjNi00YTRjLWI1MDUtZGY5OWU1MWJjZjRjXkEyXkFqcGc@._V1_.jpg
+One Flew Over the Cuckoo's Nest,1975,tt0073486,https://www.imdb.com/title/tt0073486/,https://m.media-amazon.com/images/M/MV5BYjBkMjgzMzYtNzRiMS00NDc3LWE4YTUtZjYxYjZhNjNhYzhhXkEyXkFqcGc@._V1_.jpg
+Star Wars: Episode IV - A New Hope,1977,tt0076759,https://www.imdb.com/title/tt0076759/,https://m.media-amazon.com/images/M/MV5BOGUwMDk0Y2MtNjBlNi00NmRiLTk2MWYtMGMyMDlhYmI4ZDBjXkEyXkFqcGc@._V1_.jpg
+Seven Samurai,1954,tt0047478,https://www.imdb.com/title/tt0047478/,https://m.media-amazon.com/images/M/MV5BZjliMWExOTMtZDQ3ZS00NWU3LWIyN2EtMjllNzk3ZTNlYzg4XkEyXkFqcGc@._V1_.jpg
+City of God,2002,tt0317248,https://www.imdb.com/title/tt0317248/,https://m.media-amazon.com/images/M/MV5BYjY4NGI5OTUtY2ZlZS00Zjk4LTk5N2MtN2JmYWVjNGNmMGRlXkEyXkFqcGc@._V1_.jpg
+The Silence of the Lambs,1991,tt0102926,https://www.imdb.com/title/tt0102926/,https://m.media-amazon.com/images/M/MV5BNDdhOGJhYzctYzYwZC00YmI2LWI0MjctYjg4ODdlMDExYjBlXkEyXkFqcGc@._V1_.jpg
+Interstellar,2014,tt0816692,https://www.imdb.com/title/tt0816692/,https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_.jpg
+The Dark Knight Rises,2012,tt1345836,https://www.imdb.com/title/tt1345836/,https://m.media-amazon.com/images/M/MV5BMTk4ODQzNDY3Ml5BMl5BanBnXkFtZTcwODA0NTM4Nw@@._V1_.jpg
+Once Upon a Time in the West,1968,tt0064116,https://www.imdb.com/title/tt0064116/,https://m.media-amazon.com/images/M/MV5BZjYyNGY1MDEtN2I1MC00MGVhLTljZTYtODQ1NzQ0ODc2NzZlXkEyXkFqcGc@._V1_.jpg
+Casablanca,1942,tt0034583,https://www.imdb.com/title/tt0034583/,https://m.media-amazon.com/images/M/MV5BNWEzN2U1YTYtYTQyMS00NTVkLWE2NGQtZWFlMmM0MDNjMmRiXkEyXkFqcGc@._V1_.jpg
+Spirited Away,2001,tt0245429,https://www.imdb.com/title/tt0245429/,https://m.media-amazon.com/images/M/MV5BMjlmZmI5MDctNDE2YS00YWE0LWE5ZWItZDBhYWQ0NTcxNWRhXkEyXkFqcGc@._V1_.jpg
+Parasite,2019,tt6751668,https://www.imdb.com/title/tt6751668/,https://m.media-amazon.com/images/M/MV5BYjk1Y2U4MjQtY2ZiNS00OWQyLWI3MmYtZWUwNmRjYWRiNWNhXkEyXkFqcGc@._V1_.jpg
+Rear Window,1954,tt0047396,https://www.imdb.com/title/tt0047396/,https://m.media-amazon.com/images/M/MV5BNGUxYWM3M2MtMGM3Mi00ZmRiLWE0NGQtZjE5ODI2OTJhNTU0XkEyXkFqcGc@._V1_.jpg
+Psycho,1960,tt0054215,https://www.imdb.com/title/tt0054215/,https://m.media-amazon.com/images/M/MV5BNTQwNDM1YzItNDAxZC00NWY2LTk0M2UtNDIwNWI5OGUyNWUxXkEyXkFqcGc@._V1_.jpg
+Gladiator,2000,tt0172495,https://www.imdb.com/title/tt0172495/,https://m.media-amazon.com/images/M/MV5BMDliMmNhNDEtODUyOS00MjNlLTgxODEtN2U3NzIxMGVkZTA1L2ltYWdlXkEyXkFqcGc@._V1_.jpg
+Back to the Future,1985,tt0088763,https://www.imdb.com/title/tt0088763/,https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGc@._V1_.jpg
+Alien,1979,tt0078748,https://www.imdb.com/title/tt0078748/,https://m.media-amazon.com/images/M/MV5BOGQzZTBjMjQtOTVmMS00NGE5LWEyYmMtOGQ1ZGZjNmRkYjFhXkEyXkFqcGc@._V1_.jpg
+The Prestige,2006,tt0482571,https://www.imdb.com/title/tt0482571/,https://m.media-amazon.com/images/M/MV5BMjA4NDI0MTIxNF5BMl5BanBnXkFtZTYwNTM0MzY2._V1_.jpg
+The Lives of Others,2006,tt0405094,https://www.imdb.com/title/tt0405094/,https://m.media-amazon.com/images/M/MV5BNDUzNjYwNDYyNl5BMl5BanBnXkFtZTcwNjU3ODQ0MQ@@._V1_.jpg
+The Great Dictator,1940,tt0032553,https://www.imdb.com/title/tt0032553/,https://m.media-amazon.com/images/M/MV5BMmExYWJjNTktNGUyZS00ODhmLTkxYzAtNWIzOGEyMGNiMmUwXkEyXkFqcGc@._V1_.jpg
+Memento,2000,tt0209144,https://www.imdb.com/title/tt0209144/,https://m.media-amazon.com/images/M/MV5BZTcyNjk1MjgtOWI3Mi00YzQwLWI5MTktMzY4ZmI2NDAyNzYzXkEyXkFqcGc@._V1_.jpg
+Sunset Boulevard,1950,tt0043014,https://www.imdb.com/title/tt0043014/,https://m.media-amazon.com/images/M/MV5BMTU0NTkyNzYwMF5BMl5BanBnXkFtZTgwMDU0NDk5MTI@._V1_.jpg
+Leon: The Professional,1994,tt0110413,https://www.imdb.com/title/tt0110413/,https://m.media-amazon.com/images/M/MV5BMDc2NTQ4OWQtNWQ2ZC00Zjc1LThiZDctOTZlMGEzNjhjYmU0XkEyXkFqcGc@._V1_.jpg
+Dr. Strangelove,1964,tt0057012,https://www.imdb.com/title/tt0057012/,https://m.media-amazon.com/images/M/MV5BZWI3ZTMxNjctMjdlNS00NmUwLWFiM2YtZDUyY2I3N2MxYTE0XkEyXkFqcGc@._V1_.jpg
+Apocalypse Now,1979,tt0078788,https://www.imdb.com/title/tt0078788/,https://m.media-amazon.com/images/M/MV5BZTNkOWY5MzgtMTgwMS00MjQzLWJlMjUtOWY4YjUwYzQzNjJkXkEyXkFqcGc@._V1_.jpg
+American History X,1998,tt0120586,https://www.imdb.com/title/tt0120586/,https://m.media-amazon.com/images/M/MV5BZTJhN2FkYWEtMGI0My00YWM4LWI2MjAtM2UwNjY4MTI2ZTQyXkEyXkFqcGc@._V1_.jpg
+North by Northwest,1959,tt0053125,https://www.imdb.com/title/tt0053125/,https://m.media-amazon.com/images/M/MV5BZDA3NDExMTUtMDlhOC00MmQ5LWExZGUtYmI1NGVlZWI4OWNiXkEyXkFqcGc@._V1_.jpg
+Citizen Kane,1941,tt0033467,https://www.imdb.com/title/tt0033467/,https://m.media-amazon.com/images/M/MV5BYjBiOTYxZWItMzdiZi00NjlkLWIzZTYtYmFhZjhiMTljOTdkXkEyXkFqcGc@._V1_.jpg
+Toy Story 3,2010,tt0435761,https://www.imdb.com/title/tt0435761/,https://m.media-amazon.com/images/M/MV5BMTgxOTY4Mjc0MF5BMl5BanBnXkFtZTcwNTA4MDQyMw@@._V1_.jpg
+American Beauty,1999,tt0169547,https://www.imdb.com/title/tt0169547/,https://m.media-amazon.com/images/M/MV5BNTBmZWJkNjctNDhiNC00MGE2LWEwOTctZTk5OGVhMWMyNmVhXkEyXkFqcGc@._V1_.jpg
+Terminator 2: Judgment Day,1991,tt0103064,https://www.imdb.com/title/tt0103064/,https://m.media-amazon.com/images/M/MV5BNGMyMGNkMDUtMjc2Ni00NWFlLTgyODEtZTY2MzBiZjkzNTNlXkEyXkFqcGc@._V1_.jpg
+Taxi Driver,1976,tt0075314,https://www.imdb.com/title/tt0075314/,https://m.media-amazon.com/images/M/MV5BM2M1MmVhNDgtNmI0YS00ZDNmLTkyNjctNTJiYTQ2N2NmYzc2XkEyXkFqcGc@._V1_.jpg
+Saving Private Ryan,1998,tt0120815,https://www.imdb.com/title/tt0120815/,https://m.media-amazon.com/images/M/MV5BZjhkMDM4MWItZTVjOC00ZDRhLThmYTAtM2I5NzBmNmNlMzI1XkEyXkFqcGc@._V1_.jpg
+Vertigo,1958,tt0052357,https://www.imdb.com/title/tt0052357/,https://m.media-amazon.com/images/M/MV5BYTE4ODEwZDUtNDFjOC00NjAxLWEzYTQtYTI1NGVmZmFlNjdiL2ltYWdlL2ltYWdlXkEyXkFqcGc@._V1_.jpg
+City Lights,1931,tt0021749,https://www.imdb.com/title/tt0021749/,https://m.media-amazon.com/images/M/MV5BY2I4MmM1N2EtM2YzOS00OWUzLTkzYzctNDc5NDg2N2IyODJmXkEyXkFqcGc@._V1_.jpg
+The Shining,1980,tt0081505,https://www.imdb.com/title/tt0081505/,https://m.media-amazon.com/images/M/MV5BZWFlYmY2MGEtZjVkYS00YzU4LTg0YjQtYzY1ZGE3NTA5NGQxXkEyXkFqcGc@._V1_.jpg
+Amelie,2001,tt0211915,https://www.imdb.com/title/tt0211915/,https://m.media-amazon.com/images/M/MV5BNDg4NjM1YjMtYmNhZC00MjM0LWFiZmMtNGY1Y2YxNGI5YmIzXkEyXkFqcGc@._V1_.jpg
+Paths of Glory,1957,tt0050825,https://www.imdb.com/title/tt0050825/,https://m.media-amazon.com/images/M/MV5BNjViMmRkOTEtM2ViOS00ODg0LWJhYWEtNTBlOGQxNDczOGY3XkEyXkFqcGc@._V1_.jpg
+Modern Times,1936,tt0027977,https://www.imdb.com/title/tt0027977/,https://m.media-amazon.com/images/M/MV5BYjJiZjMzYzktNjU0NS00OTkxLWEwYzItYzdhYWJjN2QzMTRlL2ltYWdlL2ltYWdlXkEyXkFqcGc@._V1_.jpg
+The Departed,2006,tt0407887,https://www.imdb.com/title/tt0407887/,https://m.media-amazon.com/images/M/MV5BMTI1MTY2OTIxNV5BMl5BanBnXkFtZTYwNjQ4NjY3._V1_.jpg
+Django Unchained,2012,tt1853728,https://www.imdb.com/title/tt1853728/,https://m.media-amazon.com/images/M/MV5BMjIyNTQ5NjQ1OV5BMl5BanBnXkFtZTcwODg1MDU4OA@@._V1_.jpg
+Whiplash,2014,tt2582802,https://www.imdb.com/title/tt2582802/,https://m.media-amazon.com/images/M/MV5BOTA5NDZlZGUtMjAxOS00YTRkLTkwYmMtYWQ0NWEwZDZiNjEzXkEyXkFqcGc@._V1_.jpg
+The Pianist,2002,tt0253474,https://www.imdb.com/title/tt0253474/,https://m.media-amazon.com/images/M/MV5BOWRiZDIxZjktMTA1NC00MDQ2LWEzMjUtMTliZmY3NjQ3ODJiXkEyXkFqcGc@._V1_.jpg
+Grave of the Fireflies,1988,tt0095327,https://www.imdb.com/title/tt0095327/,https://m.media-amazon.com/images/M/MV5BZmY2NjUzNDQtNTgxNC00M2Q4LTljOWQtMjNjNDBjNWUxNmJlXkEyXkFqcGc@._V1_.jpg
+WALL-E,2008,tt0910970,https://www.imdb.com/title/tt0910970/,https://m.media-amazon.com/images/M/MV5BMjExMTg5OTU0NF5BMl5BanBnXkFtZTcwMjMxMzMzMw@@._V1_.jpg
+The Green Mile,1999,tt0120689,https://www.imdb.com/title/tt0120689/,https://m.media-amazon.com/images/M/MV5BMTUxMzQyNjA5MF5BMl5BanBnXkFtZTYwOTU2NTY3._V1_.jpg
+The Intouchables,2011,tt1675434,https://www.imdb.com/title/tt1675434/,https://m.media-amazon.com/images/M/MV5BMTYxNDA3MDQwNl5BMl5BanBnXkFtZTcwNTU4Mzc1Nw@@._V1_.jpg
+Cinema Paradiso,1988,tt0095765,https://www.imdb.com/title/tt0095765/,https://m.media-amazon.com/images/M/MV5BM2FhYjEyYmYtMDI1Yy00YTdlLWI2NWQtYmEzNzAxOGY1NjY2XkEyXkFqcGc@._V1_.jpg
+Life Is Beautiful,1997,tt0118799,https://www.imdb.com/title/tt0118799/,https://m.media-amazon.com/images/M/MV5BYmJmM2Q4NmMtYThmNC00ZjRlLWEyZmItZTIwOTBlZDQ3NTQ1XkEyXkFqcGc@._V1_.jpg
+The Usual Suspects,1995,tt0114814,https://www.imdb.com/title/tt0114814/,https://m.media-amazon.com/images/M/MV5BOTE5MDUxZDItODUyYi00MGJjLTgxNjctNjkwNTQ0ODIxNGI4XkEyXkFqcGc@._V1_.jpg
+Harakiri,1962,tt0056058,https://www.imdb.com/title/tt0056058/,https://m.media-amazon.com/images/M/MV5BYjBmYTQ1NjItZWU5MS00YjI0LTg2OTYtYmFkN2JkMmNiNWVkXkEyXkFqcGc@._V1_.jpg
+Se7en,1995,tt0114369,https://www.imdb.com/title/tt0114369/,https://m.media-amazon.com/images/M/MV5BY2IzNzMxZjctZjUxZi00YzAxLTk3ZjMtODFjODdhMDU5NDM1XkEyXkFqcGc@._V1_.jpg
+It's a Wonderful Life,1946,tt0038650,https://www.imdb.com/title/tt0038650/,https://m.media-amazon.com/images/M/MV5BZjc4NDZhZWMtNGEzYS00ZWU2LThlM2ItNTA0YzQ0OTExMTE2XkEyXkFqcGc@._V1_.jpg
+Capernaum,2018,tt8267604,https://www.imdb.com/title/tt8267604/,https://m.media-amazon.com/images/M/MV5BY2Y3OWNkMTctYzNjYS00NWVkLTg4OWYtMDIyNGI2ZTU4YjU3XkEyXkFqcGc@._V1_.jpg
+Raiders of the Lost Ark,1981,tt0082971,https://www.imdb.com/title/tt0082971/,https://m.media-amazon.com/images/M/MV5BMjA0ODEzMTc1Nl5BMl5BanBnXkFtZTcwODM2MjAxNA@@._V1_.jpg
+The Lion King,1994,tt0110357,https://www.imdb.com/title/tt0110357/,https://m.media-amazon.com/images/M/MV5BMjIwMjE1Nzc4NV5BMl5BanBnXkFtZTgwNDg4OTA1NzM@._V1_.jpg
+Princess Mononoke,1997,tt0119698,https://www.imdb.com/title/tt0119698/,https://m.media-amazon.com/images/M/MV5BNGIzY2IzODQtNThmMi00ZDE4LWI5YzAtNzNlZTM1ZjYyYjUyXkEyXkFqcGc@._V1_.jpg
+3 Idiots,2009,tt1187043,https://www.imdb.com/title/tt1187043/,https://m.media-amazon.com/images/M/MV5BNTkyOGVjMGEtNmQzZi00NzFlLTlhOWQtODYyMDc2ZGJmYzFhXkEyXkFqcGc@._V1_.jpg
+Oppenheimer,2023,tt15398776,https://www.imdb.com/title/tt15398776/,https://m.media-amazon.com/images/M/MV5BMDBmYTZjNjUtN2M1MS00MTQ2LTk2ODgtNzc2M2QyZGE5NTVjXkEyXkFqcGc@._V1_.jpg
+Spider-Man: Into the Spider-Verse,2018,tt4633694,https://www.imdb.com/title/tt4633694/,https://m.media-amazon.com/images/M/MV5BMjMwNDkxMTgzOF5BMl5BanBnXkFtZTgwNTkwNTQ3NjM@._V1_.jpg
+Coco,2017,tt2380307,https://www.imdb.com/title/tt2380307/,https://m.media-amazon.com/images/M/MV5BYjQ5NjM0Y2YtNjZkNC00ZDhkLWJjMWItN2QyNzFkMDE3ZjAxXkEyXkFqcGc@._V1_.jpg
+The Hunt,2012,tt2106476,https://www.imdb.com/title/tt2106476/,https://m.media-amazon.com/images/M/MV5BMTg2NDg3ODg4NF5BMl5BanBnXkFtZTcwNzk3NTc3Nw@@._V1_.jpg
+Joker,2019,tt7286456,https://www.imdb.com/title/tt7286456/,https://m.media-amazon.com/images/M/MV5BNGVjNWI4ZGUtNzE0MS00YTJmLWE0ZDctN2ZiYTk2YmI3NTYyXkEyXkFqcGc@._V1_.jpg
+Avengers: Endgame,2019,tt4154796,https://www.imdb.com/title/tt4154796/,https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_.jpg
+Your Name.,2016,tt5311514,https://www.imdb.com/title/tt5311514/,https://m.media-amazon.com/images/M/MV5BMjI1ODZkYTgtYTY3Yy00ZTJkLWFkOTgtZDUyYWM4MzQwNjk0XkEyXkFqcGc@._V1_.jpg
+Toy Story,1995,tt0114709,https://www.imdb.com/title/tt0114709/,https://m.media-amazon.com/images/M/MV5BMDU2ZWJlMjktMTRhMy00ZTA5LWEzNDgtYmNmZTEwZTViZWJkXkEyXkFqcGc@._V1_.jpg
+Once Upon a Time in America,1984,tt0087843,https://www.imdb.com/title/tt0087843/,https://m.media-amazon.com/images/M/MV5BMGFkNWI4MTMtNGQ0OC00MWVmLTk3MTktOGYxN2Y2YWVkZWE2XkEyXkFqcGc@._V1_.jpg
+Requiem for a Dream,2000,tt0180093,https://www.imdb.com/title/tt0180093/,https://m.media-amazon.com/images/M/MV5BOTdiNzJlOWUtNWMwNS00NmFlLWI0YTEtZmI3YjIzZWUyY2Y3XkEyXkFqcGc@._V1_.jpg
+A Clockwork Orange,1971,tt0066921,https://www.imdb.com/title/tt0066921/,https://m.media-amazon.com/images/M/MV5BNmY3NTQ2MzgtYjhiNi00MWRjLWI2OTYtMjJlOTQ4MTBkMTgzXkEyXkFqcGc@._V1_.jpg
+Das Boot,1981,tt0082096,https://www.imdb.com/title/tt0082096/,https://m.media-amazon.com/images/M/MV5BOGIwNGZiOWYtZjJmYy00NDM5LTk3ODAtOWEwYWM2NDY5MjkwXkEyXkFqcGc@._V1_.jpg
+Singin' in the Rain,1952,tt0045152,https://www.imdb.com/title/tt0045152/,https://m.media-amazon.com/images/M/MV5BZDRjNGViMjQtOThlMi00MTA3LThkYzQtNzJkYjBkMGE0YzE1XkEyXkFqcGc@._V1_.jpg
+High and Low,1963,tt0057565,https://www.imdb.com/title/tt0057565/,https://m.media-amazon.com/images/M/MV5BZGQ1NWZlYjctNDJmOS00MmU2LTg1ODItNmZiM2ZkNzJhNDI0XkEyXkFqcGc@._V1_.jpg
+2001: A Space Odyssey,1968,tt0062622,https://www.imdb.com/title/tt0062622/,https://m.media-amazon.com/images/M/MV5BMmNlYzRiNDctZWNhMi00MzI4LThkZTctMTUzMmZkMmFmNThmXkEyXkFqcGc@._V1_.jpg
+The Sting,1973,tt0070735,https://www.imdb.com/title/tt0070735/,https://m.media-amazon.com/images/M/MV5BNGU3NjQ4YTMtZGJjOS00YTQ3LThmNmItMTI5MDE2ODI3NzY3XkEyXkFqcGc@._V1_.jpg
+Ikiru,1952,tt0044741,https://www.imdb.com/title/tt0044741/,https://m.media-amazon.com/images/M/MV5BZmM0NGY3Y2MtMTA1YS00YmQzLTk2YTctYWFhMDkzMDRjN2RjXkEyXkFqcGc@._V1_.jpg
+L.A. Confidential,1997,tt0119488,https://www.imdb.com/title/tt0119488/,https://m.media-amazon.com/images/M/MV5BMDQ2YzEyZGItYWRhOS00MjBmLTkzMDUtMTdjYzkyMmQxZTJlXkEyXkFqcGc@._V1_.jpg
+Bicycle Thieves,1948,tt0040522,https://www.imdb.com/title/tt0040522/,https://m.media-amazon.com/images/M/MV5BNmI1ODdjODctMDlmMC00ZWViLWI5MzYtYzRhNDdjYmM3MzFjXkEyXkFqcGc@._V1_.jpg
+Lawrence of Arabia,1962,tt0056172,https://www.imdb.com/title/tt0056172/,https://m.media-amazon.com/images/M/MV5BYWE3MDVkN2EtNjQ5MS00ZDJiLTg2N2EtMTEwMTRiMTVjMTQ3XkEyXkFqcGc@._V1_.jpg
+Amadeus,1984,tt0086879,https://www.imdb.com/title/tt0086879/,https://m.media-amazon.com/images/M/MV5BNWJlNzUzNGMtYTAwMS00ZjI2LWFmNWQtODcxNWUxODA5YmU1XkEyXkFqcGc@._V1_.jpg
+Full Metal Jacket,1987,tt0093058,https://www.imdb.com/title/tt0093058/,https://m.media-amazon.com/images/M/MV5BNzkxODk0NjEtYjc4Mi00ZDI0LTgyYjEtYzc1NDkxY2YzYTgyXkEyXkFqcGc@._V1_.jpg
+Snatch,2000,tt0208092,https://www.imdb.com/title/tt0208092/,https://m.media-amazon.com/images/M/MV5BMTA2NDYxOGYtYjU1Mi00Y2QzLTgxMTQtMWI1MGI0ZGQ5MmU4XkEyXkFqcGc@._V1_.jpg
+To Kill a Mockingbird,1962,tt0056592,https://www.imdb.com/title/tt0056592/,https://m.media-amazon.com/images/M/MV5BNmVmYzcwNzMtMWM1NS00MWIyLThlMDEtYzUwZDgzODE1NmE2XkEyXkFqcGc@._V1_.jpg
+Braveheart,1995,tt0112573,https://www.imdb.com/title/tt0112573/,https://m.media-amazon.com/images/M/MV5BMzkzMmU0YTYtOWM3My00YzBmLWI0YzctOGYyNTkwMWE5MTJhXkEyXkFqcGc@._V1_.jpg
+Eternal Sunshine of the Spotless Mind,2004,tt0338013,https://www.imdb.com/title/tt0338013/,https://m.media-amazon.com/images/M/MV5BMTY4NzcwODg3Nl5BMl5BanBnXkFtZTcwNTEwOTMyMw@@._V1_.jpg

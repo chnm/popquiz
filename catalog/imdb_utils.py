@@ -1,0 +1,109 @@
+"""
+Utility functions for fetching movie data from IMDB.
+"""
+import re
+import requests
+
+# User-Agent header to avoid being blocked
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+}
+
+
+def extract_imdb_id(url):
+    """
+    Extract IMDB ID from a URL.
+    Accepts URLs like:
+    - https://www.imdb.com/title/tt0111161/
+    - https://imdb.com/title/tt0111161
+    - https://m.imdb.com/title/tt0111161/
+    - tt0111161 (just the ID)
+    """
+    if not url:
+        return None
+
+    # If it's already just an ID
+    if re.match(r'^tt\d+$', url.strip()):
+        return url.strip()
+
+    # Extract from URL
+    match = re.search(r'(tt\d+)', url)
+    if match:
+        return match.group(1)
+
+    return None
+
+
+def fetch_movie_data(imdb_url):
+    """
+    Fetch movie data from IMDB given a URL or IMDB ID.
+
+    Returns a dict with:
+    - title: str
+    - year: int or None
+    - imdb_id: str
+    - imdb_url: str (cleaned canonical URL)
+    - poster_url: str or None
+
+    Returns None if fetch fails.
+    """
+    imdb_id = extract_imdb_id(imdb_url)
+    if not imdb_id:
+        return None
+
+    canonical_url = f"https://www.imdb.com/title/{imdb_id}/"
+
+    try:
+        resp = requests.get(canonical_url, headers=HEADERS, timeout=15)
+        if resp.status_code != 200:
+            return None
+
+        html = resp.text
+
+        # Extract title
+        title = None
+        # Try JSON-LD first (most reliable)
+        json_title = re.search(r'"name":\s*"([^"]+)"', html)
+        if json_title:
+            title = json_title.group(1)
+        else:
+            # Fallback to og:title
+            og_title = re.search(r'<meta property="og:title" content="([^"]+)"', html)
+            if og_title:
+                # Remove year suffix like "Movie Title (2023)"
+                title = re.sub(r'\s*\(\d{4}\)\s*$', '', og_title.group(1))
+
+        if not title:
+            return None
+
+        # Extract year
+        year = None
+        year_match = re.search(r'"datePublished":\s*"(\d{4})', html)
+        if year_match:
+            year = int(year_match.group(1))
+        else:
+            # Try release year from title or other sources
+            year_alt = re.search(r'<title>[^<]+\((\d{4})\)', html)
+            if year_alt:
+                year = int(year_alt.group(1))
+
+        # Extract poster URL
+        poster_url = None
+        og_image = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+        if og_image:
+            poster_url = og_image.group(1)
+            # Convert to larger resolution
+            if 'media-amazon.com' in poster_url:
+                poster_url = re.sub(r'_V1_.*\.jpg', '_V1_.jpg', poster_url)
+
+        return {
+            'title': title,
+            'year': year,
+            'imdb_id': imdb_id,
+            'imdb_url': canonical_url,
+            'poster_url': poster_url,
+        }
+
+    except requests.RequestException:
+        return None
