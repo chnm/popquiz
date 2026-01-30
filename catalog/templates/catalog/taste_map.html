@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Taste Map - {{ category.name }} - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
+</div>
+
+<div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
+    <h1 class="text-3xl font-bold mb-2">Taste Map: {{ category.name }}</h1>
+    <p class="text-white/80">See where everyone lands on the team's movie taste spectrum!</p>
+</div>
+
+{% if has_data %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+    <!-- The Map -->
+    <div class="relative" style="padding-bottom: 75%; min-height: 400px;">
+        <svg id="taste-map" class="absolute inset-0 w-full h-full" viewBox="-110 -110 220 220" preserveAspectRatio="xMidYMid meet">
+            <!-- Background gradient -->
+            <defs>
+                <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
+                    <stop offset="0%" style="stop-color:#F3E8FF;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#EEF2FF;stop-opacity:1" />
+                </radialGradient>
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+                </filter>
+            </defs>
+
+            <!-- Background circle -->
+            <circle cx="0" cy="0" r="100" fill="url(#bgGradient)" stroke="#E5E7EB" stroke-width="2"/>
+
+            <!-- Grid lines -->
+            <line x1="-100" y1="0" x2="100" y2="0" stroke="#D1D5DB" stroke-width="1" stroke-dasharray="5,5"/>
+            <line x1="0" y1="-100" x2="0" y2="100" stroke="#D1D5DB" stroke-width="1" stroke-dasharray="5,5"/>
+            <circle cx="0" cy="0" r="50" fill="none" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="3,3"/>
+
+            <!-- Quadrant labels -->
+            <text x="-70" y="-85" class="text-xs" fill="#9CA3AF" font-size="8" text-anchor="middle">Indie Enthusiasts</text>
+            <text x="70" y="-85" class="text-xs" fill="#9CA3AF" font-size="8" text-anchor="middle">Crowd Pleasers</text>
+            <text x="-70" y="92" class="text-xs" fill="#9CA3AF" font-size="8" text-anchor="middle">Critics</text>
+            <text x="70" y="92" class="text-xs" fill="#9CA3AF" font-size="8" text-anchor="middle">Easy Going</text>
+
+            <!-- User dots -->
+            {% for user in user_data %}
+            <g class="user-point" data-username="{{ user.username }}" style="cursor: pointer;">
+                <!-- Outer glow on hover -->
+                <circle cx="{{ user.x|floatformat:2 }}00" cy="{{ user.y|floatformat:2 }}00" r="18"
+                        fill="{{ user.color }}" opacity="0" class="hover-glow"
+                        style="transform: scale(0); transform-origin: {{ user.x|floatformat:2 }}00px {{ user.y|floatformat:2 }}00px; transition: all 0.2s ease;">
+                </circle>
+                <!-- Main circle -->
+                <circle cx="{{ user.x|floatformat:2 }}00" cy="{{ user.y|floatformat:2 }}00" r="14"
+                        fill="{{ user.color }}" filter="url(#shadow)"
+                        style="transition: all 0.2s ease;">
+                </circle>
+                <!-- Initials -->
+                <text x="{{ user.x|floatformat:2 }}00" y="{{ user.y|floatformat:2 }}00"
+                      fill="white" font-size="8" font-weight="bold"
+                      text-anchor="middle" dominant-baseline="central"
+                      style="pointer-events: none;">
+                    {{ user.initials }}
+                </text>
+            </g>
+            {% endfor %}
+        </svg>
+
+        <!-- Tooltip -->
+        <div id="tooltip" class="absolute hidden bg-gray-900 text-white px-3 py-2 rounded-lg text-sm shadow-lg pointer-events-none z-10">
+            <div class="font-bold" id="tooltip-name"></div>
+            <div class="text-gray-300 text-xs">Click to view profile</div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-6 pt-4 border-t border-gray-100">
+        <div class="flex flex-wrap justify-center gap-4">
+            {% for user in user_data %}
+            <a href="{% url 'profile' user.username %}" class="flex items-center space-x-2 px-3 py-1 rounded-full hover:bg-gray-100 transition duration-200">
+                <span class="w-4 h-4 rounded-full" style="background-color: {{ user.color }};"></span>
+                <span class="text-sm text-gray-700">{{ user.first_name }} {{ user.last_name }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Stats & Explanation -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h3 class="font-semibold text-gray-800 mb-3">About This Map</h3>
+        <p class="text-gray-600 text-sm mb-4">
+            This map uses <strong>Principal Component Analysis (PCA)</strong> to visualize everyone's movie taste in 2D.
+            Users who are close together tend to agree on movies!
+        </p>
+        <ul class="text-gray-500 text-sm space-y-2">
+            <li class="flex items-start">
+                <svg class="w-4 h-4 text-indigo-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span>Votes are converted to numbers: Yes = +1, Meh = 0, No = -1</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-4 h-4 text-indigo-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span>PCA finds the directions of maximum disagreement</span>
+            </li>
+            <li class="flex items-start">
+                <svg class="w-4 h-4 text-indigo-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span>Close together = similar taste, far apart = different taste</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h3 class="font-semibold text-gray-800 mb-3">Map Statistics</h3>
+        <div class="space-y-4">
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">Horizontal axis explains</span>
+                    <span class="font-semibold text-indigo-600">{{ var_explained_1 }}%</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-500 rounded-full" style="width: {{ var_explained_1 }}%"></div>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600">Vertical axis explains</span>
+                    <span class="font-semibold text-purple-600">{{ var_explained_2 }}%</span>
+                </div>
+                <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-purple-500 rounded-full" style="width: {{ var_explained_2 }}%"></div>
+                </div>
+            </div>
+            <div class="pt-2 border-t border-gray-100 text-sm text-gray-500">
+                <p>Based on {{ movie_count }} movies with votes from {{ user_count }} team members</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const svg = document.getElementById('taste-map');
+    const tooltip = document.getElementById('tooltip');
+    const tooltipName = document.getElementById('tooltip-name');
+    const userData = {{ user_data_json|safe }};
+
+    // Create a map for quick lookup
+    const userMap = {};
+    userData.forEach(u => userMap[u.username] = u);
+
+    document.querySelectorAll('.user-point').forEach(point => {
+        const username = point.dataset.username;
+        const user = userMap[username];
+        const glow = point.querySelector('.hover-glow');
+        const circle = point.querySelectorAll('circle')[1];
+
+        point.addEventListener('mouseenter', function(e) {
+            tooltipName.textContent = user.first_name + ' ' + user.last_name;
+            tooltip.classList.remove('hidden');
+            glow.style.transform = 'scale(1)';
+            glow.style.opacity = '0.3';
+            circle.setAttribute('r', '16');
+        });
+
+        point.addEventListener('mousemove', function(e) {
+            const rect = svg.getBoundingClientRect();
+            tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 40) + 'px';
+        });
+
+        point.addEventListener('mouseleave', function() {
+            tooltip.classList.add('hidden');
+            glow.style.transform = 'scale(0)';
+            glow.style.opacity = '0';
+            circle.setAttribute('r', '14');
+        });
+
+        point.addEventListener('click', function() {
+            window.location.href = '/profile/' + username + '/';
+        });
+    });
+});
+</script>
+
+{% else %}
+<div class="bg-white rounded-2xl shadow-xl p-12 text-center">
+    <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+        </svg>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Not Enough Data Yet</h2>
+    <p class="text-gray-600">{{ error_message }}</p>
+</div>
+{% endif %}
+{% endblock %}

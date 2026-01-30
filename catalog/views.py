@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views import View
@@ -389,5 +391,167 @@ class EclecticView(TemplateView):
 
         context['user_stats'] = user_stats
         context['has_data'] = len(user_stats) > 0
+
+        return context
+
+
+class TasteMapView(TemplateView):
+    """View showing users plotted on a 2D taste map using PCA."""
+    template_name = 'catalog/taste_map.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        context['category'] = category
+
+        # Get all team members and items
+        team_members = list(User.objects.filter(is_staff=False).order_by('id'))
+        items = list(Item.objects.filter(category=category).order_by('id'))
+
+        if len(team_members) < 2 or len(items) < 3:
+            context['has_data'] = False
+            context['error_message'] = "Need at least 2 team members and 3 movies for the taste map."
+            return context
+
+        # Get all votes (excluding NO_ANSWER)
+        votes = Vote.objects.filter(
+            item__category=category
+        ).exclude(choice=Vote.Choice.NO_ANSWER)
+
+        # Build vote lookup: (user_id, item_id) -> vote_value
+        vote_map = {}
+        for vote in votes:
+            if vote.choice == Vote.Choice.YES:
+                value = 1
+            elif vote.choice == Vote.Choice.NO:
+                value = -1
+            else:  # MEH
+                value = 0
+            vote_map[(vote.user_id, vote.item_id)] = value
+
+        # Build user-movie matrix (users as rows, movies as columns)
+        # Only include movies that at least 2 users have voted on
+        item_vote_counts = {}
+        for (user_id, item_id), _ in vote_map.items():
+            item_vote_counts[item_id] = item_vote_counts.get(item_id, 0) + 1
+
+        valid_items = [item for item in items if item_vote_counts.get(item.id, 0) >= 2]
+
+        if len(valid_items) < 3:
+            context['has_data'] = False
+            context['error_message'] = "Need at least 3 movies with multiple votes for the taste map."
+            return context
+
+        # Build the matrix
+        matrix = []
+        valid_users = []
+        for user in team_members:
+            row = []
+            has_votes = False
+            for item in valid_items:
+                vote_val = vote_map.get((user.id, item.id))
+                if vote_val is not None:
+                    row.append(vote_val)
+                    has_votes = True
+                else:
+                    row.append(0)  # Neutral for missing votes
+            if has_votes:
+                matrix.append(row)
+                valid_users.append(user)
+
+        if len(valid_users) < 2:
+            context['has_data'] = False
+            context['error_message'] = "Need at least 2 team members with votes for the taste map."
+            return context
+
+        # Perform PCA using numpy/scipy
+        try:
+            import numpy as np
+            from scipy import linalg
+
+            # Convert to numpy array
+            X = np.array(matrix, dtype=float)
+
+            # Center the data (subtract mean)
+            X_centered = X - X.mean(axis=0)
+
+            # Compute covariance matrix
+            cov_matrix = np.cov(X_centered, rowvar=True)
+
+            # Handle case where we have more users than features
+            if cov_matrix.ndim == 0:
+                cov_matrix = np.array([[cov_matrix]])
+
+            # Compute eigenvalues and eigenvectors
+            eigenvalues, eigenvectors = linalg.eigh(cov_matrix)
+
+            # Sort by eigenvalue (descending)
+            idx = np.argsort(eigenvalues)[::-1]
+            eigenvalues = eigenvalues[idx]
+            eigenvectors = eigenvectors[:, idx]
+
+            # Project onto first 2 principal components
+            if len(valid_users) == 2:
+                # Special case: only 2 users
+                coords = np.array([[eigenvalues[0] if eigenvalues[0] > 0 else 1, 0],
+                                   [-eigenvalues[0] if eigenvalues[0] > 0 else -1, 0]])
+            else:
+                # Use the eigenvectors as coordinates (they represent user positions)
+                coords = eigenvectors[:, :2]
+
+            # Normalize coordinates to [-1, 1] range
+            if coords.size > 0:
+                max_abs = np.max(np.abs(coords))
+                if max_abs > 0:
+                    coords = coords / max_abs * 0.85  # Leave some margin
+
+            # Build user data for template
+            user_data = []
+            colors = [
+                '#8B5CF6',  # Purple
+                '#EC4899',  # Pink
+                '#F59E0B',  # Amber
+                '#10B981',  # Emerald
+                '#3B82F6',  # Blue
+                '#EF4444',  # Red
+                '#06B6D4',  # Cyan
+                '#F97316',  # Orange
+                '#84CC16',  # Lime
+                '#6366F1',  # Indigo
+            ]
+
+            for i, user in enumerate(valid_users):
+                x = float(coords[i, 0]) if coords.shape[1] > 0 else 0
+                y = float(coords[i, 1]) if coords.shape[1] > 1 else 0
+                user_data.append({
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'initials': f"{user.first_name[0] if user.first_name else ''}{user.last_name[0] if user.last_name else ''}",
+                    'x': x,
+                    'y': y,
+                    'color': colors[i % len(colors)],
+                })
+
+            # Calculate variance explained (for fun stats)
+            total_var = np.sum(eigenvalues)
+            if total_var > 0 and len(eigenvalues) >= 2:
+                var_explained_1 = round(eigenvalues[0] / total_var * 100)
+                var_explained_2 = round(eigenvalues[1] / total_var * 100) if len(eigenvalues) > 1 else 0
+            else:
+                var_explained_1 = 50
+                var_explained_2 = 50
+
+            context['user_data'] = user_data
+            context['user_data_json'] = json.dumps(user_data)
+            context['var_explained_1'] = var_explained_1
+            context['var_explained_2'] = var_explained_2
+            context['has_data'] = True
+            context['movie_count'] = len(valid_items)
+            context['user_count'] = len(valid_users)
+
+        except ImportError:
+            context['has_data'] = False
+            context['error_message'] = "NumPy and SciPy are required for the taste map. Run: pip install numpy scipy"
 
         return context

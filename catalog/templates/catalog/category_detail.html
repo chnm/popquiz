@@ -25,6 +25,9 @@
             <a href="{% url 'eclectic' category.slug %}" class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-200">
                 Eclectic Tastes
             </a>
+            <a href="{% url 'taste_map' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
+                Taste Map
+            </a>
             {% if user.is_authenticated %}
             <a href="{% url 'swipe_vote' category.slug %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
                 Start Voting

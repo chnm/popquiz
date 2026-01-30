@@ -94,7 +94,7 @@
 {% if categories %}
 <div class="mb-8">
     <h2 class="text-xl font-semibold text-gray-800 mb-4">Discover</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {% for category in categories %}
         <!-- Team Rankings -->
         <a href="{% url 'stats' category.slug %}" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition duration-200 border-l-4 border-purple-500">
@@ -133,6 +133,19 @@
                 <h3 class="font-bold text-gray-800">Eclectic Tastes</h3>
             </div>
             <p class="text-gray-600 text-sm">Who has the most unique opinions on the team?</p>
+        </a>
+
+        <!-- Taste Map -->
+        <a href="{% url 'taste_map' category.slug %}" class="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition duration-200 border-l-4 border-indigo-500">
+            <div class="flex items-center mb-2">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                    </svg>
+                </div>
+                <h3 class="font-bold text-gray-800">Taste Map</h3>
+            </div>
+            <p class="text-gray-600 text-sm">Visualize where everyone lands on the taste spectrum</p>
         </a>
         {% endfor %}
     </div>
