@@ -396,7 +396,7 @@ class EclecticView(TemplateView):
 
 
 class TasteMapView(TemplateView):
-    """View showing users plotted on a 2D taste map using PCA."""
+    """View showing users clustered by taste using hierarchical clustering."""
     template_name = 'catalog/taste_map.html'
 
     def get_context_data(self, **kwargs):
@@ -404,13 +404,12 @@ class TasteMapView(TemplateView):
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get all team members and items
+        # Get all team members
         team_members = list(User.objects.filter(is_staff=False).order_by('id'))
-        items = list(Item.objects.filter(category=category).order_by('id'))
 
-        if len(team_members) < 2 or len(items) < 3:
+        if len(team_members) < 2:
             context['has_data'] = False
-            context['error_message'] = "Need at least 2 team members and 3 movies for the taste map."
+            context['error_message'] = "Need at least 2 team members for clustering."
             return context
 
         # Get all votes (excluding NO_ANSWER)
@@ -429,119 +428,128 @@ class TasteMapView(TemplateView):
                 value = 0
             vote_map[(vote.user_id, vote.item_id)] = value
 
-        # Build user-movie matrix (users as rows, movies as columns)
-        # Only include movies that at least 2 users have voted on
-        item_vote_counts = {}
-        for (user_id, item_id), _ in vote_map.items():
-            item_vote_counts[item_id] = item_vote_counts.get(item_id, 0) + 1
-
-        valid_items = [item for item in items if item_vote_counts.get(item.id, 0) >= 2]
-
-        if len(valid_items) < 3:
-            context['has_data'] = False
-            context['error_message'] = "Need at least 3 movies with multiple votes for the taste map."
-            return context
-
-        # Build the matrix
-        matrix = []
-        valid_users = []
-        for user in team_members:
-            row = []
-            has_votes = False
-            for item in valid_items:
-                vote_val = vote_map.get((user.id, item.id))
-                if vote_val is not None:
-                    row.append(vote_val)
-                    has_votes = True
-                else:
-                    row.append(0)  # Neutral for missing votes
-            if has_votes:
-                matrix.append(row)
-                valid_users.append(user)
+        # Filter to users who have voted
+        valid_users = [u for u in team_members if any(
+            (u.id, item_id) in vote_map for item_id in set(k[1] for k in vote_map.keys())
+        )]
 
         if len(valid_users) < 2:
             context['has_data'] = False
-            context['error_message'] = "Need at least 2 team members with votes for the taste map."
+            context['error_message'] = "Need at least 2 team members with votes for clustering."
             return context
 
-        # Perform PCA using SVD (more numerically stable)
-        try:
-            import numpy as np
+        # Compute pairwise similarity between users
+        # Similarity = agreement rate on movies both have seen
+        def compute_similarity(user1_id, user2_id):
+            user1_votes = {k[1]: v for k, v in vote_map.items() if k[0] == user1_id}
+            user2_votes = {k[1]: v for k, v in vote_map.items() if k[0] == user2_id}
+            common_items = set(user1_votes.keys()) & set(user2_votes.keys())
+            if not common_items:
+                return 0.5  # Neutral if no common movies
+            agreements = sum(1 for item_id in common_items if user1_votes[item_id] == user2_votes[item_id])
+            return agreements / len(common_items)
 
-            # Convert to numpy array (users x movies)
-            X = np.array(matrix, dtype=float)
+        # Build distance matrix (distance = 1 - similarity)
+        n = len(valid_users)
+        dist_matrix = [[0.0] * n for _ in range(n)]
+        for i in range(n):
+            for j in range(i + 1, n):
+                sim = compute_similarity(valid_users[i].id, valid_users[j].id)
+                dist = 1 - sim
+                dist_matrix[i][j] = dist
+                dist_matrix[j][i] = dist
 
-            # Center the data (subtract mean of each movie column)
-            X_centered = X - X.mean(axis=0)
+        # Agglomerative hierarchical clustering (average linkage)
+        # Each cluster is represented as (members, height)
+        clusters = [{i} for i in range(n)]
+        cluster_heights = [0.0] * n
+        merge_history = []  # [(cluster1_idx, cluster2_idx, height, new_cluster_idx)]
 
-            # Use SVD for PCA: X = U * S * V^T
-            # U contains the user coordinates in PC space
-            # S contains the singular values (sqrt of eigenvalues)
-            # V contains the principal component directions
-            U, S, Vt = np.linalg.svd(X_centered, full_matrices=False)
+        while len(clusters) > 1:
+            # Find closest pair of clusters
+            min_dist = float('inf')
+            merge_i, merge_j = 0, 1
+            for i in range(len(clusters)):
+                for j in range(i + 1, len(clusters)):
+                    # Average linkage: average distance between all pairs
+                    total_dist = 0
+                    count = 0
+                    for mi in clusters[i]:
+                        for mj in clusters[j]:
+                            total_dist += dist_matrix[mi][mj]
+                            count += 1
+                    avg_dist = total_dist / count if count > 0 else 0
+                    if avg_dist < min_dist:
+                        min_dist = avg_dist
+                        merge_i, merge_j = i, j
 
-            # The projection onto principal components is U * S
-            # This gives us user coordinates where variance is maximized
-            coords = U[:, :2] * S[:2]
+            # Merge clusters
+            new_cluster = clusters[merge_i] | clusters[merge_j]
+            new_height = min_dist
+            new_idx = len(cluster_heights)
+            cluster_heights.append(new_height)
 
-            # Calculate variance explained
-            variance = S ** 2
-            total_var = np.sum(variance)
-            if total_var > 0:
-                var_explained_1 = round(variance[0] / total_var * 100)
-                var_explained_2 = round(variance[1] / total_var * 100) if len(variance) > 1 else 0
-            else:
-                var_explained_1 = 50
-                var_explained_2 = 50
+            merge_history.append({
+                'left': merge_i if merge_i < n else merge_i,
+                'right': merge_j if merge_j < n else merge_j,
+                'height': new_height,
+                'left_height': cluster_heights[merge_i] if merge_i < len(cluster_heights) else 0,
+                'right_height': cluster_heights[merge_j] if merge_j < len(cluster_heights) else 0,
+                'members': list(new_cluster),
+            })
 
-            # Normalize coordinates to [-1, 1] range for display
-            # But use percentile-based scaling to spread out the points
-            if coords.size > 0:
-                for dim in range(min(2, coords.shape[1])):
-                    col = coords[:, dim]
-                    col_range = np.max(col) - np.min(col)
-                    if col_range > 0:
-                        # Scale to use more of the space
-                        coords[:, dim] = (col - np.min(col)) / col_range * 1.7 - 0.85
+            # Update clusters list
+            clusters = [c for idx, c in enumerate(clusters) if idx not in (merge_i, merge_j)]
+            clusters.append(new_cluster)
+            # Track index mapping
+            cluster_heights[merge_i] = new_height
+            cluster_heights[merge_j] = new_height
 
-            # Build user data for template
-            user_data = []
-            colors = [
-                '#8B5CF6',  # Purple
-                '#EC4899',  # Pink
-                '#F59E0B',  # Amber
-                '#10B981',  # Emerald
-                '#3B82F6',  # Blue
-                '#EF4444',  # Red
-                '#06B6D4',  # Cyan
-                '#F97316',  # Orange
-                '#84CC16',  # Lime
-                '#6366F1',  # Indigo
-            ]
+        # Build dendrogram data for visualization
+        colors = [
+            '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6',
+            '#EF4444', '#06B6D4', '#F97316', '#84CC16', '#6366F1',
+        ]
 
-            for i, user in enumerate(valid_users):
-                x = float(coords[i, 0]) if coords.shape[1] > 0 else 0
-                y = float(coords[i, 1]) if coords.shape[1] > 1 else 0
-                user_data.append({
-                    'username': user.username,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'initials': f"{user.first_name[0] if user.first_name else ''}{user.last_name[0] if user.last_name else ''}",
-                    'x': x,
-                    'y': y,
-                    'color': colors[i % len(colors)],
+        user_data = []
+        for i, user in enumerate(valid_users):
+            vote_count = sum(1 for k in vote_map.keys() if k[0] == user.id)
+            user_data.append({
+                'id': i,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'full_name': f"{user.first_name} {user.last_name}",
+                'color': colors[i % len(colors)],
+                'vote_count': vote_count,
+            })
+
+        # Build dendrogram structure for D3-style rendering
+        # We need to convert merge_history into a tree structure
+        def build_tree(merge_idx):
+            if merge_idx < 0:
+                return None
+            merge = merge_history[merge_idx]
+            return merge
+
+        # Calculate similarity percentages for display
+        similarity_data = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                sim = compute_similarity(valid_users[i].id, valid_users[j].id)
+                similarity_data.append({
+                    'user1': user_data[i]['full_name'],
+                    'user2': user_data[j]['full_name'],
+                    'similarity': round(sim * 100),
                 })
+        similarity_data.sort(key=lambda x: -x['similarity'])
 
-            context['user_data'] = user_data
-            context['user_data_json'] = json.dumps(user_data)
-            context['var_explained_1'] = var_explained_1
-            context['var_explained_2'] = var_explained_2
-            context['has_data'] = True
-            context['movie_count'] = len(valid_items)
-            context['user_count'] = len(valid_users)
-
-        except ImportError:
-            context['has_data'] = False
-            context['error_message'] = "NumPy is required for the taste map. Run: pip install numpy"
+        context['user_data'] = user_data
+        context['user_data_json'] = json.dumps(user_data)
+        context['merge_history'] = merge_history
+        context['merge_history_json'] = json.dumps(merge_history)
+        context['similarity_data'] = similarity_data[:10]  # Top 10 pairs
+        context['has_data'] = True
+        context['user_count'] = len(valid_users)
 
         return context
