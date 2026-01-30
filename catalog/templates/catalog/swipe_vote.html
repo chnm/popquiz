@@ -3,77 +3,95 @@
 {% block title %}Vote - {{ category.name }} - PopQuiz{% endblock %}
 
 {% block content %}
-<div class="mb-6">
+<div class="mb-3 md:mb-6">
     <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
 </div>
 
-<div class="text-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-800">{{ category.name }}</h1>
-    <p class="text-gray-600"><span id="voted-count">{{ voted_count }}</span> of <span id="total-count">{{ total_count }}</span> voted</p>
-    <div class="w-full bg-gray-200 rounded-full h-2 mt-2 max-w-md mx-auto">
-        <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full" style="width: {% widthratio voted_count total_count 100 %}%"></div>
+<div class="text-center mb-2 md:mb-4">
+    <h1 class="text-xl md:text-2xl font-bold text-gray-800">{{ category.name }}</h1>
+    <p class="text-sm md:text-base text-gray-600"><span id="voted-count">{{ voted_count }}</span> of <span id="total-count">{{ total_count }}</span> voted</p>
+    <div class="w-full bg-gray-200 rounded-full h-1.5 md:h-2 mt-1 md:mt-2 max-w-md mx-auto">
+        <div id="progress-bar" class="bg-indigo-600 h-1.5 md:h-2 rounded-full" style="width: {% widthratio voted_count total_count 100 %}%"></div>
     </div>
 </div>
 
 <div id="voting-container">
 {% if current_item %}
-    <!-- Mobile: Single column, Desktop: Two columns -->
     <div class="max-w-sm md:max-w-4xl mx-auto">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row md:items-center">
-            <!-- Content and Buttons Column (Top on mobile, Right on desktop) -->
+            <!-- Vote Buttons (Top on mobile, Right column on desktop) -->
             <div class="order-1 md:order-2 md:flex-1 md:flex md:flex-col md:justify-center md:p-8">
-                <!-- Title and Year -->
-                <div class="p-6 pb-4 md:p-0 md:mb-6 text-center md:text-left">
-                    <h2 id="movie-title" class="text-2xl font-bold text-gray-800 min-h-[64px]">{{ current_item.title }}</h2>
-                    <p id="movie-year" class="text-gray-500 text-lg h-7">{% if current_item.year %}{{ current_item.year }}{% endif %}</p>
-                    <a id="imdb-link" href="{% if current_item.imdb_url %}{{ current_item.imdb_url }}{% else %}#{% endif %}" target="_blank" class="text-indigo-600 hover:underline text-sm block h-5" {% if not current_item.imdb_url %}style="visibility: hidden;"{% endif %}>View on IMDB</a>
+                <input type="hidden" id="current-item-id" value="{{ current_item.id }}">
+
+                <!-- Desktop: Title and buttons in right column -->
+                <div class="hidden md:block md:mb-6 text-left">
+                    <h2 id="movie-title-desktop" class="text-2xl font-bold text-gray-800 min-h-[64px]">{{ current_item.title }}</h2>
+                    <p id="movie-year-desktop" class="text-gray-500 text-lg h-7">{% if current_item.year %}{{ current_item.year }}{% endif %}</p>
+                    <a id="imdb-link-desktop" href="{% if current_item.imdb_url %}{{ current_item.imdb_url }}{% else %}#{% endif %}" target="_blank" class="text-indigo-600 hover:underline text-sm block h-5" {% if not current_item.imdb_url %}style="visibility: hidden;"{% endif %}>View on IMDB</a>
                 </div>
 
-                <!-- Vote Buttons -->
-                <div class="px-6 pb-4 md:p-0 md:h-[140px]">
-                    <input type="hidden" id="current-item-id" value="{{ current_item.id }}">
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <button data-choice="no" class="vote-btn w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-lg transition duration-200 flex items-center justify-center space-x-2">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            <span>No</span>
+                <!-- Vote Buttons - Single row on mobile, two rows on desktop -->
+                <div class="p-3 md:p-0 md:h-[140px]">
+                    <!-- Mobile: Single row of 4 buttons -->
+                    <div class="grid grid-cols-4 gap-2 md:hidden">
+                        <button data-choice="yes" class="vote-btn py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition duration-200">
+                            Yes
                         </button>
-                        <button data-choice="yes" class="vote-btn w-full py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-lg transition duration-200 flex items-center justify-center space-x-2">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                            </svg>
-                            <span>Yes</span>
+                        <button data-choice="no" class="vote-btn py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition duration-200">
+                            No
                         </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button data-choice="meh" class="vote-btn w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold transition duration-200">
+                        <button data-choice="meh" class="vote-btn py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold transition duration-200">
                             Meh
                         </button>
-                        <button data-choice="no_answer" class="vote-btn w-full py-3 rounded-xl bg-gray-400 hover:bg-gray-500 text-white font-semibold transition duration-200">
-                            Haven't Seen
+                        <button data-choice="no_answer" class="vote-btn py-2 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-semibold transition duration-200">
+                            Skip
                         </button>
+                    </div>
+
+                    <!-- Desktop: Original 2x2 grid -->
+                    <div class="hidden md:block">
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <button data-choice="no" class="vote-btn w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-lg transition duration-200 flex items-center justify-center space-x-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                <span>No</span>
+                            </button>
+                            <button data-choice="yes" class="vote-btn w-full py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-lg transition duration-200 flex items-center justify-center space-x-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                                <span>Yes</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button data-choice="meh" class="vote-btn w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold transition duration-200">
+                                Meh
+                            </button>
+                            <button data-choice="no_answer" class="vote-btn w-full py-3 rounded-xl bg-gray-400 hover:bg-gray-500 text-white font-semibold transition duration-200">
+                                Haven't Seen
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Poster Column (Bottom on mobile, Left on desktop) -->
+            <!-- Poster Column (Left on desktop, middle on mobile) -->
             <div class="order-2 md:order-1 relative bg-gray-200 md:flex-shrink-0 md:w-1/2 md:flex md:items-center md:justify-center md:p-8">
-                <!-- Fixed height to prevent layout shifts -->
-                <div id="poster-container" class="h-96 md:h-[600px] flex items-center justify-center relative touch-none select-none">
+                <div id="poster-container" class="h-[280px] md:h-[600px] flex items-center justify-center relative touch-none select-none">
                     {% if current_item.poster_url %}
                         <img id="movie-poster" src="{{ current_item.poster_url }}" alt="{{ current_item.title }}"
                              class="w-full h-full object-contain transition-transform duration-200"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div id="poster-fallback" class="absolute inset-0 items-center justify-center bg-gray-200" style="display: none;">
-                            <svg class="w-24 h-24" fill="#9ca3af" viewBox="0 0 24 24">
+                            <svg class="w-16 h-16 md:w-24 md:h-24" fill="#9ca3af" viewBox="0 0 24 24">
                                 <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
                             </svg>
                         </div>
                     {% else %}
                         <img id="movie-poster" class="transition-transform duration-200" style="display: none;">
                         <div id="poster-fallback" class="w-full h-full flex items-center justify-center">
-                            <svg class="w-24 h-24" fill="#9ca3af" viewBox="0 0 24 24">
+                            <svg class="w-16 h-16 md:w-24 md:h-24" fill="#9ca3af" viewBox="0 0 24 24">
                                 <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
                             </svg>
                         </div>
@@ -84,9 +102,16 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Mobile: Title below poster -->
+            <div class="order-3 md:hidden p-3 pb-4 text-center">
+                <h2 id="movie-title-mobile" class="text-lg font-bold text-gray-800">{{ current_item.title }}</h2>
+                <p id="movie-year-mobile" class="text-gray-500 text-sm">{% if current_item.year %}{{ current_item.year }}{% endif %}</p>
+                <a id="imdb-link-mobile" href="{% if current_item.imdb_url %}{{ current_item.imdb_url }}{% else %}#{% endif %}" target="_blank" class="text-indigo-600 hover:underline text-xs" {% if not current_item.imdb_url %}style="visibility: hidden;"{% endif %}>View on IMDB</a>
+            </div>
         </div>
 
-        <p class="text-center text-gray-500 mt-4"><span id="remaining-count">{{ remaining_count }}</span> remaining</p>
+        <p class="text-center text-gray-500 text-sm mt-2 md:mt-4"><span id="remaining-count">{{ remaining_count }}</span> remaining</p>
     </div>
 {% else %}
     <div class="max-w-sm mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
@@ -240,18 +265,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Update item ID
                     document.getElementById('current-item-id').value = item.id;
 
-                    // Update title and year
-                    document.getElementById('movie-title').textContent = item.title;
-                    document.getElementById('movie-year').textContent = item.year || '';
+                    // Update title and year (both mobile and desktop)
+                    const titleMobile = document.getElementById('movie-title-mobile');
+                    const titleDesktop = document.getElementById('movie-title-desktop');
+                    const yearMobile = document.getElementById('movie-year-mobile');
+                    const yearDesktop = document.getElementById('movie-year-desktop');
 
-                    // Update IMDB link
-                    const imdbLink = document.getElementById('imdb-link');
+                    if (titleMobile) titleMobile.textContent = item.title;
+                    if (titleDesktop) titleDesktop.textContent = item.title;
+                    if (yearMobile) yearMobile.textContent = item.year || '';
+                    if (yearDesktop) yearDesktop.textContent = item.year || '';
+
+                    // Update IMDB links (both mobile and desktop)
+                    const imdbLinkMobile = document.getElementById('imdb-link-mobile');
+                    const imdbLinkDesktop = document.getElementById('imdb-link-desktop');
                     if (item.imdb_url) {
-                        imdbLink.href = item.imdb_url;
-                        imdbLink.style.visibility = 'visible';
+                        if (imdbLinkMobile) {
+                            imdbLinkMobile.href = item.imdb_url;
+                            imdbLinkMobile.style.visibility = 'visible';
+                        }
+                        if (imdbLinkDesktop) {
+                            imdbLinkDesktop.href = item.imdb_url;
+                            imdbLinkDesktop.style.visibility = 'visible';
+                        }
                     } else {
-                        imdbLink.href = '#';
-                        imdbLink.style.visibility = 'hidden';
+                        if (imdbLinkMobile) {
+                            imdbLinkMobile.href = '#';
+                            imdbLinkMobile.style.visibility = 'hidden';
+                        }
+                        if (imdbLinkDesktop) {
+                            imdbLinkDesktop.href = '#';
+                            imdbLinkDesktop.style.visibility = 'hidden';
+                        }
                     }
 
                     // Update poster
