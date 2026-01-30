@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user1.first_name }} vs {{ user2.first_name }} - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'profile' user1.username %}" class="text-indigo-600 hover:underline">&larr; Back to {{ user1.first_name }}'s Profile</a>
+</div>
+
+<!-- Header with both users -->
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
+    <div class="flex items-center justify-center space-x-8">
+        <!-- User 1 -->
+        <div class="text-center">
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
+                {{ user1.first_name.0 }}{{ user1.last_name.0 }}
+            </div>
+            <h2 class="text-xl font-bold">{{ user1.first_name }}</h2>
+            <a href="{% url 'profile' user1.username %}" class="text-white/70 text-sm hover:text-white">@{{ user1.username }}</a>
+        </div>
+
+        <!-- VS Badge with Compatibility -->
+        <div class="text-center">
+            <div class="text-5xl font-bold mb-2">
+                {% if compatibility.score is not None %}
+                    {{ compatibility.score }}%
+                {% else %}
+                    ?
+                {% endif %}
+            </div>
+            <div class="text-white/80">compatibility</div>
+        </div>
+
+        <!-- User 2 -->
+        <div class="text-center">
+            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
+                {{ user2.first_name.0 }}{{ user2.last_name.0 }}
+            </div>
+            <h2 class="text-xl font-bold">{{ user2.first_name }}</h2>
+            <a href="{% url 'profile' user2.username %}" class="text-white/70 text-sm hover:text-white">@{{ user2.username }}</a>
+        </div>
+    </div>
+
+    {% if compatibility.score is not None %}
+    <div class="mt-6 text-center text-white/80">
+        <p>{{ compatibility.common_count }} movies in common &bull;
+           {{ compatibility.agree_count }} agreements &bull;
+           {{ compatibility.disagree_count }} disagreements</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if compatibility.score is not None %}
+
+<!-- Venn Diagram Visualization -->
+<div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Movie Taste Overlap</h2>
+
+    <!-- SVG Venn Diagram -->
+    <div class="flex justify-center mb-8">
+        <svg viewBox="0 0 400 250" class="w-full max-w-lg">
+            <!-- User 1 circle (left) -->
+            <circle cx="140" cy="125" r="100" fill="rgba(99, 102, 241, 0.3)" stroke="#6366f1" stroke-width="2"/>
+            <!-- User 2 circle (right) -->
+            <circle cx="260" cy="125" r="100" fill="rgba(236, 72, 153, 0.3)" stroke="#ec4899" stroke-width="2"/>
+
+            <!-- Labels -->
+            <text x="80" y="125" text-anchor="middle" class="text-sm font-medium" fill="#6366f1">Only</text>
+            <text x="80" y="145" text-anchor="middle" class="text-sm font-medium" fill="#6366f1">{{ user1.first_name }}</text>
+            <text x="80" y="165" text-anchor="middle" class="text-lg font-bold" fill="#6366f1">{{ only_user1|length }}</text>
+
+            <text x="200" y="110" text-anchor="middle" class="text-sm font-medium" fill="#7c3aed">Both</text>
+            <text x="200" y="130" text-anchor="middle" class="text-sm font-medium" fill="#7c3aed">Watched</text>
+            <text x="200" y="155" text-anchor="middle" class="text-2xl font-bold" fill="#7c3aed">{{ compatibility.common_count }}</text>
+
+            <text x="320" y="125" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">Only</text>
+            <text x="320" y="145" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">{{ user2.first_name }}</text>
+            <text x="320" y="165" text-anchor="middle" class="text-lg font-bold" fill="#ec4899">{{ only_user2|length }}</text>
+        </svg>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="bg-green-50 rounded-xl p-4">
+            <div class="text-3xl font-bold text-green-600">{{ both_love|length }}</div>
+            <div class="text-sm text-green-700">Both Love</div>
+        </div>
+        <div class="bg-red-50 rounded-xl p-4">
+            <div class="text-3xl font-bold text-red-600">{{ both_hate|length }}</div>
+            <div class="text-sm text-red-700">Both Hate</div>
+        </div>
+        <div class="bg-yellow-50 rounded-xl p-4">
+            <div class="text-3xl font-bold text-yellow-600">{{ both_meh|length }}</div>
+            <div class="text-sm text-yellow-700">Both Meh</div>
+        </div>
+        <div class="bg-purple-50 rounded-xl p-4">
+            <div class="text-3xl font-bold text-purple-600">{{ user1_loves_user2_hates|length|add:user1_hates_user2_loves|length|add:other_disagreements|length }}</div>
+            <div class="text-sm text-purple-700">Disagree</div>
+        </div>
+    </div>
+</div>
+
+<!-- Movies They Both Love -->
+{% if both_love %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+    <div class="flex items-center mb-4">
+        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">Movies You Both Love ({{ both_love|length }})</h3>
+    </div>
+    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+        {% for item in both_love %}
+        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
+            {% if item.poster_url %}
+            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+            </div>
+            {% else %}
+            <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+            </div>
+            {% endif %}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Movies They Both Hate -->
+{% if both_hate %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+    <div class="flex items-center mb-4">
+        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">Movies You Both Dislike ({{ both_hate|length }})</h3>
+    </div>
+    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+        {% for item in both_hate %}
+        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75 hover:opacity-100">
+            {% if item.poster_url %}
+            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+            </div>
+            {% else %}
+            <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+            </div>
+            {% endif %}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Major Disagreements -->
+{% if user1_loves_user2_hates or user1_hates_user2_loves %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+    <div class="flex items-center mb-4">
+        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">Major Disagreements</h3>
+    </div>
+
+    {% if user1_loves_user2_hates %}
+    <div class="mb-6">
+        <p class="text-sm text-gray-600 mb-3">
+            <span class="font-semibold text-green-600">{{ user1.first_name }} loves</span> but
+            <span class="font-semibold text-red-600">{{ user2.first_name }} hates</span> ({{ user1_loves_user2_hates|length }}):
+        </p>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_loves_user2_hates %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm ring-2 ring-l-green-500 ring-r-red-500" style="box-shadow: -2px 0 0 #22c55e, 2px 0 0 #ef4444;">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user1_hates_user2_loves %}
+    <div>
+        <p class="text-sm text-gray-600 mb-3">
+            <span class="font-semibold text-red-600">{{ user1.first_name }} hates</span> but
+            <span class="font-semibold text-green-600">{{ user2.first_name }} loves</span> ({{ user1_hates_user2_loves|length }}):
+        </p>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_hates_user2_loves %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm" style="box-shadow: -2px 0 0 #ef4444, 2px 0 0 #22c55e;">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- No common movies -->
+<div class="bg-white rounded-2xl shadow-xl p-12 text-center">
+    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">No Common Movies Yet</h2>
+    <p class="text-gray-600">{{ user1.first_name }} and {{ user2.first_name }} haven't watched any of the same movies yet.</p>
+</div>
+{% endif %}
+
+{% endblock %}
