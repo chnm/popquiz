@@ -24,6 +24,27 @@ class HomeView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['users'] = User.objects.filter(is_staff=False).order_by('last_name', 'first_name')
+
+        # Get voting progress for logged-in user
+        if self.request.user.is_authenticated:
+            categories_with_progress = []
+            for category in context['categories']:
+                total_items = category.item_count
+                voted_count = Vote.objects.filter(
+                    user=self.request.user,
+                    item__category=category
+                ).exclude(choice=Vote.Choice.NO_ANSWER).count()
+                remaining = total_items - voted_count
+                progress_percent = round((voted_count / total_items) * 100) if total_items > 0 else 0
+                categories_with_progress.append({
+                    'category': category,
+                    'total': total_items,
+                    'voted': voted_count,
+                    'remaining': remaining,
+                    'progress_percent': progress_percent,
+                })
+            context['categories_with_progress'] = categories_with_progress
+
         return context
 
 
