@@ -76,6 +76,15 @@ class CategoryDetailView(DetailView):
                 'vote': votes_dict.get(item.id, Vote.Choice.NO_ANSWER)
             })
 
+        # Sort items by vote preference: Yes, Meh, No, Not Seen
+        vote_order = {
+            Vote.Choice.YES: 0,
+            Vote.Choice.MEH: 1,
+            Vote.Choice.NO: 2,
+            Vote.Choice.NO_ANSWER: 3,
+        }
+        items_with_votes.sort(key=lambda x: (vote_order.get(x['vote'], 3), x['item'].title.lower()))
+
         context['items_with_votes'] = items_with_votes
         return context
 
@@ -391,165 +400,5 @@ class EclecticView(TemplateView):
 
         context['user_stats'] = user_stats
         context['has_data'] = len(user_stats) > 0
-
-        return context
-
-
-class TasteMapView(TemplateView):
-    """View showing users clustered by taste using hierarchical clustering."""
-    template_name = 'catalog/taste_map.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        category = get_object_or_404(Category, slug=self.kwargs['slug'])
-        context['category'] = category
-
-        # Get all team members
-        team_members = list(User.objects.filter(is_staff=False).order_by('id'))
-
-        if len(team_members) < 2:
-            context['has_data'] = False
-            context['error_message'] = "Need at least 2 team members for clustering."
-            return context
-
-        # Get all votes (excluding NO_ANSWER)
-        votes = Vote.objects.filter(
-            item__category=category
-        ).exclude(choice=Vote.Choice.NO_ANSWER)
-
-        # Build vote lookup: (user_id, item_id) -> vote_value
-        vote_map = {}
-        for vote in votes:
-            if vote.choice == Vote.Choice.YES:
-                value = 1
-            elif vote.choice == Vote.Choice.NO:
-                value = -1
-            else:  # MEH
-                value = 0
-            vote_map[(vote.user_id, vote.item_id)] = value
-
-        # Filter to users who have voted
-        valid_users = [u for u in team_members if any(
-            (u.id, item_id) in vote_map for item_id in set(k[1] for k in vote_map.keys())
-        )]
-
-        if len(valid_users) < 2:
-            context['has_data'] = False
-            context['error_message'] = "Need at least 2 team members with votes for clustering."
-            return context
-
-        # Compute pairwise similarity between users
-        # Similarity = agreement rate on movies both have seen
-        def compute_similarity(user1_id, user2_id):
-            user1_votes = {k[1]: v for k, v in vote_map.items() if k[0] == user1_id}
-            user2_votes = {k[1]: v for k, v in vote_map.items() if k[0] == user2_id}
-            common_items = set(user1_votes.keys()) & set(user2_votes.keys())
-            if not common_items:
-                return 0.5  # Neutral if no common movies
-            agreements = sum(1 for item_id in common_items if user1_votes[item_id] == user2_votes[item_id])
-            return agreements / len(common_items)
-
-        # Build distance matrix (distance = 1 - similarity)
-        n = len(valid_users)
-        dist_matrix = [[0.0] * n for _ in range(n)]
-        for i in range(n):
-            for j in range(i + 1, n):
-                sim = compute_similarity(valid_users[i].id, valid_users[j].id)
-                dist = 1 - sim
-                dist_matrix[i][j] = dist
-                dist_matrix[j][i] = dist
-
-        # Agglomerative hierarchical clustering (average linkage)
-        # Each cluster is represented as (members, height)
-        clusters = [{i} for i in range(n)]
-        cluster_heights = [0.0] * n
-        merge_history = []  # [(cluster1_idx, cluster2_idx, height, new_cluster_idx)]
-
-        while len(clusters) > 1:
-            # Find closest pair of clusters
-            min_dist = float('inf')
-            merge_i, merge_j = 0, 1
-            for i in range(len(clusters)):
-                for j in range(i + 1, len(clusters)):
-                    # Average linkage: average distance between all pairs
-                    total_dist = 0
-                    count = 0
-                    for mi in clusters[i]:
-                        for mj in clusters[j]:
-                            total_dist += dist_matrix[mi][mj]
-                            count += 1
-                    avg_dist = total_dist / count if count > 0 else 0
-                    if avg_dist < min_dist:
-                        min_dist = avg_dist
-                        merge_i, merge_j = i, j
-
-            # Merge clusters
-            new_cluster = clusters[merge_i] | clusters[merge_j]
-            new_height = min_dist
-            new_idx = len(cluster_heights)
-            cluster_heights.append(new_height)
-
-            merge_history.append({
-                'left': merge_i if merge_i < n else merge_i,
-                'right': merge_j if merge_j < n else merge_j,
-                'height': new_height,
-                'left_height': cluster_heights[merge_i] if merge_i < len(cluster_heights) else 0,
-                'right_height': cluster_heights[merge_j] if merge_j < len(cluster_heights) else 0,
-                'members': list(new_cluster),
-            })
-
-            # Update clusters list
-            clusters = [c for idx, c in enumerate(clusters) if idx not in (merge_i, merge_j)]
-            clusters.append(new_cluster)
-            # Track index mapping
-            cluster_heights[merge_i] = new_height
-            cluster_heights[merge_j] = new_height
-
-        # Build dendrogram data for visualization
-        colors = [
-            '#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6',
-            '#EF4444', '#06B6D4', '#F97316', '#84CC16', '#6366F1',
-        ]
-
-        user_data = []
-        for i, user in enumerate(valid_users):
-            vote_count = sum(1 for k in vote_map.keys() if k[0] == user.id)
-            user_data.append({
-                'id': i,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'full_name': f"{user.first_name} {user.last_name}",
-                'color': colors[i % len(colors)],
-                'vote_count': vote_count,
-            })
-
-        # Build dendrogram structure for D3-style rendering
-        # We need to convert merge_history into a tree structure
-        def build_tree(merge_idx):
-            if merge_idx < 0:
-                return None
-            merge = merge_history[merge_idx]
-            return merge
-
-        # Calculate similarity percentages for display
-        similarity_data = []
-        for i in range(n):
-            for j in range(i + 1, n):
-                sim = compute_similarity(valid_users[i].id, valid_users[j].id)
-                similarity_data.append({
-                    'user1': user_data[i]['full_name'],
-                    'user2': user_data[j]['full_name'],
-                    'similarity': round(sim * 100),
-                })
-        similarity_data.sort(key=lambda x: -x['similarity'])
-
-        context['user_data'] = user_data
-        context['user_data_json'] = json.dumps(user_data)
-        context['merge_history'] = merge_history
-        context['merge_history_json'] = json.dumps(merge_history)
-        context['similarity_data'] = similarity_data[:10]  # Top 10 pairs
-        context['has_data'] = True
-        context['user_count'] = len(valid_users)
 
         return context

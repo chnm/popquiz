@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import HomeView, CategoryDetailView, AddItemView, SwipeVoteView, StatsView, DecadeStatsView, EclecticView, TasteMapView
+from .views import HomeView, CategoryDetailView, AddItemView, SwipeVoteView, StatsView, DecadeStatsView, EclecticView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
@@ -9,5 +9,4 @@ urlpatterns = [
     path('category/<slug:slug>/stats/', StatsView.as_view(), name='stats'),
     path('category/<slug:slug>/decades/', DecadeStatsView.as_view(), name='decades'),
     path('category/<slug:slug>/eclectic/', EclecticView.as_view(), name='eclectic'),
-    path('category/<slug:slug>/taste-map/', TasteMapView.as_view(), name='taste_map'),
 ]

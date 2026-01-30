@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['unnecessitously-uncontrastive-elidia.ngrok-free.dev', 'localhost', '127.0.0.1']
 
+# CSRF trusted origins for POST requests
+CSRF_TRUSTED_ORIGINS = ['https://unnecessitously-uncontrastive-elidia.ngrok-free.dev']
 
 # Application definition
 
