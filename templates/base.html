@@ -13,6 +13,7 @@
                 <a href="{% url 'home' %}" class="text-xl font-bold">PopQuiz</a>
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
+                        <span class="text-indigo-100">{{ user.first_name }} {{ user.last_name }}</span>
                         <a href="{% url 'profile' user.username %}" class="hover:text-indigo-200">My Profile</a>
                         <form method="post" action="{% url 'logout' %}" class="inline">
                             {% csrf_token %}
