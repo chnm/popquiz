@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-4et=o#7o4tsnsdlwth0^we9!n1v)z%4fwqp^f*)^ry*#&nzq_f
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['unnecessitously-uncontrastive-elidia.ngrok-free.dev', 'localhost', '127.0.0.1']
 
 
 # Application definition
