@@ -154,26 +154,21 @@ class StatsView(TemplateView):
         context['category'] = category
 
         # Count team members (non-staff users)
-        team_members = User.objects.filter(is_staff=False)
-        team_count = team_members.count()
+        team_count = User.objects.filter(is_staff=False).count()
         context['team_count'] = team_count
 
-        # Get all items with vote statistics
+        # Get all items with vote statistics (only yes/no/meh, not "haven't watched")
         items = Item.objects.filter(category=category).annotate(
             yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
             no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
             meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
-            watched_count=Count('votes', filter=Q(
-                votes__choice__in=[Vote.Choice.YES, Vote.Choice.NO, Vote.Choice.MEH]
-            )),
         )
 
-        # Calculate scores and separate into watched/not watched by all
-        watched_by_all = []
-        not_watched_by_all = []
+        # Calculate scores for all movies
+        ranked_movies = []
 
         for item in items:
-            # Calculate score: yes=+1, meh=0, no=-1
+            # Total votes = only those who actually watched (yes + no + meh)
             total_votes = item.yes_count + item.no_count + item.meh_count
             if total_votes > 0:
                 # Score from -100 to +100
@@ -182,33 +177,31 @@ class StatsView(TemplateView):
                 no_percent = round((item.no_count / total_votes) * 100)
                 meh_percent = round((item.meh_count / total_votes) * 100)
             else:
-                score = 0
+                score = None  # No votes yet
                 yes_percent = 0
                 no_percent = 0
                 meh_percent = 0
 
-            item_data = {
+            ranked_movies.append({
                 'item': item,
                 'yes_count': item.yes_count,
                 'no_count': item.no_count,
                 'meh_count': item.meh_count,
-                'watched_count': item.watched_count,
+                'total_votes': total_votes,
                 'score': score,
                 'yes_percent': yes_percent,
                 'no_percent': no_percent,
                 'meh_percent': meh_percent,
-            }
+            })
 
-            if item.watched_count >= team_count and team_count > 0:
-                watched_by_all.append(item_data)
-            else:
-                not_watched_by_all.append(item_data)
+        # Sort: movies with votes first (by score desc), then unvoted movies by title
+        ranked_movies.sort(key=lambda x: (
+            x['score'] is None,  # Unvoted movies go last
+            -(x['score'] or 0),  # Higher scores first
+            -x['yes_count'],     # More yes votes as tiebreaker
+            x['item'].title.lower()
+        ))
 
-        # Sort by score (highest first), then by yes_count, then by title
-        watched_by_all.sort(key=lambda x: (-x['score'], -x['yes_count'], x['item'].title.lower()))
-        not_watched_by_all.sort(key=lambda x: (-x['score'], -x['yes_count'], x['item'].title.lower()))
-
-        context['watched_by_all'] = watched_by_all
-        context['not_watched_by_all'] = not_watched_by_all
+        context['ranked_movies'] = ranked_movies
 
         return context
