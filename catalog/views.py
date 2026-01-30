@@ -464,46 +464,45 @@ class TasteMapView(TemplateView):
             context['error_message'] = "Need at least 2 team members with votes for the taste map."
             return context
 
-        # Perform PCA using numpy/scipy
+        # Perform PCA using SVD (more numerically stable)
         try:
             import numpy as np
-            from scipy import linalg
 
-            # Convert to numpy array
+            # Convert to numpy array (users x movies)
             X = np.array(matrix, dtype=float)
 
-            # Center the data (subtract mean)
+            # Center the data (subtract mean of each movie column)
             X_centered = X - X.mean(axis=0)
 
-            # Compute covariance matrix
-            cov_matrix = np.cov(X_centered, rowvar=True)
+            # Use SVD for PCA: X = U * S * V^T
+            # U contains the user coordinates in PC space
+            # S contains the singular values (sqrt of eigenvalues)
+            # V contains the principal component directions
+            U, S, Vt = np.linalg.svd(X_centered, full_matrices=False)
 
-            # Handle case where we have more users than features
-            if cov_matrix.ndim == 0:
-                cov_matrix = np.array([[cov_matrix]])
+            # The projection onto principal components is U * S
+            # This gives us user coordinates where variance is maximized
+            coords = U[:, :2] * S[:2]
 
-            # Compute eigenvalues and eigenvectors
-            eigenvalues, eigenvectors = linalg.eigh(cov_matrix)
-
-            # Sort by eigenvalue (descending)
-            idx = np.argsort(eigenvalues)[::-1]
-            eigenvalues = eigenvalues[idx]
-            eigenvectors = eigenvectors[:, idx]
-
-            # Project onto first 2 principal components
-            if len(valid_users) == 2:
-                # Special case: only 2 users
-                coords = np.array([[eigenvalues[0] if eigenvalues[0] > 0 else 1, 0],
-                                   [-eigenvalues[0] if eigenvalues[0] > 0 else -1, 0]])
+            # Calculate variance explained
+            variance = S ** 2
+            total_var = np.sum(variance)
+            if total_var > 0:
+                var_explained_1 = round(variance[0] / total_var * 100)
+                var_explained_2 = round(variance[1] / total_var * 100) if len(variance) > 1 else 0
             else:
-                # Use the eigenvectors as coordinates (they represent user positions)
-                coords = eigenvectors[:, :2]
+                var_explained_1 = 50
+                var_explained_2 = 50
 
-            # Normalize coordinates to [-1, 1] range
+            # Normalize coordinates to [-1, 1] range for display
+            # But use percentile-based scaling to spread out the points
             if coords.size > 0:
-                max_abs = np.max(np.abs(coords))
-                if max_abs > 0:
-                    coords = coords / max_abs * 0.85  # Leave some margin
+                for dim in range(min(2, coords.shape[1])):
+                    col = coords[:, dim]
+                    col_range = np.max(col) - np.min(col)
+                    if col_range > 0:
+                        # Scale to use more of the space
+                        coords[:, dim] = (col - np.min(col)) / col_range * 1.7 - 0.85
 
             # Build user data for template
             user_data = []
@@ -533,15 +532,6 @@ class TasteMapView(TemplateView):
                     'color': colors[i % len(colors)],
                 })
 
-            # Calculate variance explained (for fun stats)
-            total_var = np.sum(eigenvalues)
-            if total_var > 0 and len(eigenvalues) >= 2:
-                var_explained_1 = round(eigenvalues[0] / total_var * 100)
-                var_explained_2 = round(eigenvalues[1] / total_var * 100) if len(eigenvalues) > 1 else 0
-            else:
-                var_explained_1 = 50
-                var_explained_2 = 50
-
             context['user_data'] = user_data
             context['user_data_json'] = json.dumps(user_data)
             context['var_explained_1'] = var_explained_1
@@ -552,6 +542,6 @@ class TasteMapView(TemplateView):
 
         except ImportError:
             context['has_data'] = False
-            context['error_message'] = "NumPy and SciPy are required for the taste map. Run: pip install numpy scipy"
+            context['error_message'] = "NumPy is required for the taste map. Run: pip install numpy"
 
         return context
