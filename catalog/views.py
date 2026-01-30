@@ -205,3 +205,74 @@ class StatsView(TemplateView):
         context['ranked_movies'] = ranked_movies
 
         return context
+
+
+class DecadeStatsView(TemplateView):
+    """View showing movies ranked by decade."""
+    template_name = 'catalog/decades.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        context['category'] = category
+
+        # Get all items with vote statistics
+        items = Item.objects.filter(category=category).annotate(
+            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+        )
+
+        # Group movies by decade
+        decades = {}
+        no_year = []
+
+        for item in items:
+            total_votes = item.yes_count + item.no_count + item.meh_count
+            if total_votes > 0:
+                score = round(((item.yes_count - item.no_count) / total_votes) * 100)
+                yes_percent = round((item.yes_count / total_votes) * 100)
+                no_percent = round((item.no_count / total_votes) * 100)
+                meh_percent = round((item.meh_count / total_votes) * 100)
+            else:
+                score = None
+                yes_percent = 0
+                no_percent = 0
+                meh_percent = 0
+
+            movie_data = {
+                'item': item,
+                'yes_count': item.yes_count,
+                'no_count': item.no_count,
+                'meh_count': item.meh_count,
+                'total_votes': total_votes,
+                'score': score,
+                'yes_percent': yes_percent,
+                'no_percent': no_percent,
+                'meh_percent': meh_percent,
+            }
+
+            if item.year:
+                decade = (item.year // 10) * 10
+                if decade not in decades:
+                    decades[decade] = []
+                decades[decade].append(movie_data)
+            else:
+                no_year.append(movie_data)
+
+        # Sort movies within each decade by score
+        for decade in decades:
+            decades[decade].sort(key=lambda x: (
+                x['score'] is None,
+                -(x['score'] or 0),
+                -x['yes_count'],
+                x['item'].title.lower()
+            ))
+
+        # Sort decades (most recent first)
+        sorted_decades = sorted(decades.items(), key=lambda x: -x[0])
+
+        context['decades'] = sorted_decades
+        context['no_year'] = no_year
+
+        return context

@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Rankings by Decade - {{ category.name }} - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
+</div>
+
+<div class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
+    <h1 class="text-3xl font-bold mb-2">Rankings by Decade: {{ category.name }}</h1>
+    <p class="text-white/80">Movies grouped and ranked by release decade</p>
+</div>
+
+{% if decades %}
+{% for decade, movies in decades %}
+<div class="mb-10">
+    <div class="flex items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">{{ decade }}s</h2>
+        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ movies|length }} movie{{ movies|length|pluralize }}</span>
+    </div>
+
+    <div class="space-y-3">
+        {% for item_data in movies %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-200">
+            <div class="flex items-center p-4">
+                <!-- Rank Badge within decade -->
+                <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mr-4
+                    {% if item_data.score is not None %}
+                        {% if forloop.counter == 1 %}bg-yellow-400 text-yellow-900
+                        {% elif forloop.counter == 2 %}bg-gray-300 text-gray-700
+                        {% elif forloop.counter == 3 %}bg-amber-600 text-white
+                        {% else %}bg-gray-100 text-gray-600{% endif %}
+                    {% else %}bg-gray-50 text-gray-400{% endif %}">
+                    #{{ forloop.counter }}
+                </div>
+
+                <!-- Poster -->
+                <div class="flex-shrink-0 w-12 h-18 mr-4">
+                    {% if item_data.item.poster_url %}
+                    <img src="{{ item_data.item.poster_url }}" alt="{{ item_data.item.title }}"
+                         class="w-12 h-18 object-cover rounded-lg"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-12 h-18 bg-gray-200 rounded-lg items-center justify-center" style="display: none;">
+                        <svg class="w-5 h-5" fill="#9ca3af" viewBox="0 0 24 24">
+                            <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                        </svg>
+                    </div>
+                    {% else %}
+                    <div class="w-12 h-18 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="#9ca3af" viewBox="0 0 24 24">
+                            <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Title and Year -->
+                <div class="flex-grow min-w-0 mr-4">
+                    <h3 class="font-bold text-gray-800 truncate">{{ item_data.item.title }}</h3>
+                    <p class="text-gray-500 text-sm">{{ item_data.item.year }}</p>
+                </div>
+
+                {% if item_data.score is not None %}
+                <!-- Score -->
+                <div class="flex-shrink-0 text-center mr-4">
+                    <div class="text-xl font-bold {% if item_data.score > 0 %}text-green-600{% elif item_data.score < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
+                        {% if item_data.score > 0 %}+{% endif %}{{ item_data.score }}
+                    </div>
+                    <div class="text-xs text-gray-500">score</div>
+                </div>
+
+                <!-- Vote Breakdown -->
+                <div class="flex-shrink-0 flex items-center space-x-2">
+                    <div class="text-center">
+                        <div class="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
+                            <span class="text-green-700 font-semibold text-sm">{{ item_data.yes_count }}</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center w-8 h-8 bg-yellow-100 rounded-full">
+                            <span class="text-yellow-700 font-semibold text-sm">{{ item_data.meh_count }}</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center w-8 h-8 bg-red-100 rounded-full">
+                            <span class="text-red-700 font-semibold text-sm">{{ item_data.no_count }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="flex-shrink-0 text-gray-400 text-sm italic">
+                    No votes yet
+                </div>
+                {% endif %}
+            </div>
+
+            {% if item_data.total_votes > 0 %}
+            <div class="h-1.5 flex">
+                {% if item_data.yes_percent > 0 %}
+                <div class="bg-green-500" style="width: {{ item_data.yes_percent }}%"></div>
+                {% endif %}
+                {% if item_data.meh_percent > 0 %}
+                <div class="bg-yellow-400" style="width: {{ item_data.meh_percent }}%"></div>
+                {% endif %}
+                {% if item_data.no_percent > 0 %}
+                <div class="bg-red-500" style="width: {{ item_data.no_percent }}%"></div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+
+{% if no_year %}
+<div class="mb-10">
+    <div class="flex items-center mb-4">
+        <h2 class="text-2xl font-bold text-gray-800">Unknown Year</h2>
+        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ no_year|length }} movie{{ no_year|length|pluralize }}</span>
+    </div>
+
+    <div class="space-y-3">
+        {% for item_data in no_year %}
+        <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-200">
+            <div class="flex items-center p-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mr-4 bg-gray-50 text-gray-400">
+                    #{{ forloop.counter }}
+                </div>
+                <div class="flex-shrink-0 w-12 h-18 mr-4">
+                    {% if item_data.item.poster_url %}
+                    <img src="{{ item_data.item.poster_url }}" alt="{{ item_data.item.title }}"
+                         class="w-12 h-18 object-cover rounded-lg">
+                    {% else %}
+                    <div class="w-12 h-18 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="#9ca3af" viewBox="0 0 24 24">
+                            <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex-grow min-w-0 mr-4">
+                    <h3 class="font-bold text-gray-800 truncate">{{ item_data.item.title }}</h3>
+                </div>
+                {% if item_data.score is not None %}
+                <div class="flex-shrink-0 text-center mr-4">
+                    <div class="text-xl font-bold {% if item_data.score > 0 %}text-green-600{% elif item_data.score < 0 %}text-red-600{% else %}text-gray-500{% endif %}">
+                        {% if item_data.score > 0 %}+{% endif %}{{ item_data.score }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="flex-shrink-0 text-gray-400 text-sm italic">No votes</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="bg-white rounded-2xl shadow-xl p-12 text-center">
+    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">No Movies Yet</h2>
+    <p class="text-gray-600">Add some movies to see decade rankings!</p>
+</div>
+{% endif %}
+{% endblock %}
