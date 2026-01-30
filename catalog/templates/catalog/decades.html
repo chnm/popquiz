@@ -57,7 +57,9 @@
 
                 <!-- Title and Year -->
                 <div class="flex-grow min-w-0 mr-4">
-                    <h3 class="font-bold text-gray-800 truncate">{{ item_data.item.title }}</h3>
+                    <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
+                        <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
+                    </a>
                     <p class="text-gray-500 text-sm">{{ item_data.item.year }}</p>
                 </div>
 
@@ -141,7 +143,9 @@
                     {% endif %}
                 </div>
                 <div class="flex-grow min-w-0 mr-4">
-                    <h3 class="font-bold text-gray-800 truncate">{{ item_data.item.title }}</h3>
+                    <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
+                        <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
+                    </a>
                 </div>
                 {% if item_data.score is not None %}
                 <div class="flex-shrink-0 text-center mr-4">

@@ -453,3 +453,67 @@ class EclecticView(TemplateView):
         context['has_data'] = len(user_stats) > 0
 
         return context
+
+
+class MovieDetailView(TemplateView):
+    """View showing how everyone voted on a specific movie."""
+    template_name = 'catalog/movie_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = get_object_or_404(Category, slug=self.kwargs['category_slug'])
+        item = get_object_or_404(Item, id=self.kwargs['item_id'], category=category)
+
+        context['category'] = category
+        context['item'] = item
+
+        # Get all votes for this item, grouped by choice
+        all_votes = Vote.objects.filter(item=item).select_related('user').order_by('user__last_name', 'user__first_name')
+
+        # Group votes by choice
+        yes_votes = []
+        no_votes = []
+        meh_votes = []
+        not_seen_votes = []
+
+        for vote in all_votes:
+            if vote.choice == Vote.Choice.YES:
+                yes_votes.append(vote)
+            elif vote.choice == Vote.Choice.NO:
+                no_votes.append(vote)
+            elif vote.choice == Vote.Choice.MEH:
+                meh_votes.append(vote)
+            elif vote.choice == Vote.Choice.NO_ANSWER:
+                not_seen_votes.append(vote)
+
+        # Get all team members who haven't voted
+        team_members = User.objects.filter(is_staff=False)
+        voted_user_ids = set(vote.user_id for vote in all_votes)
+        no_vote_users = [user for user in team_members if user.id not in voted_user_ids]
+        no_vote_users.sort(key=lambda x: (x.last_name, x.first_name))
+
+        context['yes_votes'] = yes_votes
+        context['no_votes'] = no_votes
+        context['meh_votes'] = meh_votes
+        context['not_seen_votes'] = not_seen_votes
+        context['no_vote_users'] = no_vote_users
+
+        # Calculate statistics
+        total_votes = len(yes_votes) + len(no_votes) + len(meh_votes)
+        context['total_votes'] = total_votes
+        context['yes_count'] = len(yes_votes)
+        context['no_count'] = len(no_votes)
+        context['meh_count'] = len(meh_votes)
+        context['not_seen_count'] = len(not_seen_votes)
+        context['no_vote_count'] = len(no_vote_users)
+
+        if total_votes > 0:
+            context['yes_percent'] = round((len(yes_votes) / total_votes) * 100)
+            context['no_percent'] = round((len(no_votes) / total_votes) * 100)
+            context['meh_percent'] = round((len(meh_votes) / total_votes) * 100)
+        else:
+            context['yes_percent'] = 0
+            context['no_percent'] = 0
+            context['meh_percent'] = 0
+
+        return context
