@@ -197,6 +197,27 @@ class StatsView(TemplateView):
             meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
         )
 
+        # Calculate global average score first (for Bayesian average)
+        # We'll use this to stabilize scores for movies with few votes
+        total_yes = 0
+        total_no = 0
+        total_meh = 0
+        for item in items:
+            total_yes += item.yes_count
+            total_no += item.no_count
+            total_meh += item.meh_count
+
+        total_all_votes = total_yes + total_no + total_meh
+        if total_all_votes > 0:
+            global_average = ((total_yes - total_no) / total_all_votes) * 100
+        else:
+            global_average = 0
+
+        # Confidence parameter: number of votes needed to trust the movie's own score
+        # Higher value = more conservative (pulls toward global average more)
+        # Lower value = less conservative (trusts individual scores more)
+        C = 5  # Equivalent to "5 average votes" worth of confidence
+
         # Calculate scores for all movies
         ranked_movies = []
 
@@ -204,8 +225,17 @@ class StatsView(TemplateView):
             # Total votes = only those who actually watched (yes + no + meh)
             total_votes = item.yes_count + item.no_count + item.meh_count
             if total_votes > 0:
-                # Score from -100 to +100
-                score = round(((item.yes_count - item.no_count) / total_votes) * 100)
+                # Raw score from -100 to +100
+                raw_score = ((item.yes_count - item.no_count) / total_votes) * 100
+
+                # Bayesian average: blend raw score with global average
+                # Formula: (C * global_avg + total_votes * raw_score) / (C + total_votes)
+                # This way:
+                # - Movies with few votes are pulled toward the global average
+                # - Movies with many votes use mostly their own score
+                bayesian_score = (C * global_average + total_votes * raw_score) / (C + total_votes)
+                score = round(bayesian_score)
+
                 yes_percent = round((item.yes_count / total_votes) * 100)
                 no_percent = round((item.no_count / total_votes) * 100)
                 meh_percent = round((item.meh_count / total_votes) * 100)
@@ -256,6 +286,23 @@ class DecadeStatsView(TemplateView):
             meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
         )
 
+        # Calculate global average for Bayesian scoring
+        total_yes = 0
+        total_no = 0
+        total_meh = 0
+        for item in items:
+            total_yes += item.yes_count
+            total_no += item.no_count
+            total_meh += item.meh_count
+
+        total_all_votes = total_yes + total_no + total_meh
+        if total_all_votes > 0:
+            global_average = ((total_yes - total_no) / total_all_votes) * 100
+        else:
+            global_average = 0
+
+        C = 5  # Confidence parameter
+
         # Group movies by decade
         decades = {}
         no_year = []
@@ -263,7 +310,11 @@ class DecadeStatsView(TemplateView):
         for item in items:
             total_votes = item.yes_count + item.no_count + item.meh_count
             if total_votes > 0:
-                score = round(((item.yes_count - item.no_count) / total_votes) * 100)
+                # Use Bayesian average scoring
+                raw_score = ((item.yes_count - item.no_count) / total_votes) * 100
+                bayesian_score = (C * global_average + total_votes * raw_score) / (C + total_votes)
+                score = round(bayesian_score)
+
                 yes_percent = round((item.yes_count / total_votes) * 100)
                 no_percent = round((item.no_count / total_votes) * 100)
                 meh_percent = round((item.meh_count / total_votes) * 100)
