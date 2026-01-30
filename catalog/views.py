@@ -30,16 +30,17 @@ class HomeView(ListView):
             categories_with_progress = []
             for category in context['categories']:
                 total_items = category.item_count
-                voted_count = Vote.objects.filter(
+                # Count all votes (including NO_ANSWER) - any response counts as "handled"
+                responded_count = Vote.objects.filter(
                     user=self.request.user,
                     item__category=category
-                ).exclude(choice=Vote.Choice.NO_ANSWER).count()
-                remaining = total_items - voted_count
-                progress_percent = round((voted_count / total_items) * 100) if total_items > 0 else 0
+                ).count()
+                remaining = total_items - responded_count
+                progress_percent = round((responded_count / total_items) * 100) if total_items > 0 else 0
                 categories_with_progress.append({
                     'category': category,
                     'total': total_items,
-                    'voted': voted_count,
+                    'voted': responded_count,
                     'remaining': remaining,
                     'progress_percent': progress_percent,
                 })
