@@ -276,3 +276,96 @@ class DecadeStatsView(TemplateView):
         context['no_year'] = no_year
 
         return context
+
+
+class EclecticView(TemplateView):
+    """View showing team members ranked by how eclectic their taste is."""
+    template_name = 'catalog/eclectic.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        context['category'] = category
+
+        # Get all votes for this category (excluding NO_ANSWER)
+        all_votes = Vote.objects.filter(
+            item__category=category
+        ).exclude(
+            choice=Vote.Choice.NO_ANSWER
+        ).select_related('user', 'item')
+
+        # Build a dict of item_id -> list of votes
+        item_votes = {}
+        for vote in all_votes:
+            if vote.item_id not in item_votes:
+                item_votes[vote.item_id] = []
+            item_votes[vote.item_id].append(vote)
+
+        # For each item, determine the consensus (majority vote)
+        # Consensus is the most common vote among yes/no/meh
+        item_consensus = {}
+        for item_id, votes in item_votes.items():
+            if len(votes) < 2:
+                # Need at least 2 votes to have a meaningful consensus
+                continue
+            vote_counts = {
+                Vote.Choice.YES: 0,
+                Vote.Choice.NO: 0,
+                Vote.Choice.MEH: 0,
+            }
+            for v in votes:
+                if v.choice in vote_counts:
+                    vote_counts[v.choice] += 1
+
+            # Find the majority vote
+            max_count = max(vote_counts.values())
+            consensus_votes = [k for k, v in vote_counts.items() if v == max_count]
+            # If there's a tie, there's no clear consensus
+            if len(consensus_votes) == 1:
+                item_consensus[item_id] = consensus_votes[0]
+
+        # For each user, calculate how often they agree/disagree with consensus
+        team_members = User.objects.filter(is_staff=False)
+        user_stats = []
+
+        for user in team_members:
+            user_votes = [v for v in all_votes if v.user_id == user.id]
+            agreements = 0
+            disagreements = 0
+            contrarian_movies = []  # Movies where user disagreed with consensus
+
+            for vote in user_votes:
+                if vote.item_id in item_consensus:
+                    consensus = item_consensus[vote.item_id]
+                    if vote.choice == consensus:
+                        agreements += 1
+                    else:
+                        disagreements += 1
+                        contrarian_movies.append({
+                            'item': vote.item,
+                            'user_vote': vote.choice,
+                            'consensus': consensus,
+                        })
+
+            total = agreements + disagreements
+            if total >= 3:  # Need at least 3 comparable votes
+                eclectic_score = round((disagreements / total) * 100)
+                user_stats.append({
+                    'user': user,
+                    'eclectic_score': eclectic_score,
+                    'agreements': agreements,
+                    'disagreements': disagreements,
+                    'total': total,
+                    'contrarian_movies': sorted(
+                        contrarian_movies,
+                        key=lambda x: x['item'].title.lower()
+                    )[:5],  # Top 5 contrarian picks
+                })
+
+        # Sort by eclectic score (highest = most eclectic)
+        user_stats.sort(key=lambda x: (-x['eclectic_score'], x['user'].last_name))
+
+        context['user_stats'] = user_stats
+        context['has_data'] = len(user_stats) > 0
+
+        return context

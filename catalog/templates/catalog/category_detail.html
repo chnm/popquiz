@@ -22,6 +22,9 @@
             <a href="{% url 'decades' category.slug %}" class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition duration-200">
                 By Decade
             </a>
+            <a href="{% url 'eclectic' category.slug %}" class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-200">
+                Eclectic Tastes
+            </a>
             {% if user.is_authenticated %}
             <a href="{% url 'swipe_vote' category.slug %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
                 Start Voting
