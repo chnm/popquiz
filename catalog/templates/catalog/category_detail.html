@@ -15,16 +15,19 @@
                 <p class="text-gray-600 mt-2">{{ category.description }}</p>
             {% endif %}
         </div>
-        {% if user.is_authenticated %}
-            <div class="flex space-x-2">
-                <a href="{% url 'swipe_vote' category.slug %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
-                    Start Voting
-                </a>
-                <a href="{% url 'add_item' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
-                    Add Item
-                </a>
-            </div>
-        {% endif %}
+        <div class="flex space-x-2">
+            <a href="{% url 'stats' category.slug %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition duration-200">
+                Team Rankings
+            </a>
+            {% if user.is_authenticated %}
+            <a href="{% url 'swipe_vote' category.slug %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                Start Voting
+            </a>
+            <a href="{% url 'add_item' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
+                Add Item
+            </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 

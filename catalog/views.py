@@ -4,7 +4,7 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Case, When, IntegerField, Value
 
 from accounts.models import User
 from .models import Category, Item
@@ -140,5 +140,75 @@ class SwipeVoteView(LoginRequiredMixin, TemplateView):
         context['remaining_count'] = unvoted_items.count()
         context['total_count'] = Item.objects.filter(category=category).count()
         context['voted_count'] = context['total_count'] - context['remaining_count']
+
+        return context
+
+
+class StatsView(TemplateView):
+    """View showing movies ranked by team preference."""
+    template_name = 'catalog/stats.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        context['category'] = category
+
+        # Count team members (non-staff users)
+        team_members = User.objects.filter(is_staff=False)
+        team_count = team_members.count()
+        context['team_count'] = team_count
+
+        # Get all items with vote statistics
+        items = Item.objects.filter(category=category).annotate(
+            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+            watched_count=Count('votes', filter=Q(
+                votes__choice__in=[Vote.Choice.YES, Vote.Choice.NO, Vote.Choice.MEH]
+            )),
+        )
+
+        # Calculate scores and separate into watched/not watched by all
+        watched_by_all = []
+        not_watched_by_all = []
+
+        for item in items:
+            # Calculate score: yes=+1, meh=0, no=-1
+            total_votes = item.yes_count + item.no_count + item.meh_count
+            if total_votes > 0:
+                # Score from -100 to +100
+                score = round(((item.yes_count - item.no_count) / total_votes) * 100)
+                yes_percent = round((item.yes_count / total_votes) * 100)
+                no_percent = round((item.no_count / total_votes) * 100)
+                meh_percent = round((item.meh_count / total_votes) * 100)
+            else:
+                score = 0
+                yes_percent = 0
+                no_percent = 0
+                meh_percent = 0
+
+            item_data = {
+                'item': item,
+                'yes_count': item.yes_count,
+                'no_count': item.no_count,
+                'meh_count': item.meh_count,
+                'watched_count': item.watched_count,
+                'score': score,
+                'yes_percent': yes_percent,
+                'no_percent': no_percent,
+                'meh_percent': meh_percent,
+            }
+
+            if item.watched_count >= team_count and team_count > 0:
+                watched_by_all.append(item_data)
+            else:
+                not_watched_by_all.append(item_data)
+
+        # Sort by score (highest first), then by yes_count, then by title
+        watched_by_all.sort(key=lambda x: (-x['score'], -x['yes_count'], x['item'].title.lower()))
+        not_watched_by_all.sort(key=lambda x: (-x['score'], -x['yes_count'], x['item'].title.lower()))
+
+        context['watched_by_all'] = watched_by_all
+        context['not_watched_by_all'] = not_watched_by_all
 
         return context
