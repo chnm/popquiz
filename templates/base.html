@@ -7,21 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <nav class="bg-indigo-600 text-white shadow-lg">
+    <nav class="text-white shadow-lg" style="background-color: rgb(195, 42, 38);">
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
                 <a href="{% url 'home' %}" class="text-xl font-bold">PopQuiz</a>
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
-                        <span class="text-indigo-100">{{ user.first_name }} {{ user.last_name }}</span>
-                        <a href="{% url 'profile' user.username %}" class="hover:text-indigo-200">My Profile</a>
+                        <span class="text-white/80">{{ user.first_name }} {{ user.last_name }}</span>
+                        <a href="{% url 'profile' user.username %}" class="hover:text-white/60">My Profile</a>
                         <form method="post" action="{% url 'logout' %}" class="inline">
                             {% csrf_token %}
-                            <button type="submit" class="hover:text-indigo-200">Logout</button>
+                            <button type="submit" class="hover:text-white/60">Logout</button>
                         </form>
                     {% else %}
-                        <a href="{% url 'login' %}" class="hover:text-indigo-200">Login</a>
-                        <a href="{% url 'register' %}" class="hover:text-indigo-200">Register</a>
+                        <a href="{% url 'login' %}" class="hover:text-white/60">Login</a>
+                        <a href="{% url 'register' %}" class="hover:text-white/60">Register</a>
                     {% endif %}
                 </div>
             </div>
