@@ -25,17 +25,21 @@
                     {% for category in categories %}
                         <a href="{% url 'stats' category.slug %}" class="text-gray-200 hover:text-white">{{ category.name }}</a>
                     {% endfor %}
-                    {% if user.is_authenticated %}
-                        <span class="text-gray-300">{{ user.first_name }} {{ user.last_name }}</span>
-                        <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white">My Profile</a>
-                        <form method="post" action="{% url 'logout' %}" class="inline">
-                            {% csrf_token %}
-                            <button type="submit" class="text-gray-200 hover:text-white">Logout</button>
-                        </form>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="text-gray-200 hover:text-white">Login</a>
-                        <a href="{% url 'register' %}" class="text-gray-200 hover:text-white">Register</a>
-                    {% endif %}
+
+                    <!-- User Authentication Section -->
+                    <div class="flex items-center space-x-3 pl-4 border-l border-gray-600">
+                        {% if user.is_authenticated %}
+                            <span class="text-gray-400 text-sm">{{ user.first_name }} {{ user.last_name }}</span>
+                            <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white">My Profile</a>
+                            <form method="post" action="{% url 'logout' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-200 hover:text-white">Logout</button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600 transition">Login</a>
+                            <a href="{% url 'register' %}" class="px-3 py-1.5 rounded text-white hover:bg-white hover:text-black transition" style="background-color: rgb(195, 42, 38);">Register</a>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Mobile Menu Button -->
