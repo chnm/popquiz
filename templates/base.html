@@ -20,6 +20,7 @@
 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center space-x-4">
+                    <a href="{% url 'home' %}" class="text-gray-200 hover:text-white">Home</a>
                     {% load catalog_tags %}
                     {% get_categories as categories %}
                     {% for category in categories %}
@@ -53,6 +54,7 @@
             <!-- Mobile Menu -->
             <div id="mobile-menu" class="hidden md:hidden pb-4">
                 <div class="flex flex-col space-y-2">
+                    <a href="{% url 'home' %}" class="text-gray-200 hover:text-white py-2">Home</a>
                     {% load catalog_tags %}
                     {% get_categories as categories %}
                     {% for category in categories %}
