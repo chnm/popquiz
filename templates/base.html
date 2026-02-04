@@ -15,6 +15,11 @@
                         <img src="https://rrchnm.org/wp-content/uploads/2022/07/RRCHNM-logo-whiteBG-v2.png" alt="RRCHNM Logo" class="h-8">
                     </a>
                     <a href="{% url 'home' %}" class="text-xl font-bold text-white">PopQuiz</a>
+                    {% load catalog_tags %}
+                    {% get_categories as categories %}
+                    {% for category in categories %}
+                        <a href="{% url 'stats' category.slug %}" class="text-gray-200 hover:text-white">{{ category.name }}</a>
+                    {% endfor %}
                 </div>
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
