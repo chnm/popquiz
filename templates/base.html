@@ -10,7 +10,12 @@
     <nav class="text-white shadow-lg" style="background-color: rgb(195, 42, 38);">
         <div class="max-w-6xl mx-auto px-4">
             <div class="flex justify-between items-center py-4">
-                <a href="{% url 'home' %}" class="text-xl font-bold">PopQuiz</a>
+                <div class="flex items-center space-x-4">
+                    <a href="https://rrchnm.org/" target="_blank" rel="noopener noreferrer">
+                        <img src="https://rrchnm.org/wp-content/uploads/2022/07/RRCHNM-logo-whiteBG-v2.png" alt="RRCHNM Logo" class="h-8 bg-white px-2 py-1 rounded">
+                    </a>
+                    <a href="{% url 'home' %}" class="text-xl font-bold">PopQuiz</a>
+                </div>
                 <div class="flex items-center space-x-4">
                     {% if user.is_authenticated %}
                         <span class="text-white/80">{{ user.first_name }} {{ user.last_name }}</span>
