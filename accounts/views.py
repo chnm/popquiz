@@ -123,40 +123,98 @@ class ProfileView(DetailView):
             item_vote_count=Count('item__votes')
         )
 
-        # Organize votes by category
-        votes_by_category = {}
-        for vote in votes:
-            category_name = vote.item.category.name
-            category_slug = vote.item.category.slug
-            if category_name not in votes_by_category:
-                votes_by_category[category_name] = {
-                    'slug': category_slug,
-                    'votes': [],
-                    'yes_count': 0,
-                    'no_count': 0,
-                    'meh_count': 0,
-                }
-            votes_by_category[category_name]['votes'].append(vote)
-            if vote.choice == Vote.Choice.YES:
-                votes_by_category[category_name]['yes_count'] += 1
-            elif vote.choice == Vote.Choice.NO:
-                votes_by_category[category_name]['no_count'] += 1
-            elif vote.choice == Vote.Choice.MEH:
-                votes_by_category[category_name]['meh_count'] += 1
+        # Group votes by director, genre, or category depending on sort
+        if sort_by == 'director':
+            # Group by director
+            votes_by_category = {}
+            for vote in votes:
+                director = vote.item.director if vote.item.director else 'Unknown Director'
+                if director not in votes_by_category:
+                    votes_by_category[director] = {
+                        'slug': None,  # No slug for directors
+                        'votes': [],
+                        'yes_count': 0,
+                        'no_count': 0,
+                        'meh_count': 0,
+                    }
+                votes_by_category[director]['votes'].append(vote)
+                if vote.choice == Vote.Choice.YES:
+                    votes_by_category[director]['yes_count'] += 1
+                elif vote.choice == Vote.Choice.NO:
+                    votes_by_category[director]['no_count'] += 1
+                elif vote.choice == Vote.Choice.MEH:
+                    votes_by_category[director]['meh_count'] += 1
 
-        # Sort votes within each category
-        vote_order = {'yes': 0, 'meh': 1, 'no': 2}
-        for category_name, category_data in votes_by_category.items():
-            if sort_by == 'title':
-                category_data['votes'].sort(key=lambda v: v.item.title.lower())
-            elif sort_by == 'year':
-                category_data['votes'].sort(key=lambda v: (v.item.year or 0, v.item.title.lower()))
-            elif sort_by == 'director':
-                category_data['votes'].sort(key=lambda v: (v.item.director.lower() if v.item.director else 'zzz', v.item.title.lower()))
-            elif sort_by == 'vote':
-                category_data['votes'].sort(key=lambda v: (vote_order.get(v.choice, 3), v.item.title.lower()))
-            elif sort_by == 'popularity':
-                category_data['votes'].sort(key=lambda v: (-v.item_vote_count, v.item.title.lower()))
+            # Sort directors alphabetically and sort movies within each director by title
+            votes_by_category = dict(sorted(votes_by_category.items(), key=lambda x: x[0].lower()))
+            for director_name, director_data in votes_by_category.items():
+                director_data['votes'].sort(key=lambda v: v.item.title.lower())
+
+        elif sort_by == 'genre':
+            # Group by genre (movies can appear under multiple genres)
+            votes_by_category = {}
+            for vote in votes:
+                genres = vote.item.genre.split(',') if vote.item.genre else ['Unknown Genre']
+                # Clean up genre names
+                genres = [g.strip() for g in genres]
+
+                for genre in genres:
+                    if genre not in votes_by_category:
+                        votes_by_category[genre] = {
+                            'slug': None,  # No slug for genres
+                            'votes': [],
+                            'yes_count': 0,
+                            'no_count': 0,
+                            'meh_count': 0,
+                        }
+                    # Only add the vote if it's not already in this genre's list
+                    if vote not in votes_by_category[genre]['votes']:
+                        votes_by_category[genre]['votes'].append(vote)
+                        if vote.choice == Vote.Choice.YES:
+                            votes_by_category[genre]['yes_count'] += 1
+                        elif vote.choice == Vote.Choice.NO:
+                            votes_by_category[genre]['no_count'] += 1
+                        elif vote.choice == Vote.Choice.MEH:
+                            votes_by_category[genre]['meh_count'] += 1
+
+            # Sort genres alphabetically and sort movies within each genre by title
+            votes_by_category = dict(sorted(votes_by_category.items(), key=lambda x: x[0].lower()))
+            for genre_name, genre_data in votes_by_category.items():
+                genre_data['votes'].sort(key=lambda v: v.item.title.lower())
+
+        else:
+            # Original behavior: organize by category
+            votes_by_category = {}
+            for vote in votes:
+                category_name = vote.item.category.name
+                category_slug = vote.item.category.slug
+                if category_name not in votes_by_category:
+                    votes_by_category[category_name] = {
+                        'slug': category_slug,
+                        'votes': [],
+                        'yes_count': 0,
+                        'no_count': 0,
+                        'meh_count': 0,
+                    }
+                votes_by_category[category_name]['votes'].append(vote)
+                if vote.choice == Vote.Choice.YES:
+                    votes_by_category[category_name]['yes_count'] += 1
+                elif vote.choice == Vote.Choice.NO:
+                    votes_by_category[category_name]['no_count'] += 1
+                elif vote.choice == Vote.Choice.MEH:
+                    votes_by_category[category_name]['meh_count'] += 1
+
+            # Sort votes within each category
+            vote_order = {'yes': 0, 'meh': 1, 'no': 2}
+            for category_name, category_data in votes_by_category.items():
+                if sort_by == 'title':
+                    category_data['votes'].sort(key=lambda v: v.item.title.lower())
+                elif sort_by == 'year':
+                    category_data['votes'].sort(key=lambda v: (v.item.year or 0, v.item.title.lower()))
+                elif sort_by == 'vote':
+                    category_data['votes'].sort(key=lambda v: (vote_order.get(v.choice, 3), v.item.title.lower()))
+                elif sort_by == 'popularity':
+                    category_data['votes'].sort(key=lambda v: (-v.item_vote_count, v.item.title.lower()))
 
         # Calculate totals
         total_yes = sum(cat['yes_count'] for cat in votes_by_category.values())
