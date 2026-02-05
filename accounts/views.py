@@ -5,11 +5,12 @@ from django.contrib import messages
 from django.views.generic import CreateView, DetailView
 from django.views import View
 from django.urls import reverse_lazy, reverse
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from .forms import RegistrationForm
 from .models import User
 from votes.models import Vote
+from catalog.models import Item
 
 
 def calculate_compatibility(user1, user2):
@@ -196,6 +197,66 @@ class ProfileView(DetailView):
             context['most_compatible'] = compatibilities[0]
             context['least_compatible'] = compatibilities[-1]
             context['all_compatibilities'] = compatibilities
+
+        # Get unseen movies ranked by team ratings
+        # Get all movies the user has voted on (including NO_ANSWER)
+        voted_item_ids = Vote.objects.filter(user=profile_user).values_list('item_id', flat=True)
+
+        # Get all items the user hasn't voted on
+        unseen_items = Item.objects.exclude(id__in=voted_item_ids).annotate(
+            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+        )
+
+        # Calculate global average score (for Bayesian average)
+        total_yes = 0
+        total_no = 0
+        total_meh = 0
+        all_items_for_avg = Item.objects.annotate(
+            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+        )
+        for item in all_items_for_avg:
+            total_yes += item.yes_count
+            total_no += item.no_count
+            total_meh += item.meh_count
+
+        total_all_votes = total_yes + total_no + total_meh
+        if total_all_votes > 0:
+            global_average = ((total_yes - total_no) / total_all_votes) * 100
+        else:
+            global_average = 0
+
+        C = 5  # Confidence parameter
+
+        # Calculate scores for unseen movies
+        unseen_ranked = []
+        for item in unseen_items:
+            total_item_votes = item.yes_count + item.no_count + item.meh_count
+            if total_item_votes > 0:
+                raw_score = ((item.yes_count - item.no_count) / total_item_votes) * 100
+                bayesian_score = (C * global_average + total_item_votes * raw_score) / (C + total_item_votes)
+                score = round(bayesian_score)
+
+                unseen_ranked.append({
+                    'item': item,
+                    'score': score,
+                    'yes_count': item.yes_count,
+                    'no_count': item.no_count,
+                    'meh_count': item.meh_count,
+                    'total_votes': total_item_votes,
+                })
+
+        # Sort by score (highest first), then by vote count, then by title
+        unseen_ranked.sort(key=lambda x: (
+            -x['score'],
+            -x['yes_count'],
+            x['item'].title.lower()
+        ))
+
+        context['unseen_movies'] = unseen_ranked[:20]  # Limit to top 20
 
         return context
 

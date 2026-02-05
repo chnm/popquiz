@@ -127,6 +127,73 @@
 </div>
 {% endif %}
 
+<!-- Unseen Movies Section -->
+{% if unseen_movies %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Movies to Watch</h2>
+        <span class="text-sm text-gray-500">Ranked by team ratings</span>
+    </div>
+    <p class="text-gray-600 mb-4 text-sm">
+        {% if user == profile_user %}
+        Here are the top-rated movies by the team that you haven't seen yet.
+        {% else %}
+        Top-rated movies {{ profile_user.first_name }} hasn't seen yet.
+        {% endif %}
+    </p>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {% for movie in unseen_movies %}
+        <a href="{% url 'movie_detail' movie.item.category.slug movie.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <!-- Poster Image -->
+            {% if movie.item.poster_url %}
+            <img src="{{ movie.item.poster_url }}" alt="{{ movie.item.title }}"
+                 class="w-full h-full object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                <svg class="w-8 h-8" fill="#9ca3af" viewBox="0 0 24 24">
+                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                </svg>
+            </div>
+            {% else %}
+            <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                <svg class="w-8 h-8" fill="#9ca3af" viewBox="0 0 24 24">
+                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                </svg>
+            </div>
+            {% endif %}
+
+            <!-- Score Badge -->
+            <div class="absolute top-2 right-2 px-2 py-1 rounded-md shadow-lg font-bold text-sm
+                {% if movie.score >= 50 %}bg-green-500 text-white
+                {% elif movie.score >= 0 %}bg-yellow-500 text-white
+                {% else %}bg-red-500 text-white{% endif %}">
+                {{ movie.score }}
+            </div>
+
+            <!-- Vote Count -->
+            <div class="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                {{ movie.total_votes }} votes
+            </div>
+
+            <!-- Hover Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                <p class="text-white text-sm font-semibold leading-tight mb-1">{{ movie.item.title }}</p>
+                {% if movie.item.year %}
+                <p class="text-white/70 text-xs mb-2">{{ movie.item.year }}</p>
+                {% endif %}
+                <div class="flex gap-1 text-xs">
+                    <span class="bg-green-500/80 px-2 py-0.5 rounded">{{ movie.yes_count }} yes</span>
+                    <span class="bg-yellow-500/80 px-2 py-0.5 rounded">{{ movie.meh_count }} meh</span>
+                    <span class="bg-red-500/80 px-2 py-0.5 rounded">{{ movie.no_count }} no</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {% if votes_by_category %}
     <!-- Sort Buttons -->
     <div class="bg-white rounded-xl shadow-md p-4 mb-8">
