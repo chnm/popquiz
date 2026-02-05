@@ -132,6 +132,7 @@ class AddItemView(LoginRequiredMixin, View):
                 title=movie_data['title'],
                 year=movie_data['year'],
                 director=movie_data.get('director', ''),
+                genre=movie_data.get('genre', ''),
                 imdb_id=movie_data['imdb_id'],
                 imdb_url=movie_data['imdb_url'],
                 poster_url=movie_data['poster_url'] or '',

@@ -43,6 +43,7 @@ def fetch_movie_data(imdb_url):
     - title: str
     - year: int or None
     - director: str or None
+    - genre: str or None (comma-separated list of genres)
     - imdb_id: str
     - imdb_url: str (cleaned canonical URL)
     - poster_url: str or None
@@ -113,10 +114,26 @@ def fetch_movie_data(imdb_url):
                 if first_director:
                     director = first_director.group(1)
 
+        # Extract genres
+        genre = None
+        # Try JSON-LD genre field (can be a string or array)
+        genre_match = re.search(r'"genre":\s*(\[.*?\]|"[^"]+?")', html)
+        if genre_match:
+            genre_data = genre_match.group(1)
+            if genre_data.startswith('['):
+                # It's an array, extract all genre strings
+                genres = re.findall(r'"([^"]+)"', genre_data)
+                if genres:
+                    genre = ', '.join(genres[:3])  # Take first 3 genres
+            else:
+                # It's a single string
+                genre = genre_data.strip('"')
+
         return {
             'title': title,
             'year': year,
             'director': director,
+            'genre': genre,
             'imdb_id': imdb_id,
             'imdb_url': canonical_url,
             'poster_url': poster_url,
