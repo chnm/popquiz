@@ -20,6 +20,7 @@ class Item(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='items')
     title = models.CharField(max_length=255)
     year = models.PositiveIntegerField(null=True, blank=True)
+    director = models.CharField(max_length=255, blank=True)
     imdb_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     imdb_url = models.URLField(blank=True)
     poster_url = models.URLField(blank=True)

@@ -42,6 +42,7 @@ def fetch_movie_data(imdb_url):
     Returns a dict with:
     - title: str
     - year: int or None
+    - director: str or None
     - imdb_id: str
     - imdb_url: str (cleaned canonical URL)
     - poster_url: str or None
@@ -97,9 +98,25 @@ def fetch_movie_data(imdb_url):
             if 'media-amazon.com' in poster_url:
                 poster_url = re.sub(r'_V1_.*\.jpg', '_V1_.jpg', poster_url)
 
+        # Extract director
+        director = None
+        # Try JSON-LD director field
+        director_match = re.search(r'"director":\s*\[?\s*\{\s*"@type":\s*"Person",\s*"name":\s*"([^"]+)"', html)
+        if director_match:
+            director = director_match.group(1)
+        else:
+            # Try alternative pattern for multiple directors
+            directors_match = re.search(r'"director":\s*\[([^\]]+)\]', html)
+            if directors_match:
+                # Extract first director's name
+                first_director = re.search(r'"name":\s*"([^"]+)"', directors_match.group(1))
+                if first_director:
+                    director = first_director.group(1)
+
         return {
             'title': title,
             'year': year,
+            'director': director,
             'imdb_id': imdb_id,
             'imdb_url': canonical_url,
             'poster_url': poster_url,

@@ -151,6 +151,8 @@ class ProfileView(DetailView):
                 category_data['votes'].sort(key=lambda v: v.item.title.lower())
             elif sort_by == 'year':
                 category_data['votes'].sort(key=lambda v: (v.item.year or 0, v.item.title.lower()))
+            elif sort_by == 'director':
+                category_data['votes'].sort(key=lambda v: (v.item.director.lower() if v.item.director else 'zzz', v.item.title.lower()))
             elif sort_by == 'vote':
                 category_data['votes'].sort(key=lambda v: (vote_order.get(v.choice, 3), v.item.title.lower()))
             elif sort_by == 'popularity':
