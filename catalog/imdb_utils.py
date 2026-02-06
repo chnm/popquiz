@@ -1,6 +1,7 @@
 """
 Utility functions for fetching movie data from IMDB.
 """
+import html
 import re
 import requests
 
@@ -72,12 +73,13 @@ def fetch_movie_data(imdb_url):
             title = og_title.group(1)
             title = re.sub(r'\s*\(\d{4}\)\s*$', '', title)  # Remove (2023)
             title = re.sub(r'\s*-\s*IMDb\s*$', '', title)   # Remove - IMDb
+            title = html.unescape(title)  # Decode HTML entities like &amp;
             title = title.strip()
         else:
             # Fallback to JSON-LD if og:title not available
             json_title = re.search(r'"name":\s*"([^"]+)"', html)
             if json_title:
-                title = json_title.group(1)
+                title = html.unescape(json_title.group(1))
 
         if not title:
             return None
