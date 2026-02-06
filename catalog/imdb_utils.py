@@ -65,16 +65,19 @@ def fetch_movie_data(imdb_url):
 
         # Extract title
         title = None
-        # Try JSON-LD first (most reliable)
-        json_title = re.search(r'"name":\s*"([^"]+)"', html)
-        if json_title:
-            title = json_title.group(1)
+        # Try og:title first (English title on US IMDB site)
+        og_title = re.search(r'<meta property="og:title" content="([^"]+)"', html)
+        if og_title:
+            # Remove year suffix and " - IMDb" suffix
+            title = og_title.group(1)
+            title = re.sub(r'\s*\(\d{4}\)\s*$', '', title)  # Remove (2023)
+            title = re.sub(r'\s*-\s*IMDb\s*$', '', title)   # Remove - IMDb
+            title = title.strip()
         else:
-            # Fallback to og:title
-            og_title = re.search(r'<meta property="og:title" content="([^"]+)"', html)
-            if og_title:
-                # Remove year suffix like "Movie Title (2023)"
-                title = re.sub(r'\s*\(\d{4}\)\s*$', '', og_title.group(1))
+            # Fallback to JSON-LD if og:title not available
+            json_title = re.search(r'"name":\s*"([^"]+)"', html)
+            if json_title:
+                title = json_title.group(1)
 
         if not title:
             return None
