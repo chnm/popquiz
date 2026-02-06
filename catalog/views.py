@@ -9,9 +9,10 @@ from django.urls import reverse
 from django.db.models import Count, Q, Case, When, IntegerField, Value
 
 from accounts.models import User
-from .models import Category, Item
-from .forms import AddItemForm
-from .imdb_utils import fetch_movie_data
+from .models import Category, Item, Song, SongUpvote
+from .forms import AddItemForm, AddSongForm
+from .imdb_utils import fetch_movie_data, extract_imdb_id
+from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id
 from votes.models import Vote
 
 
@@ -90,11 +91,11 @@ class CategoryDetailView(DetailView):
 
 
 class AddItemView(LoginRequiredMixin, View):
-    """View to add a movie using just an IMDB URL."""
+    """View to add a movie or artist using an IMDB or MusicBrainz URL."""
 
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        form = AddItemForm()
+        form = AddItemForm(category=category)
         return render(request, 'catalog/add_item.html', {
             'form': form,
             'category': category,
@@ -102,42 +103,91 @@ class AddItemView(LoginRequiredMixin, View):
 
     def post(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        form = AddItemForm(request.POST)
+        form = AddItemForm(request.POST, category=category)
 
         if form.is_valid():
-            imdb_url = form.cleaned_data['imdb_url']
+            url = form.cleaned_data['url']
 
-            # Fetch movie data from IMDB
-            movie_data = fetch_movie_data(imdb_url)
+            # Detect whether this is IMDB or MusicBrainz
+            imdb_id = extract_imdb_id(url)
+            mb_id = extract_musicbrainz_id(url)
 
-            if not movie_data:
-                form.add_error('imdb_url', 'Could not fetch movie data from IMDB. Please check the URL and try again.')
-                return render(request, 'catalog/add_item.html', {
-                    'form': form,
-                    'category': category,
-                })
+            if imdb_id:
+                # Fetch movie data from IMDB
+                data = fetch_movie_data(url)
 
-            # Check if movie already exists
-            existing = Item.objects.filter(imdb_id=movie_data['imdb_id']).first()
-            if existing:
-                form.add_error('imdb_url', f'This movie already exists: "{existing.title}"')
-                return render(request, 'catalog/add_item.html', {
-                    'form': form,
-                    'category': category,
-                })
+                if not data:
+                    form.add_error('url', 'Could not fetch movie data from IMDB. Please check the URL and try again.')
+                    return render(request, 'catalog/add_item.html', {
+                        'form': form,
+                        'category': category,
+                    })
 
-            # Create the item
-            item = Item.objects.create(
-                category=category,
-                title=movie_data['title'],
-                year=movie_data['year'],
-                imdb_id=movie_data['imdb_id'],
-                imdb_url=movie_data['imdb_url'],
-                poster_url=movie_data['poster_url'] or '',
-                added_by=request.user,
-            )
+                # Check if movie already exists
+                existing = Item.objects.filter(imdb_id=data['imdb_id']).first()
+                if existing:
+                    form.add_error('url', f'This movie already exists: "{existing.title}"')
+                    return render(request, 'catalog/add_item.html', {
+                        'form': form,
+                        'category': category,
+                    })
 
-            messages.success(request, f'"{item.title}" has been added!')
+                # Create the movie item
+                item = Item.objects.create(
+                    category=category,
+                    title=data['title'],
+                    year=data['year'],
+                    imdb_id=data['imdb_id'],
+                    imdb_url=data['imdb_url'],
+                    poster_url=data['poster_url'] or '',
+                    added_by=request.user,
+                )
+
+                messages.success(request, f'"{item.title}" has been added!')
+
+            elif mb_id:
+                # Fetch artist data from MusicBrainz
+                data = fetch_artist_data(url, fetch_songs=True, max_songs=50)
+
+                if not data:
+                    form.add_error('url', 'Could not fetch artist data from MusicBrainz. Please check the URL and try again.')
+                    return render(request, 'catalog/add_item.html', {
+                        'form': form,
+                        'category': category,
+                    })
+
+                # Check if artist already exists
+                existing = Item.objects.filter(musicbrainz_id=data['musicbrainz_id']).first()
+                if existing:
+                    form.add_error('url', f'This artist already exists: "{existing.title}"')
+                    return render(request, 'catalog/add_item.html', {
+                        'form': form,
+                        'category': category,
+                    })
+
+                # Create the artist item
+                item = Item.objects.create(
+                    category=category,
+                    title=data['title'],
+                    year=None,  # Artists don't have a single year
+                    musicbrainz_id=data['musicbrainz_id'],
+                    poster_url=data['poster_url'] or '',
+                    added_by=request.user,
+                )
+
+                # Create songs if any were fetched
+                if 'songs' in data and data['songs']:
+                    for song_data in data['songs']:
+                        Song.objects.create(
+                            artist=item,
+                            title=song_data['title'],
+                            musicbrainz_id=song_data.get('musicbrainz_id'),
+                            year=song_data.get('year'),
+                            album=song_data.get('album', ''),
+                        )
+
+                messages.success(request, f'"{item.title}" has been added with {len(data.get("songs", []))} songs!')
+
             return redirect('category_detail', slug=slug)
 
         return render(request, 'catalog/add_item.html', {
@@ -271,7 +321,7 @@ class StatsView(TemplateView):
 
 
 class DecadeStatsView(TemplateView):
-    """View showing movies ranked by decade."""
+    """View showing movies/songs ranked by decade."""
     template_name = 'catalog/decades.html'
 
     def get_context_data(self, **kwargs):
@@ -279,85 +329,124 @@ class DecadeStatsView(TemplateView):
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get all items with vote statistics
-        items = Item.objects.filter(category=category).annotate(
-            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
-            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
-            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
-        )
+        # Check if this is a music category
+        is_music = 'music' in category.slug.lower() or 'artist' in category.slug.lower()
+        context['is_music'] = is_music
 
-        # Calculate global average for Bayesian scoring
-        total_yes = 0
-        total_no = 0
-        total_meh = 0
-        for item in items:
-            total_yes += item.yes_count
-            total_no += item.no_count
-            total_meh += item.meh_count
+        if is_music:
+            # For music, show songs by decade with upvote counts
+            songs = Song.objects.filter(artist__category=category).prefetch_related('upvotes')
 
-        total_all_votes = total_yes + total_no + total_meh
-        if total_all_votes > 0:
-            global_average = ((total_yes - total_no) / total_all_votes) * 100
+            # Group songs by decade
+            decades = {}
+            no_year = []
+
+            for song in songs:
+                upvote_count = song.upvotes.count()
+
+                song_data = {
+                    'song': song,
+                    'upvote_count': upvote_count,
+                }
+
+                if song.year:
+                    decade = (song.year // 10) * 10
+                    if decade not in decades:
+                        decades[decade] = []
+                    decades[decade].append(song_data)
+                else:
+                    no_year.append(song_data)
+
+            # Sort songs within each decade by upvote count
+            for decade in decades:
+                decades[decade].sort(key=lambda x: (-x['upvote_count'], x['song'].title.lower()))
+
+            # Sort decades (most recent first)
+            sorted_decades = sorted(decades.items(), key=lambda x: -x[0])
+
+            context['decades'] = sorted_decades
+            context['no_year'] = no_year
+
         else:
-            global_average = 0
+            # For movies, use existing logic
+            items = Item.objects.filter(category=category).annotate(
+                yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+                no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+                meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+            )
 
-        C = 5  # Confidence parameter
+            # Calculate global average for Bayesian scoring
+            total_yes = 0
+            total_no = 0
+            total_meh = 0
+            for item in items:
+                total_yes += item.yes_count
+                total_no += item.no_count
+                total_meh += item.meh_count
 
-        # Group movies by decade
-        decades = {}
-        no_year = []
-
-        for item in items:
-            total_votes = item.yes_count + item.no_count + item.meh_count
-            if total_votes > 0:
-                # Use Bayesian average scoring
-                raw_score = ((item.yes_count - item.no_count) / total_votes) * 100
-                bayesian_score = (C * global_average + total_votes * raw_score) / (C + total_votes)
-                score = round(bayesian_score)
-
-                yes_percent = round((item.yes_count / total_votes) * 100)
-                no_percent = round((item.no_count / total_votes) * 100)
-                meh_percent = round((item.meh_count / total_votes) * 100)
+            total_all_votes = total_yes + total_no + total_meh
+            if total_all_votes > 0:
+                global_average = ((total_yes - total_no) / total_all_votes) * 100
             else:
-                score = None
-                yes_percent = 0
-                no_percent = 0
-                meh_percent = 0
+                global_average = 0
 
-            movie_data = {
-                'item': item,
-                'yes_count': item.yes_count,
-                'no_count': item.no_count,
-                'meh_count': item.meh_count,
-                'total_votes': total_votes,
-                'score': score,
-                'yes_percent': yes_percent,
-                'no_percent': no_percent,
-                'meh_percent': meh_percent,
-            }
+            C = 5  # Confidence parameter
 
-            if item.year:
-                decade = (item.year // 10) * 10
-                if decade not in decades:
-                    decades[decade] = []
-                decades[decade].append(movie_data)
-            else:
-                no_year.append(movie_data)
+            # Group movies by decade
+            decades = {}
+            no_year = []
 
-        # Sort movies within each decade by score
-        for decade in decades:
-            decades[decade].sort(key=lambda x: (
-                x['score'] is None,
-                -(x['score'] or 0),
-                -x['yes_count'],
-                x['item'].title.lower()
-            ))
+            for item in items:
+                total_votes = item.yes_count + item.no_count + item.meh_count
+                if total_votes > 0:
+                    # Use Bayesian average scoring
+                    raw_score = ((item.yes_count - item.no_count) / total_votes) * 100
+                    bayesian_score = (C * global_average + total_votes * raw_score) / (C + total_votes)
+                    score = round(bayesian_score)
 
-        # Sort decades (most recent first)
-        sorted_decades = sorted(decades.items(), key=lambda x: -x[0])
+                    yes_percent = round((item.yes_count / total_votes) * 100)
+                    no_percent = round((item.no_count / total_votes) * 100)
+                    meh_percent = round((item.meh_count / total_votes) * 100)
+                else:
+                    score = None
+                    yes_percent = 0
+                    no_percent = 0
+                    meh_percent = 0
 
-        context['decades'] = sorted_decades
-        context['no_year'] = no_year
+                movie_data = {
+                    'item': item,
+                    'yes_count': item.yes_count,
+                    'no_count': item.no_count,
+                    'meh_count': item.meh_count,
+                    'total_votes': total_votes,
+                    'score': score,
+                    'yes_percent': yes_percent,
+                    'no_percent': no_percent,
+                    'meh_percent': meh_percent,
+                }
+
+                if item.year:
+                    decade = (item.year // 10) * 10
+                    if decade not in decades:
+                        decades[decade] = []
+                    decades[decade].append(movie_data)
+                else:
+                    no_year.append(movie_data)
+
+            # Sort movies within each decade by score
+            for decade in decades:
+                decades[decade].sort(key=lambda x: (
+                    x['score'] is None,
+                    -(x['score'] or 0),
+                    -x['yes_count'],
+                    x['item'].title.lower()
+                ))
+
+            # Sort decades (most recent first)
+            sorted_decades = sorted(decades.items(), key=lambda x: -x[0])
+
+            context['decades'] = sorted_decades
+            context['no_year'] = no_year
 
         return context
 
@@ -456,7 +545,7 @@ class EclecticView(TemplateView):
 
 
 class MovieDetailView(TemplateView):
-    """View showing how everyone voted on a specific movie."""
+    """View showing how everyone voted on a specific movie or artist."""
     template_name = 'catalog/movie_detail.html'
 
     def get_context_data(self, **kwargs):
@@ -466,6 +555,10 @@ class MovieDetailView(TemplateView):
 
         context['category'] = category
         context['item'] = item
+
+        # Check if this is an artist (has musicbrainz_id)
+        is_artist = bool(item.musicbrainz_id)
+        context['is_artist'] = is_artist
 
         # Get all votes for this item, grouped by choice
         all_votes = Vote.objects.filter(item=item).select_related('user').order_by('user__last_name', 'user__first_name')
@@ -516,4 +609,59 @@ class MovieDetailView(TemplateView):
             context['no_percent'] = 0
             context['meh_percent'] = 0
 
+        # If this is an artist, get songs with upvote data
+        if is_artist:
+            songs = Song.objects.filter(artist=item).prefetch_related('upvotes__user')
+
+            # Build song data with upvote info
+            songs_with_upvotes = []
+            for song in songs:
+                upvotes = list(song.upvotes.all())
+                user_upvoted = any(u.user == self.request.user for u in upvotes) if self.request.user.is_authenticated else False
+
+                songs_with_upvotes.append({
+                    'song': song,
+                    'upvote_count': len(upvotes),
+                    'user_upvoted': user_upvoted,
+                    'upvoted_by': [u.user for u in upvotes],
+                })
+
+            # Sort by upvote count (most upvoted first)
+            songs_with_upvotes.sort(key=lambda x: (-x['upvote_count'], x['song'].title.lower()))
+
+            context['songs'] = songs_with_upvotes
+
         return context
+
+
+class AddSongView(LoginRequiredMixin, View):
+    """View to manually add a song to an artist."""
+
+    def get(self, request, category_slug, item_id):
+        category = get_object_or_404(Category, slug=category_slug)
+        artist = get_object_or_404(Item, id=item_id, category=category)
+        form = AddSongForm()
+        return render(request, 'catalog/add_song.html', {
+            'form': form,
+            'category': category,
+            'artist': artist,
+        })
+
+    def post(self, request, category_slug, item_id):
+        category = get_object_or_404(Category, slug=category_slug)
+        artist = get_object_or_404(Item, id=item_id, category=category)
+        form = AddSongForm(request.POST)
+
+        if form.is_valid():
+            song = form.save(commit=False)
+            song.artist = artist
+            song.save()
+
+            messages.success(request, f'"{song.title}" has been added!')
+            return redirect('movie_detail', category_slug=category_slug, item_id=item_id)
+
+        return render(request, 'catalog/add_song.html', {
+            'form': form,
+            'category': category,
+            'artist': artist,
+        })

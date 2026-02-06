@@ -1,12 +1,47 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Movie - {{ category.name }} - PopQuiz{% endblock %}
+{% block title %}Add {% if 'music' in category.slug or 'artist' in category.slug %}Artist{% else %}Movie{% endif %} - {{ category.name }} - PopQuiz{% endblock %}
 
 {% block content %}
 <div class="mb-6">
     <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
 </div>
 
+{% if 'music' in category.slug or 'artist' in category.slug %}
+{# Music Artists Form #}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add an Artist</h1>
+    <p class="text-gray-600 mb-6">Just paste a MusicBrainz URL and we'll fetch the artist details and songs automatically.</p>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label for="id_url" class="block text-sm font-medium text-gray-700 mb-1">{{ form.url.label }}</label>
+            {{ form.url }}
+            {% if form.url.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.url.errors.0 }}</p>
+            {% endif %}
+            <p class="text-gray-500 text-xs mt-1">Example: https://musicbrainz.org/artist/b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d</p>
+        </div>
+
+        <button type="submit" class="w-full bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-200">
+            Add Artist
+        </button>
+    </form>
+
+    <div class="mt-6 p-4 bg-pink-50 rounded-lg">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">How to find the MusicBrainz URL:</h3>
+        <ol class="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+            <li>Go to <a href="https://musicbrainz.org" target="_blank" class="text-pink-600 hover:underline">musicbrainz.org</a></li>
+            <li>Search for your artist</li>
+            <li>Copy the URL from your browser's address bar</li>
+            <li>We'll automatically fetch their top songs too!</li>
+        </ol>
+    </div>
+</div>
+{% else %}
+{# Movies Form #}
 <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
     <h1 class="text-2xl font-bold text-gray-800 mb-2">Add a Movie</h1>
     <p class="text-gray-600 mb-6">Just paste an IMDB URL and we'll fetch all the details automatically.</p>
@@ -15,10 +50,10 @@
         {% csrf_token %}
 
         <div>
-            <label for="id_imdb_url" class="block text-sm font-medium text-gray-700 mb-1">IMDB URL</label>
-            {{ form.imdb_url }}
-            {% if form.imdb_url.errors %}
-                <p class="text-red-500 text-sm mt-1">{{ form.imdb_url.errors.0 }}</p>
+            <label for="id_url" class="block text-sm font-medium text-gray-700 mb-1">{{ form.url.label }}</label>
+            {{ form.url }}
+            {% if form.url.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.url.errors.0 }}</p>
             {% endif %}
             <p class="text-gray-500 text-xs mt-1">Example: https://www.imdb.com/title/tt0111161/</p>
         </div>
@@ -37,4 +72,5 @@
         </ol>
     </div>
 </div>
+{% endif %}
 {% endblock %}

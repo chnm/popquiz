@@ -4,7 +4,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.db.models import Count
 
-from catalog.models import Item, Category
+from catalog.models import Item, Category, Song, SongUpvote
 from .models import Vote
 
 
@@ -95,3 +95,36 @@ def vote_api(request):
             'voted_count': voted_count,
             'total_count': total_count,
         })
+
+
+@login_required
+@require_POST
+def song_upvote_api(request):
+    """API endpoint for toggling song upvotes."""
+    song_id = request.POST.get('song_id')
+
+    if not song_id:
+        return JsonResponse({'error': 'Missing song_id'}, status=400)
+
+    song = get_object_or_404(Song, id=song_id)
+
+    # Toggle upvote: if exists, remove it; if not, add it
+    upvote = SongUpvote.objects.filter(user=request.user, song=song).first()
+
+    if upvote:
+        # Remove upvote
+        upvote.delete()
+        upvoted = False
+    else:
+        # Add upvote
+        SongUpvote.objects.create(user=request.user, song=song)
+        upvoted = True
+
+    # Get updated upvote count
+    upvote_count = SongUpvote.objects.filter(song=song).count()
+
+    return JsonResponse({
+        'success': True,
+        'upvoted': upvoted,
+        'upvote_count': upvote_count,
+    })

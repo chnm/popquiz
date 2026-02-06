@@ -9,32 +9,56 @@
 
 <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
     <h1 class="text-3xl font-bold mb-2">Rankings by Decade: {{ category.name }}</h1>
-    <p class="text-white/80">Movies grouped and ranked by release decade</p>
+    <p class="text-white/80">{% if is_music %}Songs grouped by release decade{% else %}Movies grouped and ranked by release decade{% endif %}</p>
 </div>
 
 {% if decades %}
-{% for decade, movies in decades %}
+{% for decade, items in decades %}
 <div class="mb-10">
     <div class="flex items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">{{ decade }}s</h2>
-        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ movies|length }} movie{{ movies|length|pluralize }}</span>
+        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ items|length }} {% if is_music %}song{{ items|length|pluralize }}{% else %}movie{{ items|length|pluralize }}{% endif %}</span>
     </div>
 
     <div class="space-y-3">
-        {% for item_data in movies %}
+        {% for item_data in items %}
         <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-200">
             <div class="flex items-center p-4">
                 <!-- Rank Badge within decade -->
                 <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm mr-4
-                    {% if item_data.score is not None %}
-                        {% if forloop.counter == 1 %}bg-yellow-400 text-yellow-900
-                        {% elif forloop.counter == 2 %}bg-gray-300 text-gray-700
-                        {% elif forloop.counter == 3 %}bg-amber-600 text-white
-                        {% else %}bg-gray-100 text-gray-600{% endif %}
-                    {% else %}bg-gray-50 text-gray-400{% endif %}">
+                    {% if forloop.counter == 1 %}bg-yellow-400 text-yellow-900
+                    {% elif forloop.counter == 2 %}bg-gray-300 text-gray-700
+                    {% elif forloop.counter == 3 %}bg-amber-600 text-white
+                    {% else %}bg-gray-100 text-gray-600{% endif %}">
                     #{{ forloop.counter }}
                 </div>
 
+                {% if is_music %}
+                <!-- Song Info -->
+                <div class="flex-grow min-w-0 mr-4">
+                    <h3 class="font-bold text-gray-800">{{ item_data.song.title }}</h3>
+                    <div class="text-sm">
+                        <a href="{% url 'movie_detail' category.slug item_data.song.artist.id %}" class="text-gray-600 hover:text-indigo-600">
+                            {{ item_data.song.artist.title }}
+                        </a>
+                    </div>
+                    {% if item_data.song.album or item_data.song.year %}
+                    <div class="text-xs text-gray-500">
+                        {% if item_data.song.album %}{{ item_data.song.album }}{% endif %}
+                        {% if item_data.song.album and item_data.song.year %} • {% endif %}
+                        {% if item_data.song.year %}{{ item_data.song.year }}{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Upvote Count -->
+                <div class="flex-shrink-0 text-center">
+                    <div class="text-xl font-bold text-indigo-600">
+                        {{ item_data.upvote_count }}
+                    </div>
+                    <div class="text-xs text-gray-500">upvote{{ item_data.upvote_count|pluralize }}</div>
+                </div>
+                {% else %}
                 <!-- Poster -->
                 <div class="flex-shrink-0 w-12 h-18 mr-4">
                     {% if item_data.item.poster_url %}
@@ -95,9 +119,10 @@
                     No votes yet
                 </div>
                 {% endif %}
+                {% endif %}{# end is_music check #}
             </div>
 
-            {% if item_data.total_votes > 0 %}
+            {% if not is_music and item_data.total_votes > 0 %}
             <div class="h-1.5 flex">
                 {% if item_data.yes_percent > 0 %}
                 <div class="bg-green-500" style="width: {{ item_data.yes_percent }}%"></div>

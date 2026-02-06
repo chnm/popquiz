@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Song - {{ artist.title }} - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'movie_detail' category.slug artist.id %}" class="text-pink-600 hover:underline">&larr; Back to {{ artist.title }}</a>
+</div>
+
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add a Song</h1>
+    <p class="text-gray-600 mb-6">Add a song to <strong>{{ artist.title }}</strong></p>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Song Title <span class="text-red-500">*</span></label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="id_album" class="block text-sm font-medium text-gray-700 mb-1">Album</label>
+            {{ form.album }}
+            {% if form.album.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.album.errors.0 }}</p>
+            {% endif %}
+            <p class="text-gray-500 text-xs mt-1">Optional - helps identify the song</p>
+        </div>
+
+        <div>
+            <label for="id_year" class="block text-sm font-medium text-gray-700 mb-1">Release Year</label>
+            {{ form.year }}
+            {% if form.year.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.year.errors.0 }}</p>
+            {% endif %}
+            <p class="text-gray-500 text-xs mt-1">Optional - helps identify the song</p>
+        </div>
+
+        <button type="submit" class="w-full bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-200">
+            Add Song
+        </button>
+    </form>
+</div>
+{% endblock %}
