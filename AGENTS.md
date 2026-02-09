@@ -88,29 +88,35 @@ updated_at = DateTimeField(auto_now=True)
 
 ## URL Structure
 
+### Admin
+- `/admin/` - Django admin site
+
 ### Public Pages
-- `/` - Home dashboard with voting progress and team members
-- `/accounts/login/` - User login
-- `/accounts/register/` - User registration
+- `/` - Home dashboard with voting progress and team members (HomeView)
+- `/accounts/login/` - User login (CustomLoginView)
+- `/accounts/logout/` - User logout (CustomLogoutView)
+- `/accounts/register/` - User registration (RegisterView)
+- `/accounts/` - django-allauth URLs (includes social auth, password reset, email verification, etc.)
 
 ### Category & Movies
-- `/category/<slug>/` - Browse all items in category
-- `/category/<slug>/add/` - Add new item to category
-- `/category/<slug>/vote/` - Swipe voting interface
-- `/category/<slug>/movie/<id>/` - Individual movie detail with all votes
+- `/category/<slug:slug>/` - Browse all items in category (CategoryDetailView)
+- `/category/<slug:slug>/add/` - Add new item to category (AddItemView)
+- `/category/<slug:slug>/vote/` - Swipe voting interface (SwipeVoteView)
+- `/category/<slug:category_slug>/movie/<int:item_id>/` - Individual movie detail with all votes (MovieDetailView)
 
 ### Statistics
-- `/category/<slug>/stats/` - Team rankings (Bayesian average algorithm)
-- `/category/<slug>/decades/` - Movies grouped and ranked by decade
-- `/category/<slug>/eclectic/` - Users with most unique opinions
+- `/category/<slug:slug>/stats/` - Team rankings with Bayesian average algorithm (StatsView)
+- `/category/<slug:slug>/decades/` - Movies grouped and ranked by decade (DecadeStatsView)
+- `/category/<slug:slug>/eclectic/` - Users with most unique opinions (EclecticView)
 
 ### User Features
-- `/profile/<username>/` - User's voting history and stats
-- `/profile/<username>/?sort=<option>` - Sort by: title, year, director, genre, vote, popularity
-- `/compare/<user1>/<user2>/` - Compare two users' tastes
+- `/profile/<str:username>/` - User's voting history and stats (ProfileView)
+- `/profile/<str:username>/?sort=<option>` - Sort by: title, year, director, genre, vote, popularity
+- `/compare/<str:username1>/<str:username2>/` - Compare two users' tastes (CompareUsersView)
 
-### API
-- `/api/vote/` - POST endpoint for AJAX voting
+### API & Voting
+- `/api/vote/` - POST endpoint for AJAX voting (vote_api)
+- `/vote/` - Vote view (vote_view)
 
 ## Key Features & Implementation
 
