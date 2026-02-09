@@ -180,13 +180,13 @@ SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create accounts on social login
 SOCIALACCOUNT_QUERY_EMAIL = True
 
 # Slack OAuth settings (set these in .env file)
-# SOCIALACCOUNT_PROVIDERS = {
-#     'slack': {
-#         'APP': {
-#             'client_id': os.getenv('SLACK_CLIENT_ID'),
-#             'secret': os.getenv('SLACK_CLIENT_SECRET'),
-#             'key': ''
-#         },
-#         'SCOPE': ['identity.basic', 'identity.email'],
-#     }
-# }
+SOCIALACCOUNT_PROVIDERS = {
+    'slack': {
+        'APP': {
+            'client_id': os.getenv('SLACK_CLIENT_ID'),
+            'secret': os.getenv('SLACK_CLIENT_SECRET'),
+            'key': ''
+        },
+        'SCOPE': ['identity.basic', 'identity.email'],
+    }
+}
