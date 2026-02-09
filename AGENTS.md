@@ -156,7 +156,6 @@ popquiz/
 ├── manage.py                    # Django management script
 ├── requirements.txt             # Python dependencies (Django 4.2+)
 ├── db.sqlite3                   # SQLite database
-├── founder.jpg                  # Source image for founder photo
 ├── static/                      # Static assets
 │   └── images/
 │       └── founder.jpg          # Founder photo used on home page
