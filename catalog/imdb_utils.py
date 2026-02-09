@@ -69,10 +69,12 @@ def fetch_movie_data(imdb_url):
         # Try og:title first (English title on US IMDB site)
         og_title = re.search(r'<meta property="og:title" content="([^"]+)"', page_html)
         if og_title:
-            # Remove year suffix and " - IMDb" suffix
+            # Clean up the title - IMDB includes extra metadata we need to remove
             title = og_title.group(1)
-            title = re.sub(r'\s*\(\d{4}\)\s*$', '', title)  # Remove (2023)
-            title = re.sub(r'\s*-\s*IMDb\s*$', '', title)   # Remove - IMDb
+            title = re.sub(r'\s*\|.*$', '', title)  # Remove pipe separator and everything after (genres, etc.)
+            title = re.sub(r'\s*⭐\s*[\d.]+', '', title)  # Remove star emoji and rating
+            title = re.sub(r'\s*\(\d{4}\)', '', title)  # Remove year in parentheses
+            title = re.sub(r'\s*-\s*IMDb\s*$', '', title)  # Remove - IMDb suffix
             title = html.unescape(title)  # Decode HTML entities like &amp;
             title = title.strip()
         else:
