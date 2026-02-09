@@ -8,6 +8,7 @@ dependencies = [
     "requests",
     "python-dotenv",
     "whitenoise>=6.11.0",
+    "django-allauth>=65.14.1",
 ]
 
 [build-system]

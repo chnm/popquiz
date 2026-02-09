@@ -44,10 +44,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  # Required by allauth
+
+    # django-allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.slack',
+
+    # Local apps
     'accounts',
     'catalog',
     'votes',
 ]
+
+# Required for allauth
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,6 +70,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required by allauth
 ]
 
 ROOT_URLCONF = 'popquiz.urls'
@@ -149,3 +162,31 @@ AUTH_USER_MODEL = 'accounts.User'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of allauth
+    'django.contrib.auth.backends.ModelBackend',
+
+    # allauth specific authentication methods
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# django-allauth configuration
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Allow login with email or username
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required signup fields
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Change to 'mandatory' if email verification is required
+SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create accounts on social login
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Slack OAuth settings (set these in .env file)
+# SOCIALACCOUNT_PROVIDERS = {
+#     'slack': {
+#         'APP': {
+#             'client_id': os.getenv('SLACK_CLIENT_ID'),
+#             'secret': os.getenv('SLACK_CLIENT_SECRET'),
+#             'key': ''
+#         },
+#         'SCOPE': ['identity.basic', 'identity.email'],
+#     }
+# }

@@ -5,6 +5,7 @@ from accounts.views import ProfileView, CompareUsersView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),  # django-allauth URLs (must come before accounts.urls)
     path('accounts/', include('accounts.urls')),
     path('profile/<str:username>/', ProfileView.as_view(), name='profile'),
     path('compare/<str:username1>/<str:username2>/', CompareUsersView.as_view(), name='compare_users'),
