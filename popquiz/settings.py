@@ -188,6 +188,9 @@ SOCIALACCOUNT_PROVIDERS = {
             'secret': os.getenv('SLACK_CLIENT_SECRET'),
             'key': ''
         },
-        'SCOPE': ['identity.basic', 'identity.email'],
+        'SCOPE': ['openid', 'profile', 'email'],
+        'AUTH_PARAMS': {
+            'auth_type': 'reauthenticate',
+        }
     }
 }
