@@ -198,25 +198,51 @@ popquiz/
 ## Development Setup
 
 ```bash
-# Create and activate virtual environment
+# Install dependencies using uv (preferred)
+uv sync
+
+# Or create and activate virtual environment manually
 python -m venv venv
 source venv/bin/activate  # On Mac/Linux
 # venv\Scripts\activate   # On Windows
-
-# Install dependencies
 pip install -r requirements.txt
 
 # Run migrations (if needed)
-python manage.py migrate
+uv run python manage.py migrate
 
 # Create superuser (if needed)
-python manage.py createsuperuser
+uv run python manage.py createsuperuser
 
 # Run development server
-python manage.py runserver
+uv run python manage.py runserver
 
 # Access at http://localhost:8000
 ```
+
+## Starting the App Server
+
+**IMPORTANT**: When starting the app server, always follow these steps in order:
+
+```bash
+# 1. Check for pending migrations
+uv run python manage.py showmigrations
+
+# 2. Apply any pending migrations
+uv run python manage.py migrate
+
+# 3. Collect static files (for production-like setup)
+uv run python manage.py collectstatic --noinput
+
+# 4. Start the server on 0.0.0.0:8000 (accessible from all network interfaces)
+uv run python manage.py runserver 0.0.0.0:8000
+```
+
+**Why these steps matter:**
+- **showmigrations**: Verifies database schema is up-to-date
+- **migrate**: Applies any pending database migrations to avoid runtime errors
+- **collectstatic**: Ensures all static files (CSS, JS, images) are properly collected
+- **0.0.0.0:8000**: Makes the server accessible from other devices on the network (not just localhost)
+- **uv**: Fast Python package manager that ensures correct dependencies are used
 
 ## Common Tasks
 
@@ -362,5 +388,5 @@ PopQuiz is developed for team use. The app uses publicly available IMDB data for
 
 ---
 
-*Last Updated: 2025-02-09*
+*Last Updated: 2026-02-09*
 *This document is maintained for AI agent context and onboarding.*
