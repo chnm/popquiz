@@ -2,6 +2,8 @@
 
 This document provides comprehensive context for AI agents working on the PopQuiz codebase.
 
+**IMPORTANT**: Before working on this codebase, read `README.md` to understand what PopQuiz does and who it's for. This provides essential context about the app's purpose and user experience.
+
 ## AI Agent Guidelines
 
 **IMPORTANT WORKFLOW**: When making changes to the codebase, always follow this workflow:
