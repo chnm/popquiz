@@ -302,7 +302,7 @@
         <!-- Poster Grid -->
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
             {% for vote in category_data.votes %}
-            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer
+            <a href="{% url 'movie_detail' vote.item.category.slug vote.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer
                 {% if vote.choice == 'yes' %}ring-4 ring-green-500
                 {% elif vote.choice == 'no' %}ring-4 ring-red-500
                 {% elif vote.choice == 'meh' %}ring-4 ring-yellow-500
@@ -354,7 +354,7 @@
                     <p class="text-white/70 text-xs">{{ vote.item.year }}</p>
                     {% endif %}
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
     </div>
