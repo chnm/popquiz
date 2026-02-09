@@ -39,12 +39,21 @@ class HomeView(ListView):
                 ).count()
                 remaining = total_items - responded_count
                 progress_percent = round((responded_count / total_items) * 100) if total_items > 0 else 0
+
+                # Get random movie posters for this category
+                random_posters = Item.objects.filter(
+                    category=category
+                ).exclude(
+                    poster_url=''
+                ).order_by('?')[:5]
+
                 categories_with_progress.append({
                     'category': category,
                     'total': total_items,
                     'voted': responded_count,
                     'remaining': remaining,
                     'progress_percent': progress_percent,
+                    'random_posters': random_posters,
                 })
             context['categories_with_progress'] = categories_with_progress
 
