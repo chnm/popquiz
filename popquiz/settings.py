@@ -173,6 +173,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # django-allauth configuration
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Force HTTPS for OAuth callbacks
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Allow login with email or username
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required signup fields
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Change to 'mandatory' if email verification is required
