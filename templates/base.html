@@ -52,6 +52,9 @@
                     <!-- User Authentication Section -->
                     <div class="flex items-center space-x-3 pl-4 border-l border-gray-600">
                         {% if user.is_authenticated %}
+                            {% if user.avatar_url %}
+                                <img src="{{ user.avatar_url }}" alt="{{ user.first_name }} {{ user.last_name }}" class="w-8 h-8 rounded-full">
+                            {% endif %}
                             <span class="text-gray-400 text-sm">{{ user.first_name }} {{ user.last_name }}</span>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white">My Profile</a>
                             <form method="post" action="{% url 'account_logout' %}" class="inline">
@@ -84,7 +87,12 @@
                     {% endfor %}
                     <div class="border-t border-gray-700 pt-2 mt-2">
                         {% if user.is_authenticated %}
-                            <div class="text-gray-300 py-2">{{ user.first_name }} {{ user.last_name }}</div>
+                            <div class="flex items-center gap-3 py-2">
+                                {% if user.avatar_url %}
+                                    <img src="{{ user.avatar_url }}" alt="{{ user.first_name }} {{ user.last_name }}" class="w-8 h-8 rounded-full">
+                                {% endif %}
+                                <div class="text-gray-300">{{ user.first_name }} {{ user.last_name }}</div>
+                            </div>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white block py-2">My Profile</a>
                             <form method="post" action="{% url 'account_logout' %}">
                                 {% csrf_token %}

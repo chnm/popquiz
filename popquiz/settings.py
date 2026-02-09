@@ -179,6 +179,7 @@ ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # R
 ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Change to 'mandatory' if email verification is required
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create accounts on social login
 SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_ADAPTER = 'accounts.adapter.CustomSocialAccountAdapter'  # Custom adapter for profile data
 
 # Slack OAuth settings (set these in .env file)
 SOCIALACCOUNT_PROVIDERS = {
