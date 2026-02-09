@@ -319,6 +319,14 @@ class ProfileView(DetailView):
 
         context['unseen_movies'] = unseen_ranked[:20]  # Limit to top 20
 
+        # Get random movie posters from user's voted items for header background
+        voted_items_with_posters = Item.objects.filter(
+            votes__user=profile_user
+        ).exclude(
+            poster_url=''
+        ).distinct().order_by('?')[:5]
+        context['random_posters'] = voted_items_with_posters
+
         return context
 
 

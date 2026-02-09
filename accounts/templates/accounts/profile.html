@@ -4,55 +4,77 @@
 
 {% block content %}
 <!-- Profile Header -->
-<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div class="flex items-center space-x-4 mb-4 md:mb-0">
-            <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm">
-                {{ profile_user.first_name.0 }}{{ profile_user.last_name.0 }}
-            </div>
-            <div>
-                <h1 class="text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
-                <p class="text-white/80">@{{ profile_user.username }}</p>
-            </div>
+<div class="relative rounded-2xl shadow-xl overflow-hidden mb-8">
+    <!-- Background Poster Collage -->
+    {% if random_posters %}
+    <div class="absolute inset-0 grid grid-cols-5 gap-0">
+        {% for item in random_posters %}
+        <div class="relative w-full h-full">
+            {% if item.poster_url %}
+            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                 onerror="this.style.display='none';">
+            {% endif %}
         </div>
+        {% endfor %}
+    </div>
+    <!-- Gradient overlay for readability -->
+    <div class="absolute inset-0 bg-gradient-to-r from-indigo-900/85 via-purple-900/80 to-pink-900/85"></div>
+    {% else %}
+    <!-- Fallback gradient if no posters -->
+    <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500"></div>
+    {% endif %}
+
+    <!-- Content Layer -->
+    <div class="relative z-10 p-8 text-white">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm">
+                    {{ profile_user.first_name.0 }}{{ profile_user.last_name.0 }}
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
+                    <p class="text-white/80">@{{ profile_user.username }}</p>
+                </div>
+            </div>
+            {% if total_votes > 0 %}
+            <div class="text-right">
+                <p class="text-4xl font-bold">{{ total_votes }}</p>
+                <p class="text-white/80">votes cast</p>
+            </div>
+            {% endif %}
+        </div>
+
         {% if total_votes > 0 %}
-        <div class="text-right">
-            <p class="text-4xl font-bold">{{ total_votes }}</p>
-            <p class="text-white/80">votes cast</p>
+        <!-- Stats Bar -->
+        <div class="mt-8">
+            <div class="flex h-4 rounded-full overflow-hidden bg-white/20">
+                {% if yes_percent > 0 %}
+                <div class="bg-green-400 transition-all duration-500" style="width: {{ yes_percent }}%"></div>
+                {% endif %}
+                {% if meh_percent > 0 %}
+                <div class="bg-yellow-400 transition-all duration-500" style="width: {{ meh_percent }}%"></div>
+                {% endif %}
+                {% if no_percent > 0 %}
+                <div class="bg-red-400 transition-all duration-500" style="width: {{ no_percent }}%"></div>
+                {% endif %}
+            </div>
+            <div class="flex justify-between mt-3 text-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                    <span>{{ total_yes }} Yes ({{ yes_percent }}%)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+                    <span>{{ total_meh }} Meh ({{ meh_percent }}%)</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-red-400 rounded-full"></span>
+                    <span>{{ total_no }} No ({{ no_percent }}%)</span>
+                </div>
+            </div>
         </div>
         {% endif %}
     </div>
-
-    {% if total_votes > 0 %}
-    <!-- Stats Bar -->
-    <div class="mt-8">
-        <div class="flex h-4 rounded-full overflow-hidden bg-white/20">
-            {% if yes_percent > 0 %}
-            <div class="bg-green-400 transition-all duration-500" style="width: {{ yes_percent }}%"></div>
-            {% endif %}
-            {% if meh_percent > 0 %}
-            <div class="bg-yellow-400 transition-all duration-500" style="width: {{ meh_percent }}%"></div>
-            {% endif %}
-            {% if no_percent > 0 %}
-            <div class="bg-red-400 transition-all duration-500" style="width: {{ no_percent }}%"></div>
-            {% endif %}
-        </div>
-        <div class="flex justify-between mt-3 text-sm">
-            <div class="flex items-center space-x-2">
-                <span class="w-3 h-3 bg-green-400 rounded-full"></span>
-                <span>{{ total_yes }} Yes ({{ yes_percent }}%)</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                <span>{{ total_meh }} Meh ({{ meh_percent }}%)</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="w-3 h-3 bg-red-400 rounded-full"></span>
-                <span>{{ total_no }} No ({{ no_percent }}%)</span>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <!-- Compatibility Section -->
