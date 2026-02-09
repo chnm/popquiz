@@ -26,4 +26,4 @@ PopQuiz is designed for friend groups, work teams, film clubs, or any group that
 
 ---
 
-*Developed by [RRCHNM](https://rrchnm.org) at George Mason University*
+*Developed by [RRCHNM](https://rrchnm.org) at George Mason University with [Claude Code](https://claude.com/claude-code)*
