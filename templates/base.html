@@ -54,13 +54,13 @@
                         {% if user.is_authenticated %}
                             <span class="text-gray-400 text-sm">{{ user.first_name }} {{ user.last_name }}</span>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white">My Profile</a>
-                            <form method="post" action="{% url 'logout' %}" class="inline">
+                            <form method="post" action="{% url 'account_logout' %}" class="inline">
                                 {% csrf_token %}
                                 <button type="submit" class="text-gray-200 hover:text-white">Logout</button>
                             </form>
                         {% else %}
-                            <a href="{% url 'login' %}" class="px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600 transition">Login</a>
-                            <a href="{% url 'register' %}" class="px-3 py-1.5 rounded text-white hover:bg-white hover:text-black transition" style="background-color: rgb(195, 42, 38);">Register</a>
+                            <a href="{% url 'account_login' %}" class="px-3 py-1.5 rounded bg-gray-700 text-white hover:bg-gray-600 transition">Login</a>
+                            <a href="{% url 'account_signup' %}" class="px-3 py-1.5 rounded text-white hover:bg-white hover:text-black transition" style="background-color: rgb(195, 42, 38);">Sign Up</a>
                         {% endif %}
                     </div>
                 </div>
@@ -86,13 +86,13 @@
                         {% if user.is_authenticated %}
                             <div class="text-gray-300 py-2">{{ user.first_name }} {{ user.last_name }}</div>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white block py-2">My Profile</a>
-                            <form method="post" action="{% url 'logout' %}">
+                            <form method="post" action="{% url 'account_logout' %}">
                                 {% csrf_token %}
                                 <button type="submit" class="text-gray-200 hover:text-white text-left w-full py-2">Logout</button>
                             </form>
                         {% else %}
-                            <a href="{% url 'login' %}" class="text-gray-200 hover:text-white block py-2">Login</a>
-                            <a href="{% url 'register' %}" class="text-gray-200 hover:text-white block py-2">Register</a>
+                            <a href="{% url 'account_login' %}" class="text-gray-200 hover:text-white block py-2">Login</a>
+                            <a href="{% url 'account_signup' %}" class="text-gray-200 hover:text-white block py-2">Sign Up</a>
                         {% endif %}
                     </div>
                 </div>
