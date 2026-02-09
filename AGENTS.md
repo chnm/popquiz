@@ -7,11 +7,12 @@ This document provides comprehensive context for AI agents working on the PopQui
 **PopQuiz** is a Django-based web application for team voting on pop culture items (primarily movies). It features a Tinder-style swipe interface, team rankings, compatibility comparisons, and various statistical views organized by decade, director, and genre.
 
 **Tech Stack:**
-- Django 4.2+ (Python web framework)
+- Django 5.2+ (Python web framework)
 - SQLite database (db.sqlite3)
 - Tailwind CSS for styling
 - Vanilla JavaScript for interactivity
 - IMDB integration for movie data
+- uv for Python package management
 
 ## Architecture
 
@@ -154,7 +155,8 @@ Categories of agreement/disagreement:
 ```
 popquiz/
 ├── manage.py                    # Django management script
-├── requirements.txt             # Python dependencies (Django 4.2+)
+├── pyproject.toml               # Python dependencies and project metadata
+├── uv.lock                      # Locked dependency versions
 ├── db.sqlite3                   # SQLite database
 ├── static/                      # Static assets
 │   └── images/
@@ -197,17 +199,17 @@ popquiz/
 
 ## Development Setup
 
+This project uses **uv** for fast, reliable Python package management. All dependencies are defined in `pyproject.toml`.
+
 ```bash
-# Install dependencies using uv (preferred)
+# Install uv (if not already installed)
+# See: https://docs.astral.sh/uv/getting-started/installation/
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies and sync environment
 uv sync
 
-# Or create and activate virtual environment manually
-python -m venv venv
-source venv/bin/activate  # On Mac/Linux
-# venv\Scripts\activate   # On Windows
-pip install -r requirements.txt
-
-# Run migrations (if needed)
+# Run migrations
 uv run python manage.py migrate
 
 # Create superuser (if needed)
@@ -217,6 +219,22 @@ uv run python manage.py createsuperuser
 uv run python manage.py runserver
 
 # Access at http://localhost:8000
+```
+
+### Managing Dependencies
+
+```bash
+# Add a new dependency
+uv add package-name
+
+# Add a development dependency
+uv add --dev package-name
+
+# Remove a dependency
+uv remove package-name
+
+# Update all dependencies
+uv sync --upgrade
 ```
 
 ## Starting the App Server
@@ -287,8 +305,9 @@ Genres are stored as comma-separated strings (e.g., "Drama, Thriller, Crime"):
 
 ### 3. Static Files
 - Static directory was in `.gitignore`, but we force-added the founder image
-- Remember to run `python manage.py collectstatic` for production
+- Remember to run `uv run python manage.py collectstatic --noinput` for production
 - Founder image uses `{% load static %}` template tag
+- WhiteNoise serves static files in production without needing nginx
 
 ### 4. Vote Uniqueness
 The `(user, item)` unique constraint means:
