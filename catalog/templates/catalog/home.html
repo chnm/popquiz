@@ -145,7 +145,8 @@
 </div>
 {% endif %}
 
-<!-- Two Column Layout for Compare & Team -->
+<!-- Two Column Layout for Compare & Team (logged in users only) -->
+{% if user.is_authenticated %}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <!-- Compare Tastes -->
     <div>
@@ -208,4 +209,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

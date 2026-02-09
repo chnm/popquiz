@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}{{ user1.first_name }} vs {{ user2.first_name }} - PopQuiz{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <a href="{% url 'profile' user1.username %}" class="text-indigo-600 hover:underline">&larr; Back to {{ user1.first_name }}'s Profile</a>
+    <a href="{% url 'profile' user1.username %}" class="text-indigo-600 hover:underline">&larr; Back to {{ user1|display_name:request.user }}'s Profile</a>
 </div>
 
 <!-- Header with both users -->
@@ -15,7 +16,7 @@
             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
                 {{ user1.first_name.0 }}{{ user1.last_name.0 }}
             </div>
-            <h2 class="text-xl font-bold">{{ user1.first_name }}</h2>
+            <h2 class="text-xl font-bold">{{ user1|display_name:request.user }}</h2>
             <a href="{% url 'profile' user1.username %}" class="text-white/70 text-sm hover:text-white">@{{ user1.username }}</a>
         </div>
 
@@ -36,7 +37,7 @@
             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
                 {{ user2.first_name.0 }}{{ user2.last_name.0 }}
             </div>
-            <h2 class="text-xl font-bold">{{ user2.first_name }}</h2>
+            <h2 class="text-xl font-bold">{{ user2|display_name:request.user }}</h2>
             <a href="{% url 'profile' user2.username %}" class="text-white/70 text-sm hover:text-white">@{{ user2.username }}</a>
         </div>
     </div>
@@ -66,7 +67,7 @@
 
             <!-- Labels -->
             <text x="80" y="125" text-anchor="middle" class="text-sm font-medium" fill="#6366f1">Only</text>
-            <text x="80" y="145" text-anchor="middle" class="text-sm font-medium" fill="#6366f1">{{ user1.first_name }}</text>
+            <text x="80" y="145" text-anchor="middle" class="text-sm font-medium" fill="#6366f1">{{ user1|display_name:request.user }}</text>
             <text x="80" y="165" text-anchor="middle" class="text-lg font-bold" fill="#6366f1">{{ only_user1|length }}</text>
 
             <text x="200" y="110" text-anchor="middle" class="text-sm font-medium" fill="#7c3aed">Both</text>
@@ -74,7 +75,7 @@
             <text x="200" y="155" text-anchor="middle" class="text-2xl font-bold" fill="#7c3aed">{{ compatibility.common_count }}</text>
 
             <text x="320" y="125" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">Only</text>
-            <text x="320" y="145" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">{{ user2.first_name }}</text>
+            <text x="320" y="145" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">{{ user2|display_name:request.user }}</text>
             <text x="320" y="165" text-anchor="middle" class="text-lg font-bold" fill="#ec4899">{{ only_user2|length }}</text>
         </svg>
     </div>
@@ -183,8 +184,8 @@
     {% if user1_loves_user2_hates %}
     <div class="mb-6">
         <p class="text-sm text-gray-600 mb-3">
-            <span class="font-semibold text-green-600">{{ user1.first_name }} loves</span> but
-            <span class="font-semibold text-red-600">{{ user2.first_name }} hates</span> ({{ user1_loves_user2_hates|length }}):
+            <span class="font-semibold text-green-600">{{ user1|display_name:request.user }} loves</span> but
+            <span class="font-semibold text-red-600">{{ user2|display_name:request.user }} hates</span> ({{ user1_loves_user2_hates|length }}):
         </p>
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_loves_user2_hates %}
@@ -212,8 +213,8 @@
     {% if user1_hates_user2_loves %}
     <div>
         <p class="text-sm text-gray-600 mb-3">
-            <span class="font-semibold text-red-600">{{ user1.first_name }} hates</span> but
-            <span class="font-semibold text-green-600">{{ user2.first_name }} loves</span> ({{ user1_hates_user2_loves|length }}):
+            <span class="font-semibold text-red-600">{{ user1|display_name:request.user }} hates</span> but
+            <span class="font-semibold text-green-600">{{ user2|display_name:request.user }} loves</span> ({{ user1_hates_user2_loves|length }}):
         </p>
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_hates_user2_loves %}
@@ -249,7 +250,7 @@
         </svg>
     </div>
     <h2 class="text-2xl font-bold text-gray-800 mb-2">No Common Movies Yet</h2>
-    <p class="text-gray-600">{{ user1.first_name }} and {{ user2.first_name }} haven't watched any of the same movies yet.</p>
+    <p class="text-gray-600">{{ user1|display_name:request.user }} and {{ user2|display_name:request.user }} haven't watched any of the same movies yet.</p>
 </div>
 {% endif %}
 
