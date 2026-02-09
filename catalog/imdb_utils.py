@@ -62,12 +62,12 @@ def fetch_movie_data(imdb_url):
         if resp.status_code != 200:
             return None
 
-        html = resp.text
+        page_html = resp.text
 
         # Extract title
         title = None
         # Try og:title first (English title on US IMDB site)
-        og_title = re.search(r'<meta property="og:title" content="([^"]+)"', html)
+        og_title = re.search(r'<meta property="og:title" content="([^"]+)"', page_html)
         if og_title:
             # Remove year suffix and " - IMDb" suffix
             title = og_title.group(1)
@@ -77,7 +77,7 @@ def fetch_movie_data(imdb_url):
             title = title.strip()
         else:
             # Fallback to JSON-LD if og:title not available
-            json_title = re.search(r'"name":\s*"([^"]+)"', html)
+            json_title = re.search(r'"name":\s*"([^"]+)"', page_html)
             if json_title:
                 title = html.unescape(json_title.group(1))
 
@@ -86,18 +86,18 @@ def fetch_movie_data(imdb_url):
 
         # Extract year
         year = None
-        year_match = re.search(r'"datePublished":\s*"(\d{4})', html)
+        year_match = re.search(r'"datePublished":\s*"(\d{4})', page_html)
         if year_match:
             year = int(year_match.group(1))
         else:
             # Try release year from title or other sources
-            year_alt = re.search(r'<title>[^<]+\((\d{4})\)', html)
+            year_alt = re.search(r'<title>[^<]+\((\d{4})\)', page_html)
             if year_alt:
                 year = int(year_alt.group(1))
 
         # Extract poster URL
         poster_url = None
-        og_image = re.search(r'<meta property="og:image" content="([^"]+)"', html)
+        og_image = re.search(r'<meta property="og:image" content="([^"]+)"', page_html)
         if og_image:
             poster_url = og_image.group(1)
             # Convert to larger resolution
@@ -107,12 +107,12 @@ def fetch_movie_data(imdb_url):
         # Extract director
         director = None
         # Try JSON-LD director field
-        director_match = re.search(r'"director":\s*\[?\s*\{\s*"@type":\s*"Person",\s*"name":\s*"([^"]+)"', html)
+        director_match = re.search(r'"director":\s*\[?\s*\{\s*"@type":\s*"Person",\s*"name":\s*"([^"]+)"', page_html)
         if director_match:
             director = director_match.group(1)
         else:
             # Try alternative pattern for multiple directors
-            directors_match = re.search(r'"director":\s*\[([^\]]+)\]', html)
+            directors_match = re.search(r'"director":\s*\[([^\]]+)\]', page_html)
             if directors_match:
                 # Extract first director's name
                 first_director = re.search(r'"name":\s*"([^"]+)"', directors_match.group(1))
@@ -122,7 +122,7 @@ def fetch_movie_data(imdb_url):
         # Extract genres
         genre = None
         # Try JSON-LD genre field (can be a string or array)
-        genre_match = re.search(r'"genre":\s*(\[.*?\]|"[^"]+?")', html)
+        genre_match = re.search(r'"genre":\s*(\[.*?\]|"[^"]+?")', page_html)
         if genre_match:
             genre_data = genre_match.group(1)
             if genre_data.startswith('['):
