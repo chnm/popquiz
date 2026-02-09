@@ -2,6 +2,24 @@
 
 This document provides comprehensive context for AI agents working on the PopQuiz codebase.
 
+## AI Agent Guidelines
+
+**IMPORTANT WORKFLOW**: When making changes to the codebase, always follow this workflow:
+
+1. **Understand** - Read relevant code and documentation
+2. **Implement** - Make the necessary changes
+3. **Test** - Verify changes work (restart server if needed)
+4. **Commit** - Always commit successful modifications
+
+**Why committing matters:**
+- Ensures work is tracked in version control
+- Enables deployment of changes to production
+- Creates audit trail for modifications
+- Allows rollback if issues arise
+- Documents what was changed and why
+
+**Golden Rule**: If a modification is successful and improves the codebase, commit it immediately. Don't wait for multiple changes to accumulate.
+
 ## Project Overview
 
 **PopQuiz** is a Django-based web application for team voting on pop culture items (primarily movies). It features a Tinder-style swipe interface, team rankings, compatibility comparisons, and various statistical views organized by decade, director, and genre.
@@ -341,7 +359,61 @@ Profile pages with many votes can be slow:
 
 ## Git Workflow
 
+### Committing Changes
+
+**CRITICAL**: Always commit successful modifications to the codebase. This ensures work is tracked and can be deployed.
+
+**When to commit:**
+- After successfully implementing a feature or fix
+- After updating dependencies or configuration
+- After refactoring that passes existing functionality checks
+- When tests pass (if applicable)
+- Before switching to a different task or feature
+
+**Commit workflow:**
+```bash
+# 1. Check what files have changed
+git status
+
+# 2. Review the changes
+git diff
+
+# 3. Stage the relevant files
+git add <file1> <file2> ...
+# Or stage all changes: git add .
+
+# 4. Commit with a descriptive message
+git commit -m "Brief summary of changes
+
+- Detailed point 1
+- Detailed point 2
+- Why this change was needed
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 5. Verify the commit
+git log -1 --stat
+```
+
+**Commit message best practices:**
+- Use imperative mood ("Add feature" not "Added feature")
+- First line: concise summary (50 chars or less)
+- Blank line after summary
+- Detailed explanation in body (wrap at 72 chars)
+- Reference issue numbers if applicable
+- Explain WHY, not just WHAT
+
+**DO NOT commit:**
+- Sensitive data (.env files, credentials, API keys)
+- Generated files that are in .gitignore (staticfiles/, __pycache__, etc.)
+- Incomplete or broken changes
+- Debug code or temporary test files
+
 Recent significant commits:
+- WhiteNoise configuration for production static file serving
+- Migration to uv for Python package management
 - Image processing and background removal
 - Director and genre metadata backfilling
 - Profile grouping by director/genre
