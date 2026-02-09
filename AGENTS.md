@@ -159,7 +159,7 @@ popquiz/
 ├── founder.jpg                  # Source image for founder photo
 ├── static/                      # Static assets
 │   └── images/
-│       └── founder_transparent.png
+│       └── founder.jpg          # Founder photo used on home page
 ├── templates/                   # Shared templates
 │   └── base.html               # Base template with navigation
 ├── popquiz/                     # Django project settings
