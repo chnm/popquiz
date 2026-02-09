@@ -32,7 +32,7 @@
             {% endfor %}
         </div>
         <!-- Gradient overlay for readability -->
-        <div class="absolute inset-0 bg-gradient-to-r from-indigo-900/95 via-purple-900/90 to-pink-900/95"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-900/85 via-purple-900/80 to-pink-900/85"></div>
         {% else %}
         <!-- Fallback gradient if no posters -->
         <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500"></div>
@@ -98,16 +98,38 @@
 {% else %}
 <!-- Not logged in -->
 <div class="mb-8">
-    {% for category in categories %}
-    <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-xl p-8 text-white">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-                <h2 class="text-2xl font-bold mb-2">{{ category.name }}</h2>
-                <p class="text-white/90 text-lg">{{ category.item_count }} movie{{ category.item_count|pluralize }} to vote on</p>
+    {% for cat_data in categories_with_posters %}
+    <div class="relative rounded-2xl shadow-xl overflow-hidden">
+        <!-- Background Poster Collage -->
+        {% if cat_data.random_posters %}
+        <div class="absolute inset-0 grid grid-cols-5 gap-0">
+            {% for item in cat_data.random_posters %}
+            <div class="relative w-full h-full">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none';">
+                {% endif %}
             </div>
-            <a href="{% url 'login' %}" class="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-indigo-700 transition duration-200 shadow-lg">
-                Log in to Vote
-            </a>
+            {% endfor %}
+        </div>
+        <!-- Gradient overlay for readability -->
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-900/85 via-purple-900/80 to-pink-900/85"></div>
+        {% else %}
+        <!-- Fallback gradient if no posters -->
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500"></div>
+        {% endif %}
+
+        <!-- Content Layer -->
+        <div class="relative z-10 p-8 text-white">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">{{ cat_data.category.name }}</h2>
+                    <p class="text-white/90 text-lg">{{ cat_data.category.item_count }} movie{{ cat_data.category.item_count|pluralize }} to vote on</p>
+                </div>
+                <a href="{% url 'login' %}" class="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-indigo-700 transition duration-200 shadow-lg">
+                    Log in to Vote
+                </a>
+            </div>
         </div>
     </div>
     {% empty %}

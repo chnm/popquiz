@@ -56,6 +56,20 @@ class HomeView(ListView):
                     'random_posters': random_posters,
                 })
             context['categories_with_progress'] = categories_with_progress
+        else:
+            # For logged-out users, add random posters to categories
+            categories_with_posters = []
+            for category in context['categories']:
+                random_posters = Item.objects.filter(
+                    category=category
+                ).exclude(
+                    poster_url=''
+                ).order_by('?')[:5]
+                categories_with_posters.append({
+                    'category': category,
+                    'random_posters': random_posters,
+                })
+            context['categories_with_posters'] = categories_with_posters
 
         return context
 
