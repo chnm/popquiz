@@ -7,7 +7,7 @@ from django.views import View
 from django.urls import reverse_lazy, reverse
 from django.db.models import Count, Q
 
-from .forms import RegistrationForm
+from .forms import RegistrationForm, LoginForm
 from .models import User
 from votes.models import Vote
 from catalog.models import Item
@@ -86,6 +86,7 @@ class RegisterView(CreateView):
 
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
+    form_class = LoginForm
 
     def get_success_url(self):
         return reverse_lazy('home')
