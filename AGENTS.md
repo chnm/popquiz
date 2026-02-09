@@ -317,6 +317,11 @@ The IMDB scraping in `imdb_utils.py` uses regex parsing of HTML, which can break
 - Update regex patterns in `fetch_movie_data()`
 - IMDB may rate-limit or block requests - 0.5s delay added between requests
 
+**Recent fixes:**
+- Fixed variable name conflict: renamed `html` variable to `page_html` to avoid overwriting the `html` module
+- Enhanced title parsing to strip metadata: removes star ratings (⭐), genres after pipe (|), and years in parentheses
+- IMDB now includes extra metadata in og:title that must be cleaned
+
 ### 2. Genre Field Format
 Genres are stored as comma-separated strings (e.g., "Drama, Thriller, Crime"):
 - When splitting, always use `.split(',')` and `.strip()`
@@ -324,10 +329,13 @@ Genres are stored as comma-separated strings (e.g., "Drama, Thriller, Crime"):
 - Max 3 genres extracted from IMDB to keep it concise
 
 ### 3. Static Files
-- Static directory was in `.gitignore`, but we force-added the founder image
-- Remember to run `uv run python manage.py collectstatic --noinput` for production
-- Founder image uses `{% load static %}` template tag
+- Static directory was in `.gitignore`, but we force-added founder images
+- WhiteNoise is configured for production static file serving
+- Remember to run `uv run python manage.py collectstatic --noinput` after static file changes
+- Current founder image: `founder_transparent.png` (used on home dashboard)
+- `founder.jpg` also exists but not currently used
 - WhiteNoise serves static files in production without needing nginx
+- Static files use cache-busting hashes in production (e.g., `founder_transparent.d6d8442a3c35.png`)
 
 ### 4. Vote Uniqueness
 The `(user, item)` unique constraint means:
@@ -358,6 +366,16 @@ Profile pages with many votes can be slow:
 - Uses `.select_related()` to reduce queries
 - Annotates vote counts for popularity sorting
 - Consider pagination for users with 100+ votes
+
+### 9. Social Media Meta Tags
+The base template includes comprehensive social media meta tags:
+- **SEO**: Meta description for search engines
+- **Open Graph**: For Facebook, LinkedIn sharing (og:title, og:description, og:image, og:url)
+- **Twitter Card**: For Twitter sharing with large image preview
+- **Favicon**: RRCHNM favicon
+- All tags use Django template blocks for per-page customization
+- Default social image: `founder_transparent.png`
+- Individual pages can override meta tags by extending blocks (e.g., `{% block og_title %}Custom Title{% endblock %}`)
 
 ## Git Workflow
 
@@ -414,6 +432,12 @@ git log -1 --stat
 - Debug code or temporary test files
 
 Recent significant commits:
+- Fix IMDB title parsing to strip metadata (ratings, genres, years)
+- Fix variable name conflict in IMDB fetching (html module vs variable)
+- Add Open Graph, Twitter Card, and SEO meta tags
+- Update dashboard to use transparent founder image
+- Add README.md with user-friendly app description
+- AI agent workflow and git commit guidelines documentation
 - WhiteNoise configuration for production static file serving
 - Migration to uv for Python package management
 - Image processing and background removal
