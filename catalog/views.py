@@ -97,6 +97,47 @@ class HomeView(ListView):
 
         context['featured_movie'] = featured_movie
 
+        # Get recent activity (votes and movie additions) for logged-in users
+        if self.request.user.is_authenticated:
+            activities = []
+
+            # Get recent votes (last 20)
+            recent_votes = Vote.objects.exclude(
+                choice=Vote.Choice.NO_ANSWER
+            ).select_related(
+                'user', 'item', 'item__category'
+            ).order_by('-updated_at')[:20]
+
+            for vote in recent_votes:
+                activities.append({
+                    'type': 'vote',
+                    'user': vote.user,
+                    'item': vote.item,
+                    'choice': vote.choice,
+                    'timestamp': vote.updated_at,
+                })
+
+            # Get recently added movies (last 20)
+            recent_additions = Item.objects.exclude(
+                added_by=None
+            ).select_related(
+                'added_by', 'category'
+            ).order_by('-created_at')[:20]
+
+            for item in recent_additions:
+                activities.append({
+                    'type': 'addition',
+                    'user': item.added_by,
+                    'item': item,
+                    'timestamp': item.created_at,
+                })
+
+            # Sort all activities by timestamp (most recent first)
+            activities.sort(key=lambda x: x['timestamp'], reverse=True)
+
+            # Limit to 15 most recent activities
+            context['recent_activities'] = activities[:15]
+
         return context
 
 
