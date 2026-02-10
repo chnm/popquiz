@@ -296,6 +296,12 @@
                     <span class="w-2 h-2 bg-red-500 rounded-full"></span>
                     <span class="text-gray-600">{{ category_data.no_count }}</span>
                 </span>
+                {% if category_data.not_seen_count %}
+                <span class="flex items-center space-x-1">
+                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                    <span class="text-gray-600">{{ category_data.not_seen_count }} not seen</span>
+                </span>
+                {% endif %}
             </div>
         </div>
 
@@ -306,12 +312,13 @@
                 {% if vote.choice == 'yes' %}ring-4 ring-green-500
                 {% elif vote.choice == 'no' %}ring-4 ring-red-500
                 {% elif vote.choice == 'meh' %}ring-4 ring-yellow-500
+                {% elif vote.choice == 'no_answer' %}ring-2 ring-gray-300 opacity-75
                 {% endif %}">
 
                 <!-- Poster Image -->
                 {% if vote.item.poster_url %}
                 <img src="{{ vote.item.poster_url }}" alt="{{ vote.item.title }}"
-                     class="w-full h-full object-cover"
+                     class="w-full h-full object-cover {% if vote.choice == 'no_answer' %}opacity-60{% endif %}"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-8 h-8" fill="#9ca3af" viewBox="0 0 24 24">
@@ -331,6 +338,7 @@
                     {% if vote.choice == 'yes' %}bg-green-500
                     {% elif vote.choice == 'no' %}bg-red-500
                     {% elif vote.choice == 'meh' %}bg-yellow-500
+                    {% elif vote.choice == 'no_answer' %}bg-gray-400
                     {% endif %}">
                     {% if vote.choice == 'yes' %}
                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -343,6 +351,10 @@
                     {% elif vote.choice == 'meh' %}
                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4 10a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    {% elif vote.choice == 'no_answer' %}
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     {% endif %}
                 </div>

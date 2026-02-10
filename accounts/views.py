@@ -117,16 +117,24 @@ class ProfileView(DetailView):
         sort_by = self.request.GET.get('sort', 'title')
         context['current_sort'] = sort_by
 
-        # Get votes with vote counts for popularity sorting
-        votes = Vote.objects.filter(user=profile_user).exclude(
-            choice=Vote.Choice.NO_ANSWER
-        ).select_related('item__category', 'item').annotate(
-            item_vote_count=Count('item__votes')
-        )
+        # For director and genre views, include NO_ANSWER to show movies not yet seen
+        # For other views, exclude NO_ANSWER to only show rated movies
+        if sort_by in ['director', 'genre']:
+            votes = Vote.objects.filter(user=profile_user).select_related(
+                'item__category', 'item'
+            ).annotate(
+                item_vote_count=Count('item__votes')
+            )
+        else:
+            votes = Vote.objects.filter(user=profile_user).exclude(
+                choice=Vote.Choice.NO_ANSWER
+            ).select_related('item__category', 'item').annotate(
+                item_vote_count=Count('item__votes')
+            )
 
         # Group votes by director, genre, or category depending on sort
         if sort_by == 'director':
-            # Group by director
+            # Group by director (includes not-seen movies)
             votes_by_category = {}
             for vote in votes:
                 director = vote.item.director if vote.item.director else 'Unknown Director'
@@ -137,6 +145,7 @@ class ProfileView(DetailView):
                         'yes_count': 0,
                         'no_count': 0,
                         'meh_count': 0,
+                        'not_seen_count': 0,
                     }
                 votes_by_category[director]['votes'].append(vote)
                 if vote.choice == Vote.Choice.YES:
@@ -145,6 +154,8 @@ class ProfileView(DetailView):
                     votes_by_category[director]['no_count'] += 1
                 elif vote.choice == Vote.Choice.MEH:
                     votes_by_category[director]['meh_count'] += 1
+                elif vote.choice == Vote.Choice.NO_ANSWER:
+                    votes_by_category[director]['not_seen_count'] += 1
 
             # Sort directors alphabetically and sort movies within each director by title
             votes_by_category = dict(sorted(votes_by_category.items(), key=lambda x: x[0].lower()))
@@ -152,7 +163,7 @@ class ProfileView(DetailView):
                 director_data['votes'].sort(key=lambda v: v.item.title.lower())
 
         elif sort_by == 'genre':
-            # Group by genre (movies can appear under multiple genres)
+            # Group by genre (movies can appear under multiple genres, includes not-seen)
             votes_by_category = {}
             for vote in votes:
                 genres = vote.item.genre.split(',') if vote.item.genre else ['Unknown Genre']
@@ -167,6 +178,7 @@ class ProfileView(DetailView):
                             'yes_count': 0,
                             'no_count': 0,
                             'meh_count': 0,
+                            'not_seen_count': 0,
                         }
                     # Only add the vote if it's not already in this genre's list
                     if vote not in votes_by_category[genre]['votes']:
@@ -177,6 +189,8 @@ class ProfileView(DetailView):
                             votes_by_category[genre]['no_count'] += 1
                         elif vote.choice == Vote.Choice.MEH:
                             votes_by_category[genre]['meh_count'] += 1
+                        elif vote.choice == Vote.Choice.NO_ANSWER:
+                            votes_by_category[genre]['not_seen_count'] += 1
 
             # Sort genres alphabetically and sort movies within each genre by title
             votes_by_category = dict(sorted(votes_by_category.items(), key=lambda x: x[0].lower()))
