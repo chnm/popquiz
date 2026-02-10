@@ -128,9 +128,21 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-200 text-gray-600 py-4 mt-8">
-        <div class="max-w-6xl mx-auto px-4 text-center">
-            <p>PopQuiz - Team Culture Voting</p>
+    <footer class="bg-gray-200 text-gray-600 py-6 mt-8">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="text-center md:text-left">
+                    <p class="font-medium text-gray-800">PopQuiz - Team Culture Voting</p>
+                    <p class="text-sm text-gray-500">Discover and rank your favorite movies together</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right text-sm text-gray-500">
+                        <p>Created by</p>
+                    </div>
+                    {% load static %}
+                    <img src="{% static 'images/founder_transparent.png' %}" alt="Founder" class="h-16 w-auto">
+                </div>
+            </div>
         </div>
     </footer>
 </body>

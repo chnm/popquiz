@@ -71,6 +71,32 @@ class HomeView(ListView):
                 })
             context['categories_with_posters'] = categories_with_posters
 
+        # Get a random featured movie with vote statistics
+        featured_movie = Item.objects.exclude(
+            poster_url=''
+        ).annotate(
+            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+            total_votes=Count('votes', filter=~Q(votes__choice=Vote.Choice.NO_ANSWER))
+        ).filter(
+            total_votes__gt=0  # Only show movies with at least one vote
+        ).order_by('?').first()
+
+        if featured_movie:
+            # Calculate percentages
+            total = featured_movie.total_votes
+            if total > 0:
+                featured_movie.yes_percent = round((featured_movie.yes_count / total) * 100)
+                featured_movie.no_percent = round((featured_movie.no_count / total) * 100)
+                featured_movie.meh_percent = round((featured_movie.meh_count / total) * 100)
+            else:
+                featured_movie.yes_percent = 0
+                featured_movie.no_percent = 0
+                featured_movie.meh_percent = 0
+
+        context['featured_movie'] = featured_movie
+
         return context
 
 
