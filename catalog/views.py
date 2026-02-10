@@ -546,6 +546,64 @@ class EclecticView(TemplateView):
         return context
 
 
+class DivisiveView(TemplateView):
+    """View showing movies with the most disagreement (high yes AND high no votes)."""
+    template_name = 'catalog/divisive.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = get_object_or_404(Category, slug=self.kwargs['slug'])
+        context['category'] = category
+
+        # Get all items with vote statistics
+        items = Item.objects.filter(category=category).annotate(
+            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
+            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
+            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+        )
+
+        # Calculate divisiveness for each movie
+        divisive_movies = []
+
+        for item in items:
+            total_votes = item.yes_count + item.no_count + item.meh_count
+
+            # Need at least 5 votes to be considered
+            if total_votes >= 5:
+                # Divisiveness score = min(yes, no) - measures how many are on minority side
+                # Higher score = more people on both sides = more divisive
+                divisiveness_score = min(item.yes_count, item.no_count)
+
+                # Calculate percentages
+                yes_percent = round((item.yes_count / total_votes) * 100) if total_votes > 0 else 0
+                no_percent = round((item.no_count / total_votes) * 100) if total_votes > 0 else 0
+                meh_percent = round((item.meh_count / total_votes) * 100) if total_votes > 0 else 0
+
+                divisive_movies.append({
+                    'item': item,
+                    'yes_count': item.yes_count,
+                    'no_count': item.no_count,
+                    'meh_count': item.meh_count,
+                    'total_votes': total_votes,
+                    'divisiveness_score': divisiveness_score,
+                    'yes_percent': yes_percent,
+                    'no_percent': no_percent,
+                    'meh_percent': meh_percent,
+                })
+
+        # Sort by divisiveness score (highest first)
+        divisive_movies.sort(key=lambda x: (
+            -x['divisiveness_score'],  # Most divisive first
+            -x['total_votes'],         # More votes as tiebreaker
+            x['item'].title.lower()
+        ))
+
+        context['divisive_movies'] = divisive_movies
+        context['has_data'] = len(divisive_movies) > 0
+
+        return context
+
+
 class MovieDetailView(TemplateView):
     """View showing how everyone voted on a specific movie."""
     template_name = 'catalog/movie_detail.html'
