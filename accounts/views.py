@@ -414,3 +414,158 @@ class CompareUsersView(View):
             'only_user1': only_user1,
             'only_user2': only_user2,
         })
+
+
+class CompareThreeUsersView(View):
+    """View to compare three users' movie preferences with a 3-way Venn diagram."""
+
+    def get(self, request, username1, username2, username3):
+        user1 = get_object_or_404(User, username=username1)
+        user2 = get_object_or_404(User, username=username2)
+        user3 = get_object_or_404(User, username=username3)
+
+        # Get votes for all three users
+        user1_votes = {
+            v.item_id: {'choice': v.choice, 'item': v.item}
+            for v in Vote.objects.filter(user=user1).exclude(
+                choice=Vote.Choice.NO_ANSWER
+            ).select_related('item', 'item__category')
+        }
+        user2_votes = {
+            v.item_id: {'choice': v.choice, 'item': v.item}
+            for v in Vote.objects.filter(user=user2).exclude(
+                choice=Vote.Choice.NO_ANSWER
+            ).select_related('item', 'item__category')
+        }
+        user3_votes = {
+            v.item_id: {'choice': v.choice, 'item': v.item}
+            for v in Vote.objects.filter(user=user3).exclude(
+                choice=Vote.Choice.NO_ANSWER
+            ).select_related('item', 'item__category')
+        }
+
+        # Seven regions for 3-way Venn diagram
+        only_user1 = []
+        only_user2 = []
+        only_user3 = []
+        user1_and_2 = {'all_love': [], 'all_hate': [], 'all_meh': [], 'mixed': []}
+        user1_and_3 = {'all_love': [], 'all_hate': [], 'all_meh': [], 'mixed': []}
+        user2_and_3 = {'all_love': [], 'all_hate': [], 'all_meh': [], 'mixed': []}
+        all_three = {'all_love': [], 'all_hate': [], 'all_meh': [], 'mixed': []}
+
+        all_items = set(user1_votes.keys()) | set(user2_votes.keys()) | set(user3_votes.keys())
+
+        for item_id in all_items:
+            in_user1 = item_id in user1_votes
+            in_user2 = item_id in user2_votes
+            in_user3 = item_id in user3_votes
+
+            # Determine which region this item belongs to
+            if in_user1 and in_user2 and in_user3:
+                # All three watched
+                v1 = user1_votes[item_id]['choice']
+                v2 = user2_votes[item_id]['choice']
+                v3 = user3_votes[item_id]['choice']
+                item = user1_votes[item_id]['item']
+
+                if v1 == v2 == v3:
+                    if v1 == Vote.Choice.YES:
+                        all_three['all_love'].append(item)
+                    elif v1 == Vote.Choice.NO:
+                        all_three['all_hate'].append(item)
+                    else:
+                        all_three['all_meh'].append(item)
+                else:
+                    all_three['mixed'].append({'item': item, 'v1': v1, 'v2': v2, 'v3': v3})
+
+            elif in_user1 and in_user2 and not in_user3:
+                # User 1 & 2 only
+                v1 = user1_votes[item_id]['choice']
+                v2 = user2_votes[item_id]['choice']
+                item = user1_votes[item_id]['item']
+
+                if v1 == v2:
+                    if v1 == Vote.Choice.YES:
+                        user1_and_2['all_love'].append(item)
+                    elif v1 == Vote.Choice.NO:
+                        user1_and_2['all_hate'].append(item)
+                    else:
+                        user1_and_2['all_meh'].append(item)
+                else:
+                    user1_and_2['mixed'].append({'item': item, 'v1': v1, 'v2': v2})
+
+            elif in_user1 and in_user3 and not in_user2:
+                # User 1 & 3 only
+                v1 = user1_votes[item_id]['choice']
+                v3 = user3_votes[item_id]['choice']
+                item = user1_votes[item_id]['item']
+
+                if v1 == v3:
+                    if v1 == Vote.Choice.YES:
+                        user1_and_3['all_love'].append(item)
+                    elif v1 == Vote.Choice.NO:
+                        user1_and_3['all_hate'].append(item)
+                    else:
+                        user1_and_3['all_meh'].append(item)
+                else:
+                    user1_and_3['mixed'].append({'item': item, 'v1': v1, 'v3': v3})
+
+            elif in_user2 and in_user3 and not in_user1:
+                # User 2 & 3 only
+                v2 = user2_votes[item_id]['choice']
+                v3 = user3_votes[item_id]['choice']
+                item = user2_votes[item_id]['item']
+
+                if v2 == v3:
+                    if v2 == Vote.Choice.YES:
+                        user2_and_3['all_love'].append(item)
+                    elif v2 == Vote.Choice.NO:
+                        user2_and_3['all_hate'].append(item)
+                    else:
+                        user2_and_3['all_meh'].append(item)
+                else:
+                    user2_and_3['mixed'].append({'item': item, 'v2': v2, 'v3': v3})
+
+            elif in_user1 and not in_user2 and not in_user3:
+                only_user1.append(user1_votes[item_id]['item'])
+            elif in_user2 and not in_user1 and not in_user3:
+                only_user2.append(user2_votes[item_id]['item'])
+            elif in_user3 and not in_user1 and not in_user2:
+                only_user3.append(user3_votes[item_id]['item'])
+
+        # Sort all lists by title
+        only_user1.sort(key=lambda x: x.title.lower())
+        only_user2.sort(key=lambda x: x.title.lower())
+        only_user3.sort(key=lambda x: x.title.lower())
+
+        for region in [user1_and_2, user1_and_3, user2_and_3, all_three]:
+            for category in ['all_love', 'all_hate', 'all_meh']:
+                region[category].sort(key=lambda x: x.title.lower())
+            region['mixed'].sort(key=lambda x: x['item'].title.lower())
+
+        # Calculate statistics
+        total_all_three = (len(all_three['all_love']) + len(all_three['all_hate']) +
+                          len(all_three['all_meh']) + len(all_three['mixed']))
+        total_user1_and_2 = (len(user1_and_2['all_love']) + len(user1_and_2['all_hate']) +
+                            len(user1_and_2['all_meh']) + len(user1_and_2['mixed']))
+        total_user1_and_3 = (len(user1_and_3['all_love']) + len(user1_and_3['all_hate']) +
+                            len(user1_and_3['all_meh']) + len(user1_and_3['mixed']))
+        total_user2_and_3 = (len(user2_and_3['all_love']) + len(user2_and_3['all_hate']) +
+                            len(user2_and_3['all_meh']) + len(user2_and_3['mixed']))
+
+        return render(request, 'accounts/compare_three.html', {
+            'user1': user1,
+            'user2': user2,
+            'user3': user3,
+            'only_user1': only_user1,
+            'only_user2': only_user2,
+            'only_user3': only_user3,
+            'user1_and_2': user1_and_2,
+            'user1_and_3': user1_and_3,
+            'user2_and_3': user2_and_3,
+            'all_three': all_three,
+            'total_all_three': total_all_three,
+            'total_user1_and_2': total_user1_and_2,
+            'total_user1_and_3': total_user1_and_3,
+            'total_user2_and_3': total_user2_and_3,
+        })
