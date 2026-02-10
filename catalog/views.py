@@ -118,16 +118,15 @@ class HomeView(ListView):
                 })
 
             # Get recently added movies (last 20)
-            recent_additions = Item.objects.exclude(
-                added_by=None
-            ).select_related(
+            # Include all movies, even those added by scripts (added_by=None)
+            recent_additions = Item.objects.select_related(
                 'added_by', 'category'
             ).order_by('-created_at')[:20]
 
             for item in recent_additions:
                 activities.append({
                     'type': 'addition',
-                    'user': item.added_by,
+                    'user': item.added_by,  # Will be None for script-added movies
                     'item': item,
                     'timestamp': item.created_at,
                 })

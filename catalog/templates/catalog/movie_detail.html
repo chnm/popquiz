@@ -36,6 +36,19 @@
             {% if item.year %}
                 <p class="text-xl text-gray-500 mb-4">{{ item.year }}</p>
             {% endif %}
+
+            <!-- Added By -->
+            <div class="mb-4">
+                <span class="text-sm text-gray-500">Added by: </span>
+                {% if item.added_by %}
+                    <a href="{% url 'profile' item.added_by.username %}" class="text-sm text-indigo-600 hover:underline">
+                        {{ item.added_by|display_name:request.user }}
+                    </a>
+                {% else %}
+                    <span class="text-sm text-gray-700 font-medium">Claude</span>
+                {% endif %}
+            </div>
+
             {% if item.imdb_url %}
                 <a href="{{ item.imdb_url }}" target="_blank" class="text-indigo-600 hover:underline mb-6 inline-block">View on IMDB</a>
             {% endif %}
