@@ -295,13 +295,45 @@
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Team Members</h2>
         <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100">
             {% for member in users %}
-                <a href="{% url 'profile' member.username %}" class="block px-4 py-3 hover:bg-gray-50 transition duration-200">
+                <a href="{% url 'profile' member.username %}" class="team-member block px-4 py-3 hover:bg-gray-50 transition duration-200 {% if forloop.counter > 5 %}hidden{% endif %}" data-index="{{ forloop.counter }}">
                     <span class="text-gray-800">{{ member.first_name }} {{ member.last_name }}</span>
                 </a>
             {% empty %}
                 <p class="px-4 py-3 text-gray-600">No team members yet.</p>
             {% endfor %}
         </div>
+        {% if users|length > 5 %}
+        <button id="toggle-members" class="mt-3 w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-2 hover:bg-gray-50 rounded-md transition duration-200">
+            Show more ({{ users|length|add:"-5" }} hidden)
+        </button>
+        {% endif %}
+        <script>
+            (function() {
+                const toggleBtn = document.getElementById('toggle-members');
+                if (!toggleBtn) return;
+
+                let expanded = false;
+                const items = document.querySelectorAll('.team-member');
+                const totalCount = items.length;
+
+                toggleBtn.addEventListener('click', function() {
+                    expanded = !expanded;
+                    items.forEach(function(item) {
+                        const index = parseInt(item.getAttribute('data-index'));
+                        if (index > 5) {
+                            item.classList.toggle('hidden');
+                        }
+                    });
+
+                    if (expanded) {
+                        toggleBtn.textContent = 'Show less';
+                    } else {
+                        toggleBtn.textContent = 'Show more (' + (totalCount - 5) + ' hidden)';
+                    }
+                });
+            })();
+        </script>
+        {% endif %}
     </div>
 
     <!-- Recent Activity -->
@@ -310,7 +342,7 @@
         {% if recent_activities %}
         <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100">
             {% for activity in recent_activities %}
-            <div class="px-4 py-3 hover:bg-gray-50 transition duration-200">
+            <div class="activity-item px-4 py-3 hover:bg-gray-50 transition duration-200 {% if forloop.counter > 5 %}hidden{% endif %}" data-index="{{ forloop.counter }}">
                 <div class="flex items-start gap-3">
                     <!-- Activity Icon -->
                     <div class="flex-shrink-0 mt-1">
@@ -373,6 +405,37 @@
             </div>
             {% endfor %}
         </div>
+        {% if recent_activities|length > 5 %}
+        <button id="toggle-activity" class="mt-3 w-full text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium py-2 hover:bg-gray-50 rounded-md transition duration-200">
+            Show more ({{ recent_activities|length|add:"-5" }} hidden)
+        </button>
+        {% endif %}
+        <script>
+            (function() {
+                const toggleBtn = document.getElementById('toggle-activity');
+                if (!toggleBtn) return;
+
+                let expanded = false;
+                const items = document.querySelectorAll('.activity-item');
+                const totalCount = items.length;
+
+                toggleBtn.addEventListener('click', function() {
+                    expanded = !expanded;
+                    items.forEach(function(item) {
+                        const index = parseInt(item.getAttribute('data-index'));
+                        if (index > 5) {
+                            item.classList.toggle('hidden');
+                        }
+                    });
+
+                    if (expanded) {
+                        toggleBtn.textContent = 'Show less';
+                    } else {
+                        toggleBtn.textContent = 'Show more (' + (totalCount - 5) + ' hidden)';
+                    }
+                });
+            })();
+        </script>
         {% else %}
         <div class="bg-white rounded-lg shadow-md p-5">
             <p class="text-gray-600 text-sm">No recent activity yet.</p>

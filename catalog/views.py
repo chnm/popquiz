@@ -135,8 +135,8 @@ class HomeView(ListView):
             # Sort all activities by timestamp (most recent first)
             activities.sort(key=lambda x: x['timestamp'], reverse=True)
 
-            # Limit to 6 most recent activities
-            context['recent_activities'] = activities[:6]
+            # Limit to 15 most recent activities
+            context['recent_activities'] = activities[:15]
 
         return context
 
