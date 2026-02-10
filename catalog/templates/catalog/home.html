@@ -14,7 +14,7 @@
 
     <!-- Featured Movie Section -->
     {% if featured_movie %}
-    <div class="flex-grow">
+    <div class="flex-grow lg:max-w-3xl">
         <a href="{% url 'movie_detail' featured_movie.category.slug featured_movie.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
             <!-- Background Poster -->
             <div class="absolute inset-0">
