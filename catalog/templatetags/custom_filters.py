@@ -15,14 +15,18 @@ def display_name(user, viewer):
     if not user:
         return ""
 
+    # Safely get first_name and last_name (handle None or empty strings)
+    first_name = (user.first_name or "").strip()
+    last_name = (user.last_name or "").strip()
+
     # Fallback to username if first name is not set
-    if not user.first_name:
+    if not first_name:
         return user.username
 
     if viewer and viewer.is_authenticated:
         # Show full name to authenticated users
-        return f"{user.first_name} {user.last_name}" if user.last_name else user.first_name
+        return f"{first_name} {last_name}" if last_name else first_name
     else:
         # Show abbreviated name to unauthenticated users
-        last_initial = user.last_name[0] if user.last_name else ""
-        return f"{user.first_name} {last_initial}"
+        last_initial = last_name[0] if last_name else ""
+        return f"{first_name} {last_initial}".strip()
