@@ -191,17 +191,22 @@ def search_directors_by_name(director_name):
                 continue
             seen_ids.add(imdb_id)
 
-            # Try to extract "known for" information from nearby context
+            # Try to extract profession information from nearby context
             start_pos = max(0, match.start() - 1000)
             end_pos = min(len(page_html), match.end() + 1000)
             context = page_html[start_pos:end_pos]
 
-            # Look for credits/known-for text
+            # Look for profession data in nlib-professions element
             known_for = ""
-            # Try to find text that describes their work
-            known_for_match = re.search(r'<li[^>]*>([^<]+(?:Director|Actor|Producer)[^<]*)</li>', context)
-            if known_for_match:
-                known_for = html.unescape(known_for_match.group(1)).strip()
+            professions_match = re.search(r'data-testid="nlib-professions"[^>]*>(.*?)</ul>', context, re.DOTALL)
+            if professions_match:
+                professions_html = professions_match.group(1)
+                # Extract all <li> items
+                profession_items = re.findall(r'<li[^>]*>([^<]+)</li>', professions_html)
+                if profession_items:
+                    # Clean and join professions
+                    professions = [html.unescape(p.strip()) for p in profession_items]
+                    known_for = ', '.join(professions)
 
             results.append({
                 'name': name,
