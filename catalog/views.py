@@ -345,6 +345,15 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 skipped_count += 1
                 continue
 
+            # CRITICAL: Verify this person was actually the director of this movie
+            # Many people (like John Hughes) wrote/produced movies they didn't direct
+            movie_director = movie_data.get('director') or ''
+            if movie_director and director_name not in movie_director:
+                # Director name doesn't match - this person was NOT the director
+                # They might have been the writer or producer
+                skipped_count += 1
+                continue
+
             # Create the item
             Item.objects.create(
                 category=category,
