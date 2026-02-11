@@ -148,3 +148,108 @@ def fetch_movie_data(imdb_url):
 
     except requests.RequestException:
         return None
+
+
+def extract_director_id(url):
+    """
+    Extract IMDB director/person ID from a URL.
+    Accepts URLs like:
+    - https://www.imdb.com/name/nm0001392/
+    - https://imdb.com/name/nm0001392
+    - nm0001392 (just the ID)
+    """
+    if not url:
+        return None
+
+    # If it's already just an ID
+    if re.match(r'^nm\d+$', url.strip()):
+        return url.strip()
+
+    # Extract from URL
+    match = re.search(r'(nm\d+)', url)
+    if match:
+        return match.group(1)
+
+    return None
+
+
+def fetch_director_filmography(director_url):
+    """
+    Fetch a director's filmography from their IMDB page.
+
+    Returns a dict with:
+    - name: str (director's name)
+    - movies: list of dicts, each with:
+      - title: str
+      - year: int or None
+      - imdb_id: str
+
+    Returns None if fetch fails.
+    """
+    director_id = extract_director_id(director_url)
+    if not director_id:
+        return None
+
+    canonical_url = f"https://www.imdb.com/name/{director_id}/"
+
+    try:
+        resp = requests.get(canonical_url, headers=HEADERS, timeout=15)
+        if resp.status_code != 200:
+            return None
+
+        page_html = resp.text
+
+        # Extract director name
+        name = None
+        name_match = re.search(r'<meta property="og:title" content="([^"]+)"', page_html)
+        if name_match:
+            name = name_match.group(1).replace(' - IMDb', '').strip()
+
+        if not name:
+            return None
+
+        # Extract filmography - look for director credits
+        movies = []
+
+        # Find all movie links with year information
+        # Pattern matches: title/tt1234567/... and extracts the ID and title
+        movie_pattern = r'<a href="/title/(tt\d+)/[^"]*"[^>]*>([^<]+)</a>'
+        year_pattern = r'<span class="year_column">\s*(\d{4})\s*</span>'
+
+        # Look for director filmography section
+        director_section = re.search(r'id="director".*?<div class="filmo-rows.*?</div>\s*</div>', page_html, re.DOTALL)
+
+        if director_section:
+            section_html = director_section.group(0)
+
+            # Find all movies in this section
+            movie_matches = re.finditer(movie_pattern, section_html)
+            for match in movie_matches:
+                imdb_id = match.group(1)
+                title = html.unescape(match.group(2)).strip()
+
+                # Try to find the year for this movie (look nearby in the HTML)
+                # Get a snippet around the match
+                start_pos = max(0, match.start() - 200)
+                end_pos = min(len(section_html), match.end() + 200)
+                context = section_html[start_pos:end_pos]
+
+                year_match = re.search(r'<span class="year_column"[^>]*>\s*(\d{4})', context)
+                year = int(year_match.group(1)) if year_match else None
+
+                movies.append({
+                    'title': title,
+                    'year': year,
+                    'imdb_id': imdb_id,
+                })
+
+        # Sort by year (newest first), then by title
+        movies.sort(key=lambda x: (-x['year'] if x['year'] else 0, x['title'].lower()))
+
+        return {
+            'name': name,
+            'movies': movies,
+        }
+
+    except requests.RequestException:
+        return None

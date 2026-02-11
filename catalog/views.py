@@ -11,7 +11,7 @@ from django.db.models import Count, Q, Case, When, IntegerField, Value
 from accounts.models import User
 from .models import Category, Item
 from .forms import AddItemForm
-from .imdb_utils import fetch_movie_data
+from .imdb_utils import fetch_movie_data, fetch_director_filmography
 from votes.models import Vote
 
 
@@ -235,6 +235,116 @@ class AddItemView(LoginRequiredMixin, View):
             'form': form,
             'category': category,
         })
+
+
+class AddByDirectorView(LoginRequiredMixin, View):
+    """View to add multiple movies by a director."""
+
+    def get(self, request, slug):
+        category = get_object_or_404(Category, slug=slug)
+        return render(request, 'catalog/add_by_director.html', {
+            'category': category,
+        })
+
+    def post(self, request, slug):
+        category = get_object_or_404(Category, slug=slug)
+
+        # Check if we're fetching director filmography or adding selected movies
+        if 'director_url' in request.POST:
+            # Step 1: Fetch director's filmography
+            director_url = request.POST.get('director_url', '').strip()
+
+            if not director_url:
+                messages.error(request, 'Please enter a director IMDB URL.')
+                return render(request, 'catalog/add_by_director.html', {
+                    'category': category,
+                })
+
+            # Fetch filmography
+            filmography = fetch_director_filmography(director_url)
+
+            if not filmography:
+                messages.error(request, 'Could not fetch director filmography. Please check the URL and try again.')
+                return render(request, 'catalog/add_by_director.html', {
+                    'category': category,
+                    'director_url': director_url,
+                })
+
+            # Check which movies already exist in database
+            existing_imdb_ids = set(
+                Item.objects.filter(
+                    imdb_id__in=[m['imdb_id'] for m in filmography['movies']]
+                ).values_list('imdb_id', flat=True)
+            )
+
+            # Mark movies as existing
+            for movie in filmography['movies']:
+                movie['already_exists'] = movie['imdb_id'] in existing_imdb_ids
+
+            return render(request, 'catalog/add_by_director.html', {
+                'category': category,
+                'director_url': director_url,
+                'director_name': filmography['name'],
+                'movies': filmography['movies'],
+            })
+
+        elif 'selected_movies' in request.POST:
+            # Step 2: Add selected movies
+            selected_imdb_ids = request.POST.getlist('selected_movies')
+            director_name = request.POST.get('director_name', 'Unknown')
+
+            if not selected_imdb_ids:
+                messages.warning(request, 'No movies selected.')
+                return redirect('category_detail', slug=slug)
+
+            added_count = 0
+            skipped_count = 0
+            failed_count = 0
+
+            for imdb_id in selected_imdb_ids:
+                # Check if already exists
+                if Item.objects.filter(imdb_id=imdb_id).exists():
+                    skipped_count += 1
+                    continue
+
+                # Fetch full movie data
+                movie_data = fetch_movie_data(imdb_id)
+
+                if not movie_data:
+                    failed_count += 1
+                    continue
+
+                # Create the item
+                Item.objects.create(
+                    category=category,
+                    title=movie_data['title'],
+                    year=movie_data['year'],
+                    director=movie_data.get('director', ''),
+                    genre=movie_data.get('genre', ''),
+                    imdb_id=movie_data['imdb_id'],
+                    imdb_url=movie_data['imdb_url'],
+                    poster_url=movie_data['poster_url'] or '',
+                    added_by=request.user,
+                )
+                added_count += 1
+
+            # Show summary message
+            message_parts = []
+            if added_count > 0:
+                message_parts.append(f'Added {added_count} movie(s)')
+            if skipped_count > 0:
+                message_parts.append(f'skipped {skipped_count} (already exist)')
+            if failed_count > 0:
+                message_parts.append(f'{failed_count} failed')
+
+            if added_count > 0:
+                messages.success(request, f'{director_name}: {", ".join(message_parts)}')
+            else:
+                messages.warning(request, f'{director_name}: {", ".join(message_parts)}')
+
+            return redirect('category_detail', slug=slug)
+
+        return redirect('category_detail', slug=slug)
 
 
 class SwipeVoteView(LoginRequiredMixin, TemplateView):

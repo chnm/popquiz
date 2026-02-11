@@ -32,6 +32,12 @@
             <a href="{% url 'add_item' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
                 Add Item
             </a>
+            <a href="{% url 'add_by_director' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                By Director
+            </a>
             {% endif %}
         </div>
     </div>
