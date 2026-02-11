@@ -11,7 +11,7 @@ from django.db.models import Count, Q, Case, When, IntegerField, Value
 from accounts.models import User
 from .models import Category, Item
 from .forms import AddItemForm
-from .imdb_utils import fetch_movie_data, fetch_director_filmography, search_directors_by_name
+from .imdb_utils import fetch_movie_data
 from votes.models import Vote
 
 
@@ -235,133 +235,6 @@ class AddItemView(LoginRequiredMixin, View):
             'form': form,
             'category': category,
         })
-
-
-class AddByDirectorView(LoginRequiredMixin, View):
-    """View to add all movies by a director automatically by searching IMDB by name."""
-
-    def get(self, request, slug):
-        category = get_object_or_404(Category, slug=slug)
-        return render(request, 'catalog/add_by_director.html', {
-            'category': category,
-        })
-
-    def post(self, request, slug):
-        category = get_object_or_404(Category, slug=slug)
-
-        # Check if user is selecting from search results
-        if 'director_id' in request.POST:
-            return self._add_movies_by_director_id(request, category, slug)
-
-        # Otherwise, search for director by name
-        director_name = request.POST.get('director_name', '').strip()
-
-        if not director_name:
-            messages.error(request, 'Please enter a director name.')
-            return render(request, 'catalog/add_by_director.html', {
-                'category': category,
-            })
-
-        # Search IMDB for directors matching this name
-        search_results = search_directors_by_name(director_name)
-
-        if not search_results:
-            messages.error(request, f'No directors found matching "{director_name}". Please check the spelling and try again.')
-            return render(request, 'catalog/add_by_director.html', {
-                'category': category,
-                'director_name': director_name,
-            })
-
-        # If exactly one result, proceed automatically
-        if len(search_results) == 1:
-            director_id = search_results[0]['imdb_id']
-            return self._add_movies_by_director_id(request, category, slug, director_id)
-
-        # Multiple results - show selection page
-        return render(request, 'catalog/add_by_director.html', {
-            'category': category,
-            'director_name': director_name,
-            'search_results': search_results,
-        })
-
-    def _add_movies_by_director_id(self, request, category, slug, director_id=None):
-        """Helper method to add movies once director is determined."""
-        if director_id is None:
-            director_id = request.POST.get('director_id', '').strip()
-
-        if not director_id:
-            messages.error(request, 'No director selected.')
-            return redirect('add_by_director', slug=slug)
-
-        # Fetch filmography using the director's IMDB ID
-        filmography = fetch_director_filmography(director_id)
-
-        if not filmography:
-            messages.error(request, 'Could not fetch director filmography. Please try again.')
-            return redirect('add_by_director', slug=slug)
-
-        director_name = filmography['name']
-        movies = filmography['movies']
-
-        # Automatically add all movies that don't already exist
-        added_count = 0
-        skipped_count = 0
-        failed_count = 0
-
-        for movie in movies:
-            imdb_id = movie['imdb_id']
-
-            # Check if already exists
-            if Item.objects.filter(imdb_id=imdb_id).exists():
-                skipped_count += 1
-                continue
-
-            # Fetch full movie data
-            movie_data = fetch_movie_data(imdb_id)
-
-            if not movie_data:
-                failed_count += 1
-                continue
-
-            # Create the item
-            Item.objects.create(
-                category=category,
-                title=movie_data['title'],
-                year=movie_data['year'],
-                director=movie_data.get('director') or '',
-                genre=movie_data.get('genre') or '',
-                imdb_id=movie_data['imdb_id'],
-                imdb_url=movie_data['imdb_url'],
-                poster_url=movie_data['poster_url'] or '',
-                added_by=request.user,
-            )
-            added_count += 1
-
-        # Show summary message
-        if added_count > 0:
-            # Success message when movies were added
-            message = f'I added {added_count} {director_name} movie{"s" if added_count != 1 else ""} to {category.name}!'
-            if skipped_count > 0:
-                message += f' ({skipped_count} {"was" if skipped_count == 1 else "were"} already in the database)'
-            messages.success(request, message)
-        elif skipped_count > 0 and failed_count == 0:
-            # Info message when all movies already exist
-            messages.info(request, f'All {skipped_count} {director_name} movies are already in your {category.name} collection.')
-        elif failed_count > 0 and added_count == 0:
-            # Warning when no movies could be added
-            messages.warning(request, f'Could not add {director_name} movies. {failed_count} movie{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
-        else:
-            # Mixed results
-            message_parts = []
-            if added_count > 0:
-                message_parts.append(f'added {added_count}')
-            if skipped_count > 0:
-                message_parts.append(f'skipped {skipped_count} (already in database)')
-            if failed_count > 0:
-                message_parts.append(f'{failed_count} failed')
-            messages.info(request, f'{director_name}: {", ".join(message_parts)}')
-
-        return redirect('home')
 
 
 class SwipeVoteView(LoginRequiredMixin, TemplateView):
