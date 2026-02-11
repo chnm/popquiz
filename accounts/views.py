@@ -9,27 +9,34 @@ from django.db.models import Count, Q
 
 from .forms import RegistrationForm, LoginForm
 from .models import User
-from votes.models import Vote
+from ratings.models import Rating
 from catalog.models import Item
 
 
 def calculate_compatibility(user1, user2):
     """
-    Calculate compatibility between two users based on their votes.
-    Returns a dict with compatibility score and vote breakdowns.
+    Calculate compatibility between two users based on their ratings.
+    Only compares love (LOVED) and hate (HATED) ratings.
+    Returns a dict with compatibility score and rating breakdowns.
     """
-    # Get votes for both users (excluding "haven't watched")
-    user1_votes = {
-        v.item_id: v.choice
-        for v in Vote.objects.filter(user=user1).exclude(choice=Vote.Choice.NO_ANSWER)
+    # Get ratings for both users (only LOVED and HATED)
+    user1_ratings = {
+        r.item_id: r.rating
+        for r in Rating.objects.filter(
+            user=user1,
+            rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+        )
     }
-    user2_votes = {
-        v.item_id: v.choice
-        for v in Vote.objects.filter(user=user2).exclude(choice=Vote.Choice.NO_ANSWER)
+    user2_ratings = {
+        r.item_id: r.rating
+        for r in Rating.objects.filter(
+            user=user2,
+            rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+        )
     }
 
-    # Find common items (both have watched)
-    common_items = set(user1_votes.keys()) & set(user2_votes.keys())
+    # Find common items (both have rated with love or hate)
+    common_items = set(user1_ratings.keys()) & set(user2_ratings.keys())
 
     if not common_items:
         return {
@@ -39,25 +46,22 @@ def calculate_compatibility(user1, user2):
             'disagree_count': 0,
         }
 
-    # Count agreements and disagreements
-    both_yes = 0
-    both_no = 0
-    both_meh = 0
+    # Count agreements and disagreements (only love/hate)
+    both_love = 0
+    both_hate = 0
     disagree = 0
 
     for item_id in common_items:
-        v1, v2 = user1_votes[item_id], user2_votes[item_id]
-        if v1 == v2:
-            if v1 == Vote.Choice.YES:
-                both_yes += 1
-            elif v1 == Vote.Choice.NO:
-                both_no += 1
-            else:
-                both_meh += 1
+        r1, r2 = user1_ratings[item_id], user2_ratings[item_id]
+        if r1 == r2:
+            if r1 == Rating.Level.LOVED:
+                both_love += 1
+            else:  # HATED
+                both_hate += 1
         else:
             disagree += 1
 
-    agree_count = both_yes + both_no + both_meh
+    agree_count = both_love + both_hate
     total = len(common_items)
     score = round((agree_count / total) * 100) if total > 0 else 0
 
@@ -66,9 +70,8 @@ def calculate_compatibility(user1, user2):
         'common_count': total,
         'agree_count': agree_count,
         'disagree_count': disagree,
-        'both_yes': both_yes,
-        'both_no': both_no,
-        'both_meh': both_meh,
+        'both_love': both_love,
+        'both_hate': both_hate,
     }
 
 
@@ -120,19 +123,19 @@ class ProfileView(DetailView):
         sort_by = self.request.GET.get('sort', 'title')
         context['current_sort'] = sort_by
 
-        # For director and genre views, include NO_ANSWER to show movies not yet seen
-        # For other views, exclude NO_ANSWER to only show rated movies
+        # For director and genre views, include NO_RATING to show movies not yet rated
+        # For other views, exclude NO_RATING to only show rated movies
         if sort_by in ['director', 'genre']:
-            votes = Vote.objects.filter(user=profile_user).select_related(
+            ratings = Rating.objects.filter(user=profile_user).select_related(
                 'item__category', 'item'
             ).annotate(
-                item_vote_count=Count('item__votes')
+                item_rating_count=Count('item__ratings')
             )
         else:
-            votes = Vote.objects.filter(user=profile_user).exclude(
-                choice=Vote.Choice.NO_ANSWER
+            ratings = Rating.objects.filter(user=profile_user).exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related('item__category', 'item').annotate(
-                item_vote_count=Count('item__votes')
+                item_rating_count=Count('item__ratings')
             )
 
         # Group votes by director, genre, or category depending on sort

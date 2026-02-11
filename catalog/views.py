@@ -12,7 +12,7 @@ from accounts.models import User
 from .models import Category, Item
 from .forms import AddItemForm
 from .imdb_utils import fetch_movie_data, search_directors_by_name, fetch_director_filmography
-from votes.models import Vote
+from ratings.models import Rating
 
 
 class HomeView(ListView):
@@ -40,8 +40,8 @@ class HomeView(ListView):
             categories_with_progress = []
             for category in context['categories']:
                 total_items = category.item_count
-                # Count all votes (including NO_ANSWER) - any response counts as "handled"
-                responded_count = Vote.objects.filter(
+                # Count all ratings (including NO_RATING) - any response counts as "handled"
+                responded_count = Rating.objects.filter(
                     user=self.request.user,
                     item__category=category
                 ).count()
@@ -79,50 +79,56 @@ class HomeView(ListView):
                 })
             context['categories_with_posters'] = categories_with_posters
 
-        # Get a random featured movie with vote statistics
+        # Get a random featured movie with rating statistics
         featured_movie = Item.objects.exclude(
             poster_url=''
         ).annotate(
-            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
-            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
-            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
-            total_votes=Count('votes', filter=~Q(votes__choice=Vote.Choice.NO_ANSWER))
+            loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
+            liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
+            okay_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.OKAY)),
+            disliked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.DISLIKED)),
+            hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
+            total_ratings=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING))
         ).filter(
-            total_votes__gt=0  # Only show movies with at least one vote
+            total_ratings__gt=0  # Only show movies with at least one rating
         ).order_by('?').first()
 
         if featured_movie:
             # Calculate percentages
-            total = featured_movie.total_votes
+            total = featured_movie.total_ratings
             if total > 0:
-                featured_movie.yes_percent = round((featured_movie.yes_count / total) * 100)
-                featured_movie.no_percent = round((featured_movie.no_count / total) * 100)
-                featured_movie.meh_percent = round((featured_movie.meh_count / total) * 100)
+                featured_movie.loved_percent = round((featured_movie.loved_count / total) * 100)
+                featured_movie.liked_percent = round((featured_movie.liked_count / total) * 100)
+                featured_movie.okay_percent = round((featured_movie.okay_count / total) * 100)
+                featured_movie.disliked_percent = round((featured_movie.disliked_count / total) * 100)
+                featured_movie.hated_percent = round((featured_movie.hated_count / total) * 100)
             else:
-                featured_movie.yes_percent = 0
-                featured_movie.no_percent = 0
-                featured_movie.meh_percent = 0
+                featured_movie.loved_percent = 0
+                featured_movie.liked_percent = 0
+                featured_movie.okay_percent = 0
+                featured_movie.disliked_percent = 0
+                featured_movie.hated_percent = 0
 
         context['featured_movie'] = featured_movie
 
-        # Get recent activity (votes and movie additions) for logged-in users
+        # Get recent activity (ratings and movie additions) for logged-in users
         if self.request.user.is_authenticated:
             activities = []
 
-            # Get recent votes (last 20)
-            recent_votes = Vote.objects.exclude(
-                choice=Vote.Choice.NO_ANSWER
+            # Get recent ratings (last 20)
+            recent_ratings = Rating.objects.exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related(
                 'user', 'item', 'item__category'
             ).order_by('-updated_at')[:20]
 
-            for vote in recent_votes:
+            for rating in recent_ratings:
                 activities.append({
-                    'type': 'vote',
-                    'user': vote.user,
-                    'item': vote.item,
-                    'choice': vote.choice,
-                    'timestamp': vote.updated_at,
+                    'type': 'rating',
+                    'user': rating.user,
+                    'item': rating.item,
+                    'rating': rating.rating,
+                    'timestamp': rating.updated_at,
                 })
 
             # Get recently added movies (last 20)
@@ -158,31 +164,33 @@ class CategoryDetailView(DetailView):
         items = self.object.items.all()
 
         if self.request.user.is_authenticated:
-            user_votes = Vote.objects.filter(
+            user_ratings = Rating.objects.filter(
                 user=self.request.user,
                 item__in=items
             ).select_related('item')
-            votes_dict = {vote.item_id: vote.choice for vote in user_votes}
+            ratings_dict = {rating.item_id: rating.rating for rating in user_ratings}
         else:
-            votes_dict = {}
+            ratings_dict = {}
 
-        items_with_votes = []
+        items_with_ratings = []
         for item in items:
-            items_with_votes.append({
+            items_with_ratings.append({
                 'item': item,
-                'vote': votes_dict.get(item.id, Vote.Choice.NO_ANSWER)
+                'rating': ratings_dict.get(item.id, Rating.Level.NO_RATING)
             })
 
-        # Sort items by vote preference: Yes, Meh, No, Not Seen
-        vote_order = {
-            Vote.Choice.YES: 0,
-            Vote.Choice.MEH: 1,
-            Vote.Choice.NO: 2,
-            Vote.Choice.NO_ANSWER: 3,
+        # Sort items by rating preference: Loved, Liked, Okay, Disliked, Hated, Not Rated
+        rating_order = {
+            Rating.Level.LOVED: 0,
+            Rating.Level.LIKED: 1,
+            Rating.Level.OKAY: 2,
+            Rating.Level.DISLIKED: 3,
+            Rating.Level.HATED: 4,
+            Rating.Level.NO_RATING: 5,
         }
-        items_with_votes.sort(key=lambda x: (vote_order.get(x['vote'], 3), x['item'].title.lower()))
+        items_with_ratings.sort(key=lambda x: (rating_order.get(x['rating'], 5), x['item'].title.lower()))
 
-        context['items_with_votes'] = items_with_votes
+        context['items_with_ratings'] = items_with_ratings
         return context
 
 
@@ -396,39 +404,39 @@ class AddByDirectorView(LoginRequiredMixin, View):
         return redirect('category_detail', slug=slug)
 
 
-class SwipeVoteView(LoginRequiredMixin, TemplateView):
-    template_name = 'catalog/swipe_vote.html'
+class SwipeRatingView(LoginRequiredMixin, TemplateView):
+    template_name = 'catalog/swipe_rating.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get items user has already voted on
-        voted_item_ids = Vote.objects.filter(
+        # Get items user has already rated
+        rated_item_ids = Rating.objects.filter(
             user=self.request.user,
             item__category=category
         ).values_list('item_id', flat=True)
 
-        # Get unvoted items, ordered by total vote count (most popular first)
-        unvoted_items = Item.objects.filter(
+        # Get unrated items, ordered by total rating count (most popular first)
+        unrated_items = Item.objects.filter(
             category=category
         ).exclude(
-            id__in=voted_item_ids
+            id__in=rated_item_ids
         ).annotate(
-            vote_count=Count('votes')
-        ).order_by('-vote_count', 'title')
+            rating_count=Count('ratings')
+        ).order_by('-rating_count', 'title')
 
-        context['current_item'] = unvoted_items.first()
-        context['remaining_count'] = unvoted_items.count()
+        context['current_item'] = unrated_items.first()
+        context['remaining_count'] = unrated_items.count()
         context['total_count'] = Item.objects.filter(category=category).count()
-        context['voted_count'] = context['total_count'] - context['remaining_count']
+        context['rated_count'] = context['total_count'] - context['remaining_count']
 
         return context
 
 
 class StatsView(TemplateView):
-    """View showing movies ranked by team preference."""
+    """View showing movies ranked by team preference using simple averages."""
     template_name = 'catalog/stats.html'
 
     def get_context_data(self, **kwargs):
@@ -440,78 +448,70 @@ class StatsView(TemplateView):
         team_count = User.objects.filter(is_staff=False).count()
         context['team_count'] = team_count
 
-        # Get all items with vote statistics (only yes/no/meh, not "haven't watched")
+        # Get all items with rating statistics (5-level system)
         items = Item.objects.filter(category=category).annotate(
-            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
-            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
-            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+            loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
+            liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
+            okay_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.OKAY)),
+            disliked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.DISLIKED)),
+            hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
         )
 
-        # Calculate global average score first (for Bayesian average)
-        # We'll use this to stabilize scores for movies with few votes
-        total_yes = 0
-        total_no = 0
-        total_meh = 0
-        for item in items:
-            total_yes += item.yes_count
-            total_no += item.no_count
-            total_meh += item.meh_count
-
-        total_all_votes = total_yes + total_no + total_meh
-        if total_all_votes > 0:
-            global_average = ((total_yes - total_no) / total_all_votes) * 100
-        else:
-            global_average = 0
-
-        # Confidence parameter: number of votes needed to trust the movie's own score
-        # Higher value = more conservative (pulls toward global average more)
-        # Lower value = less conservative (trusts individual scores more)
-        C = 5  # Equivalent to "5 average votes" worth of confidence
-
-        # Calculate scores for all movies
+        # Calculate scores for all movies using simple average
         ranked_movies = []
 
         for item in items:
-            # Total votes = only those who actually watched (yes + no + meh)
-            total_votes = item.yes_count + item.no_count + item.meh_count
-            if total_votes > 0:
-                # Raw score from -100 to +100
-                raw_score = ((item.yes_count - item.no_count) / total_votes) * 100
+            # Total ratings = only those who actually rated (not NO_RATING)
+            total_ratings = (item.loved_count + item.liked_count + item.okay_count +
+                           item.disliked_count + item.hated_count)
 
-                # Bayesian average: blend raw score with global average
-                # Formula: (C * global_avg + total_votes * raw_score) / (C + total_votes)
-                # This way:
-                # - Movies with few votes are pulled toward the global average
-                # - Movies with many votes use mostly their own score
-                bayesian_score = (C * global_average + total_votes * raw_score) / (C + total_votes)
-                score = round(bayesian_score)
+            if total_ratings > 0:
+                # Simple average: sum of (count * value) / total
+                # loved=2, liked=1, okay=0, disliked=-1, hated=-2
+                total_value = (item.loved_count * 2 + item.liked_count * 1 +
+                             item.okay_count * 0 + item.disliked_count * -1 +
+                             item.hated_count * -2)
+                average = total_value / total_ratings
+                # Convert to 0-100 scale for display (from -2 to +2 range)
+                score = round(((average + 2) / 4) * 100)
 
-                yes_percent = round((item.yes_count / total_votes) * 100)
-                no_percent = round((item.no_count / total_votes) * 100)
-                meh_percent = round((item.meh_count / total_votes) * 100)
+                # Calculate percentages
+                loved_percent = round((item.loved_count / total_ratings) * 100)
+                liked_percent = round((item.liked_count / total_ratings) * 100)
+                okay_percent = round((item.okay_count / total_ratings) * 100)
+                disliked_percent = round((item.disliked_count / total_ratings) * 100)
+                hated_percent = round((item.hated_count / total_ratings) * 100)
             else:
-                score = None  # No votes yet
-                yes_percent = 0
-                no_percent = 0
-                meh_percent = 0
+                score = None  # No ratings yet
+                average = 0
+                loved_percent = 0
+                liked_percent = 0
+                okay_percent = 0
+                disliked_percent = 0
+                hated_percent = 0
 
             ranked_movies.append({
                 'item': item,
-                'yes_count': item.yes_count,
-                'no_count': item.no_count,
-                'meh_count': item.meh_count,
-                'total_votes': total_votes,
+                'loved_count': item.loved_count,
+                'liked_count': item.liked_count,
+                'okay_count': item.okay_count,
+                'disliked_count': item.disliked_count,
+                'hated_count': item.hated_count,
+                'total_ratings': total_ratings,
                 'score': score,
-                'yes_percent': yes_percent,
-                'no_percent': no_percent,
-                'meh_percent': meh_percent,
+                'average': average if total_ratings > 0 else None,
+                'loved_percent': loved_percent,
+                'liked_percent': liked_percent,
+                'okay_percent': okay_percent,
+                'disliked_percent': disliked_percent,
+                'hated_percent': hated_percent,
             })
 
-        # Sort: movies with votes first (by score desc), then unvoted movies by title
+        # Sort: movies with ratings first (by score desc), then unrated movies by title
         ranked_movies.sort(key=lambda x: (
-            x['score'] is None,  # Unvoted movies go last
+            x['score'] is None,  # Unrated movies go last
             -(x['score'] or 0),  # Higher scores first
-            -x['yes_count'],     # More yes votes as tiebreaker
+            -x['loved_count'],   # More loved ratings as tiebreaker
             x['item'].title.lower()
         ))
 
@@ -521,7 +521,7 @@ class StatsView(TemplateView):
 
 
 class DecadeStatsView(TemplateView):
-    """View showing movies ranked by decade."""
+    """View showing movies ranked by decade using simple averages."""
     template_name = 'catalog/decades.html'
 
     def get_context_data(self, **kwargs):
@@ -529,61 +529,60 @@ class DecadeStatsView(TemplateView):
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get all items with vote statistics
+        # Get all items with rating statistics
         items = Item.objects.filter(category=category).annotate(
-            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
-            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
-            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
+            loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
+            liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
+            okay_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.OKAY)),
+            disliked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.DISLIKED)),
+            hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
         )
-
-        # Calculate global average for Bayesian scoring
-        total_yes = 0
-        total_no = 0
-        total_meh = 0
-        for item in items:
-            total_yes += item.yes_count
-            total_no += item.no_count
-            total_meh += item.meh_count
-
-        total_all_votes = total_yes + total_no + total_meh
-        if total_all_votes > 0:
-            global_average = ((total_yes - total_no) / total_all_votes) * 100
-        else:
-            global_average = 0
-
-        C = 5  # Confidence parameter
 
         # Group movies by decade
         decades = {}
         no_year = []
 
         for item in items:
-            total_votes = item.yes_count + item.no_count + item.meh_count
-            if total_votes > 0:
-                # Use Bayesian average scoring
-                raw_score = ((item.yes_count - item.no_count) / total_votes) * 100
-                bayesian_score = (C * global_average + total_votes * raw_score) / (C + total_votes)
-                score = round(bayesian_score)
+            total_ratings = (item.loved_count + item.liked_count + item.okay_count +
+                           item.disliked_count + item.hated_count)
 
-                yes_percent = round((item.yes_count / total_votes) * 100)
-                no_percent = round((item.no_count / total_votes) * 100)
-                meh_percent = round((item.meh_count / total_votes) * 100)
+            if total_ratings > 0:
+                # Simple average
+                total_value = (item.loved_count * 2 + item.liked_count * 1 +
+                             item.okay_count * 0 + item.disliked_count * -1 +
+                             item.hated_count * -2)
+                average = total_value / total_ratings
+                score = round(((average + 2) / 4) * 100)
+
+                loved_percent = round((item.loved_count / total_ratings) * 100)
+                liked_percent = round((item.liked_count / total_ratings) * 100)
+                okay_percent = round((item.okay_count / total_ratings) * 100)
+                disliked_percent = round((item.disliked_count / total_ratings) * 100)
+                hated_percent = round((item.hated_count / total_ratings) * 100)
             else:
                 score = None
-                yes_percent = 0
-                no_percent = 0
-                meh_percent = 0
+                average = 0
+                loved_percent = 0
+                liked_percent = 0
+                okay_percent = 0
+                disliked_percent = 0
+                hated_percent = 0
 
             movie_data = {
                 'item': item,
-                'yes_count': item.yes_count,
-                'no_count': item.no_count,
-                'meh_count': item.meh_count,
-                'total_votes': total_votes,
+                'loved_count': item.loved_count,
+                'liked_count': item.liked_count,
+                'okay_count': item.okay_count,
+                'disliked_count': item.disliked_count,
+                'hated_count': item.hated_count,
+                'total_ratings': total_ratings,
                 'score': score,
-                'yes_percent': yes_percent,
-                'no_percent': no_percent,
-                'meh_percent': meh_percent,
+                'average': average if total_ratings > 0 else None,
+                'loved_percent': loved_percent,
+                'liked_percent': liked_percent,
+                'okay_percent': okay_percent,
+                'disliked_percent': disliked_percent,
+                'hated_percent': hated_percent,
             }
 
             if item.year:
@@ -599,7 +598,7 @@ class DecadeStatsView(TemplateView):
             decades[decade].sort(key=lambda x: (
                 x['score'] is None,
                 -(x['score'] or 0),
-                -x['yes_count'],
+                -x['loved_count'],
                 x['item'].title.lower()
             ))
 
@@ -621,68 +620,70 @@ class EclecticView(TemplateView):
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get all votes for this category (excluding NO_ANSWER)
-        all_votes = Vote.objects.filter(
+        # Get all ratings for this category (excluding NO_RATING)
+        all_ratings = Rating.objects.filter(
             item__category=category
         ).exclude(
-            choice=Vote.Choice.NO_ANSWER
+            rating=Rating.Level.NO_RATING
         ).select_related('user', 'item')
 
-        # Build a dict of item_id -> list of votes
-        item_votes = {}
-        for vote in all_votes:
-            if vote.item_id not in item_votes:
-                item_votes[vote.item_id] = []
-            item_votes[vote.item_id].append(vote)
+        # Build a dict of item_id -> list of ratings
+        item_ratings = {}
+        for rating in all_ratings:
+            if rating.item_id not in item_ratings:
+                item_ratings[rating.item_id] = []
+            item_ratings[rating.item_id].append(rating)
 
-        # For each item, determine the consensus (majority vote)
-        # Consensus is the most common vote among yes/no/meh
+        # For each item, determine the consensus (majority rating)
+        # Consensus is the most common rating among the 5 levels
         item_consensus = {}
-        for item_id, votes in item_votes.items():
-            if len(votes) < 2:
-                # Need at least 2 votes to have a meaningful consensus
+        for item_id, ratings in item_ratings.items():
+            if len(ratings) < 2:
+                # Need at least 2 ratings to have a meaningful consensus
                 continue
-            vote_counts = {
-                Vote.Choice.YES: 0,
-                Vote.Choice.NO: 0,
-                Vote.Choice.MEH: 0,
+            rating_counts = {
+                Rating.Level.LOVED: 0,
+                Rating.Level.LIKED: 0,
+                Rating.Level.OKAY: 0,
+                Rating.Level.DISLIKED: 0,
+                Rating.Level.HATED: 0,
             }
-            for v in votes:
-                if v.choice in vote_counts:
-                    vote_counts[v.choice] += 1
+            for r in ratings:
+                if r.rating in rating_counts:
+                    rating_counts[r.rating] += 1
 
-            # Find the majority vote
-            max_count = max(vote_counts.values())
-            consensus_votes = [k for k, v in vote_counts.items() if v == max_count]
+            # Find the majority rating
+            max_count = max(rating_counts.values())
+            consensus_ratings = [k for k, v in rating_counts.items() if v == max_count]
             # If there's a tie, there's no clear consensus
-            if len(consensus_votes) == 1:
-                item_consensus[item_id] = consensus_votes[0]
+            if len(consensus_ratings) == 1:
+                item_consensus[item_id] = consensus_ratings[0]
 
         # For each user, calculate how often they agree/disagree with consensus
         team_members = User.objects.filter(is_staff=False)
         user_stats = []
 
         for user in team_members:
-            user_votes = [v for v in all_votes if v.user_id == user.id]
+            user_ratings = [r for r in all_ratings if r.user_id == user.id]
             agreements = 0
             disagreements = 0
             contrarian_movies = []  # Movies where user disagreed with consensus
 
-            for vote in user_votes:
-                if vote.item_id in item_consensus:
-                    consensus = item_consensus[vote.item_id]
-                    if vote.choice == consensus:
+            for rating in user_ratings:
+                if rating.item_id in item_consensus:
+                    consensus = item_consensus[rating.item_id]
+                    if rating.rating == consensus:
                         agreements += 1
                     else:
                         disagreements += 1
                         contrarian_movies.append({
-                            'item': vote.item,
-                            'user_vote': vote.choice,
+                            'item': rating.item,
+                            'user_rating': rating.rating,
                             'consensus': consensus,
                         })
 
             total = agreements + disagreements
-            if total >= 3:  # Need at least 3 comparable votes
+            if total >= 3:  # Need at least 3 comparable ratings
                 eclectic_score = round((disagreements / total) * 100)
                 user_stats.append({
                     'user': user,
@@ -706,7 +707,7 @@ class EclecticView(TemplateView):
 
 
 class DivisiveView(TemplateView):
-    """View showing movies with the most disagreement (high yes AND high no votes)."""
+    """View showing movies with the most disagreement (high standard deviation in ratings)."""
     template_name = 'catalog/divisive.html'
 
     def get_context_data(self, **kwargs):
@@ -714,46 +715,61 @@ class DivisiveView(TemplateView):
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get all items with vote statistics
+        # Get all items with rating statistics
         items = Item.objects.filter(category=category).annotate(
-            yes_count=Count('votes', filter=Q(votes__choice=Vote.Choice.YES)),
-            no_count=Count('votes', filter=Q(votes__choice=Vote.Choice.NO)),
-            meh_count=Count('votes', filter=Q(votes__choice=Vote.Choice.MEH)),
-        )
+            loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
+            liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
+            okay_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.OKAY)),
+            disliked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.DISLIKED)),
+            hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
+        ).prefetch_related('ratings')
 
-        # Calculate divisiveness for each movie
+        # Calculate divisiveness using standard deviation for each movie
         divisive_movies = []
 
         for item in items:
-            total_votes = item.yes_count + item.no_count + item.meh_count
+            # Get all ratings for this item (excluding NO_RATING)
+            ratings = [r for r in item.ratings.all() if r.rating != Rating.Level.NO_RATING]
 
-            # Need at least 5 votes to be considered
-            if total_votes >= 5:
-                # Divisiveness score = min(yes, no) - measures how many are on minority side
-                # Higher score = more people on both sides = more divisive
-                divisiveness_score = min(item.yes_count, item.no_count)
+            if len(ratings) >= 5:  # Need at least 5 ratings to be considered
+                # Convert ratings to numeric values (-2 to +2)
+                values = [r.get_numeric_value() for r in ratings]
+
+                # Calculate mean
+                mean = sum(values) / len(values)
+
+                # Calculate standard deviation
+                variance = sum((x - mean) ** 2 for x in values) / len(values)
+                std_dev = variance ** 0.5
 
                 # Calculate percentages
-                yes_percent = round((item.yes_count / total_votes) * 100) if total_votes > 0 else 0
-                no_percent = round((item.no_count / total_votes) * 100) if total_votes > 0 else 0
-                meh_percent = round((item.meh_count / total_votes) * 100) if total_votes > 0 else 0
+                total_ratings = len(ratings)
+                loved_percent = round((item.loved_count / total_ratings) * 100)
+                liked_percent = round((item.liked_count / total_ratings) * 100)
+                okay_percent = round((item.okay_count / total_ratings) * 100)
+                disliked_percent = round((item.disliked_count / total_ratings) * 100)
+                hated_percent = round((item.hated_count / total_ratings) * 100)
 
                 divisive_movies.append({
                     'item': item,
-                    'yes_count': item.yes_count,
-                    'no_count': item.no_count,
-                    'meh_count': item.meh_count,
-                    'total_votes': total_votes,
-                    'divisiveness_score': divisiveness_score,
-                    'yes_percent': yes_percent,
-                    'no_percent': no_percent,
-                    'meh_percent': meh_percent,
+                    'loved_count': item.loved_count,
+                    'liked_count': item.liked_count,
+                    'okay_count': item.okay_count,
+                    'disliked_count': item.disliked_count,
+                    'hated_count': item.hated_count,
+                    'total_ratings': total_ratings,
+                    'std_dev': round(std_dev, 2),
+                    'loved_percent': loved_percent,
+                    'liked_percent': liked_percent,
+                    'okay_percent': okay_percent,
+                    'disliked_percent': disliked_percent,
+                    'hated_percent': hated_percent,
                 })
 
-        # Sort by divisiveness score (highest first)
+        # Sort by standard deviation (highest first = most divisive)
         divisive_movies.sort(key=lambda x: (
-            -x['divisiveness_score'],  # Most divisive first
-            -x['total_votes'],         # More votes as tiebreaker
+            -x['std_dev'],           # Highest standard deviation first
+            -x['total_ratings'],     # More ratings as tiebreaker
             x['item'].title.lower()
         ))
 
@@ -764,7 +780,7 @@ class DivisiveView(TemplateView):
 
 
 class MovieDetailView(TemplateView):
-    """View showing how everyone voted on a specific movie."""
+    """View showing how everyone rated a specific movie."""
     template_name = 'catalog/movie_detail.html'
 
     def get_context_data(self, **kwargs):
@@ -775,53 +791,68 @@ class MovieDetailView(TemplateView):
         context['category'] = category
         context['item'] = item
 
-        # Get all votes for this item, grouped by choice
-        all_votes = Vote.objects.filter(item=item).select_related('user').order_by('user__last_name', 'user__first_name')
+        # Get all ratings for this item, grouped by rating level
+        all_ratings = Rating.objects.filter(item=item).select_related('user').order_by('user__last_name', 'user__first_name')
 
-        # Group votes by choice
-        yes_votes = []
-        no_votes = []
-        meh_votes = []
-        not_seen_votes = []
+        # Group ratings by level
+        loved_ratings = []
+        liked_ratings = []
+        okay_ratings = []
+        disliked_ratings = []
+        hated_ratings = []
+        not_rated_ratings = []
 
-        for vote in all_votes:
-            if vote.choice == Vote.Choice.YES:
-                yes_votes.append(vote)
-            elif vote.choice == Vote.Choice.NO:
-                no_votes.append(vote)
-            elif vote.choice == Vote.Choice.MEH:
-                meh_votes.append(vote)
-            elif vote.choice == Vote.Choice.NO_ANSWER:
-                not_seen_votes.append(vote)
+        for rating in all_ratings:
+            if rating.rating == Rating.Level.LOVED:
+                loved_ratings.append(rating)
+            elif rating.rating == Rating.Level.LIKED:
+                liked_ratings.append(rating)
+            elif rating.rating == Rating.Level.OKAY:
+                okay_ratings.append(rating)
+            elif rating.rating == Rating.Level.DISLIKED:
+                disliked_ratings.append(rating)
+            elif rating.rating == Rating.Level.HATED:
+                hated_ratings.append(rating)
+            elif rating.rating == Rating.Level.NO_RATING:
+                not_rated_ratings.append(rating)
 
-        # Get all team members who haven't voted
+        # Get all team members who haven't rated yet
         team_members = User.objects.filter(is_staff=False)
-        voted_user_ids = set(vote.user_id for vote in all_votes)
-        no_vote_users = [user for user in team_members if user.id not in voted_user_ids]
-        no_vote_users.sort(key=lambda x: (x.last_name, x.first_name))
+        rated_user_ids = set(rating.user_id for rating in all_ratings)
+        no_rating_users = [user for user in team_members if user.id not in rated_user_ids]
+        no_rating_users.sort(key=lambda x: (x.last_name, x.first_name))
 
-        context['yes_votes'] = yes_votes
-        context['no_votes'] = no_votes
-        context['meh_votes'] = meh_votes
-        context['not_seen_votes'] = not_seen_votes
-        context['no_vote_users'] = no_vote_users
+        context['loved_ratings'] = loved_ratings
+        context['liked_ratings'] = liked_ratings
+        context['okay_ratings'] = okay_ratings
+        context['disliked_ratings'] = disliked_ratings
+        context['hated_ratings'] = hated_ratings
+        context['not_rated_ratings'] = not_rated_ratings
+        context['no_rating_users'] = no_rating_users
 
         # Calculate statistics
-        total_votes = len(yes_votes) + len(no_votes) + len(meh_votes)
-        context['total_votes'] = total_votes
-        context['yes_count'] = len(yes_votes)
-        context['no_count'] = len(no_votes)
-        context['meh_count'] = len(meh_votes)
-        context['not_seen_count'] = len(not_seen_votes)
-        context['no_vote_count'] = len(no_vote_users)
+        total_ratings = (len(loved_ratings) + len(liked_ratings) + len(okay_ratings) +
+                        len(disliked_ratings) + len(hated_ratings))
+        context['total_ratings'] = total_ratings
+        context['loved_count'] = len(loved_ratings)
+        context['liked_count'] = len(liked_ratings)
+        context['okay_count'] = len(okay_ratings)
+        context['disliked_count'] = len(disliked_ratings)
+        context['hated_count'] = len(hated_ratings)
+        context['not_rated_count'] = len(not_rated_ratings)
+        context['no_rating_count'] = len(no_rating_users)
 
-        if total_votes > 0:
-            context['yes_percent'] = round((len(yes_votes) / total_votes) * 100)
-            context['no_percent'] = round((len(no_votes) / total_votes) * 100)
-            context['meh_percent'] = round((len(meh_votes) / total_votes) * 100)
+        if total_ratings > 0:
+            context['loved_percent'] = round((len(loved_ratings) / total_ratings) * 100)
+            context['liked_percent'] = round((len(liked_ratings) / total_ratings) * 100)
+            context['okay_percent'] = round((len(okay_ratings) / total_ratings) * 100)
+            context['disliked_percent'] = round((len(disliked_ratings) / total_ratings) * 100)
+            context['hated_percent'] = round((len(hated_ratings) / total_ratings) * 100)
         else:
-            context['yes_percent'] = 0
-            context['no_percent'] = 0
-            context['meh_percent'] = 0
+            context['loved_percent'] = 0
+            context['liked_percent'] = 0
+            context['okay_percent'] = 0
+            context['disliked_percent'] = 0
+            context['hated_percent'] = 0
 
         return context

@@ -5,24 +5,25 @@ from django.http import JsonResponse
 from django.db.models import Count
 
 from catalog.models import Item, Category
-from .models import Vote
+from .models import Rating
 
 
 @login_required
 @require_POST
-def vote_view(request):
+def rate_view(request):
+    """Submit a rating for an item (traditional form submission)."""
     item_id = request.POST.get('item_id')
-    choice = request.POST.get('choice')
+    rating_value = request.POST.get('rating')
 
-    if not item_id or choice not in [c[0] for c in Vote.Choice.choices]:
+    if not item_id or rating_value not in [choice[0] for choice in Rating.Level.choices]:
         return redirect('home')
 
     item = get_object_or_404(Item, id=item_id)
 
-    vote, created = Vote.objects.update_or_create(
+    rating, created = Rating.objects.update_or_create(
         user=request.user,
         item=item,
-        defaults={'choice': choice}
+        defaults={'rating': rating_value}
     )
 
     # Check for custom redirect
@@ -35,44 +36,44 @@ def vote_view(request):
 
 @login_required
 @require_POST
-def vote_api(request):
-    """API endpoint for voting that returns JSON with next item."""
+def rate_api(request):
+    """API endpoint for rating that returns JSON with next item."""
     item_id = request.POST.get('item_id')
-    choice = request.POST.get('choice')
+    rating_value = request.POST.get('rating')
     category_slug = request.POST.get('category_slug')
 
-    if not item_id or choice not in [c[0] for c in Vote.Choice.choices]:
-        return JsonResponse({'error': 'Invalid vote data'}, status=400)
+    if not item_id or rating_value not in [choice[0] for choice in Rating.Level.choices]:
+        return JsonResponse({'error': 'Invalid rating data'}, status=400)
 
     item = get_object_or_404(Item, id=item_id)
     category = get_object_or_404(Category, slug=category_slug)
 
-    # Save the vote
-    vote, created = Vote.objects.update_or_create(
+    # Save the rating
+    rating, created = Rating.objects.update_or_create(
         user=request.user,
         item=item,
-        defaults={'choice': choice}
+        defaults={'rating': rating_value}
     )
 
-    # Get items user has already voted on
-    voted_item_ids = Vote.objects.filter(
+    # Get items user has already rated
+    rated_item_ids = Rating.objects.filter(
         user=request.user,
         item__category=category
     ).values_list('item_id', flat=True)
 
-    # Get unvoted items, ordered by total vote count (most popular first)
-    unvoted_items = Item.objects.filter(
+    # Get unrated items, ordered by total rating count (most popular first)
+    unrated_items = Item.objects.filter(
         category=category
     ).exclude(
-        id__in=voted_item_ids
+        id__in=rated_item_ids
     ).annotate(
-        vote_count=Count('votes')
-    ).order_by('-vote_count', 'title')
+        rating_count=Count('ratings')
+    ).order_by('-rating_count', 'title')
 
-    current_item = unvoted_items.first()
-    remaining_count = unvoted_items.count()
+    current_item = unrated_items.first()
+    remaining_count = unrated_items.count()
     total_count = Item.objects.filter(category=category).count()
-    voted_count = total_count - remaining_count
+    rated_count = total_count - remaining_count
 
     if current_item:
         return JsonResponse({
@@ -85,13 +86,13 @@ def vote_api(request):
                 'imdb_url': current_item.imdb_url,
             },
             'remaining_count': remaining_count,
-            'voted_count': voted_count,
+            'rated_count': rated_count,
             'total_count': total_count,
         })
     else:
         return JsonResponse({
             'success': True,
             'completed': True,
-            'voted_count': voted_count,
+            'rated_count': rated_count,
             'total_count': total_count,
         })

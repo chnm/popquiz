@@ -11,5 +11,5 @@ urlpatterns = [
     path('compare/<str:username1>/<str:username2>/', CompareUsersView.as_view(), name='compare_users'),
     path('compare/<str:username1>/<str:username2>/<str:username3>/', CompareThreeUsersView.as_view(), name='compare_three_users'),
     path('', include('catalog.urls')),
-    path('', include('votes.urls')),
+    path('', include('ratings.urls')),
 ]

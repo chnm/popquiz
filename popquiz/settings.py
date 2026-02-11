@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     # Local apps
     'accounts',
     'catalog',
-    'votes',
+    'ratings',
 ]
 
 # Required for allauth
