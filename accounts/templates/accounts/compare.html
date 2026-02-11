@@ -81,24 +81,23 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+    <div class="grid grid-cols-3 gap-4 text-center max-w-2xl mx-auto">
         <div class="bg-green-50 rounded-xl p-4">
             <div class="text-3xl font-bold text-green-600">{{ both_love|length }}</div>
-            <div class="text-sm text-green-700">Both Love</div>
+            <div class="text-sm text-green-700">Both Love 🤩</div>
         </div>
         <div class="bg-red-50 rounded-xl p-4">
             <div class="text-3xl font-bold text-red-600">{{ both_hate|length }}</div>
-            <div class="text-sm text-red-700">Both Hate</div>
-        </div>
-        <div class="bg-yellow-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-yellow-600">{{ both_meh|length }}</div>
-            <div class="text-sm text-yellow-700">Both Meh</div>
+            <div class="text-sm text-red-700">Both Hate 😡</div>
         </div>
         <div class="bg-purple-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-purple-600">{{ user1_loves_user2_hates|length|add:user1_hates_user2_loves|length|add:other_disagreements|length }}</div>
-            <div class="text-sm text-purple-700">Disagree</div>
+            <div class="text-3xl font-bold text-purple-600">{{ user1_loves_user2_hates|length|add:user1_hates_user2_loves|length }}</div>
+            <div class="text-sm text-purple-700">Major Disagreements</div>
         </div>
     </div>
+    <p class="text-center text-gray-500 text-sm mt-4">
+        Comparing only 🤩 Loved and 😡 Hated ratings
+    </p>
 </div>
 
 <!-- Movies They Both Love -->
