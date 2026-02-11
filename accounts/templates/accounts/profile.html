@@ -36,40 +36,54 @@
                     <p class="text-white/80">@{{ profile_user.username }}</p>
                 </div>
             </div>
-            {% if total_votes > 0 %}
+            {% if total_ratings > 0 %}
             <div class="text-right">
-                <p class="text-4xl font-bold">{{ total_votes }}</p>
-                <p class="text-white/80">votes cast</p>
+                <p class="text-4xl font-bold">{{ total_ratings }}</p>
+                <p class="text-white/80">ratings cast</p>
             </div>
             {% endif %}
         </div>
 
-        {% if total_votes > 0 %}
+        {% if total_ratings > 0 %}
         <!-- Stats Bar -->
         <div class="mt-8">
             <div class="flex h-4 rounded-full overflow-hidden bg-white/20">
-                {% if yes_percent > 0 %}
-                <div class="bg-green-400 transition-all duration-500" style="width: {{ yes_percent }}%"></div>
+                {% if loved_percent > 0 %}
+                <div class="bg-purple-400 transition-all duration-500" style="width: {{ loved_percent }}%"></div>
                 {% endif %}
-                {% if meh_percent > 0 %}
-                <div class="bg-yellow-400 transition-all duration-500" style="width: {{ meh_percent }}%"></div>
+                {% if liked_percent > 0 %}
+                <div class="bg-green-400 transition-all duration-500" style="width: {{ liked_percent }}%"></div>
                 {% endif %}
-                {% if no_percent > 0 %}
-                <div class="bg-red-400 transition-all duration-500" style="width: {{ no_percent }}%"></div>
+                {% if okay_percent > 0 %}
+                <div class="bg-yellow-400 transition-all duration-500" style="width: {{ okay_percent }}%"></div>
+                {% endif %}
+                {% if disliked_percent > 0 %}
+                <div class="bg-orange-400 transition-all duration-500" style="width: {{ disliked_percent }}%"></div>
+                {% endif %}
+                {% if hated_percent > 0 %}
+                <div class="bg-red-400 transition-all duration-500" style="width: {{ hated_percent }}%"></div>
                 {% endif %}
             </div>
-            <div class="flex justify-between mt-3 text-sm">
-                <div class="flex items-center space-x-2">
+            <div class="flex justify-between mt-3 text-xs flex-wrap gap-2">
+                <div class="flex items-center space-x-1">
+                    <span class="w-3 h-3 bg-purple-400 rounded-full"></span>
+                    <span>{{ total_loved }} 🤩 ({{ loved_percent }}%)</span>
+                </div>
+                <div class="flex items-center space-x-1">
                     <span class="w-3 h-3 bg-green-400 rounded-full"></span>
-                    <span>{{ total_yes }} Yes ({{ yes_percent }}%)</span>
+                    <span>{{ total_liked }} 🙂 ({{ liked_percent }}%)</span>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1">
                     <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
-                    <span>{{ total_meh }} Meh ({{ meh_percent }}%)</span>
+                    <span>{{ total_okay }} 😐 ({{ okay_percent }}%)</span>
                 </div>
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1">
+                    <span class="w-3 h-3 bg-orange-400 rounded-full"></span>
+                    <span>{{ total_disliked }} 😕 ({{ disliked_percent }}%)</span>
+                </div>
+                <div class="flex items-center space-x-1">
                     <span class="w-3 h-3 bg-red-400 rounded-full"></span>
-                    <span>{{ total_no }} No ({{ no_percent }}%)</span>
+                    <span>{{ total_hated }} 😡 ({{ hated_percent }}%)</span>
                 </div>
             </div>
         </div>
@@ -193,9 +207,9 @@
                 {{ movie.score }}
             </div>
 
-            <!-- Vote Count -->
+            <!-- Rating Count -->
             <div class="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                {{ movie.total_votes }} votes
+                {{ movie.total_ratings }} ratings
             </div>
 
             <!-- Hover Overlay -->
@@ -204,10 +218,12 @@
                 {% if movie.item.year %}
                 <p class="text-white/70 text-xs mb-2">{{ movie.item.year }}</p>
                 {% endif %}
-                <div class="flex gap-1 text-xs">
-                    <span class="bg-green-500/80 px-2 py-0.5 rounded">{{ movie.yes_count }} yes</span>
-                    <span class="bg-yellow-500/80 px-2 py-0.5 rounded">{{ movie.meh_count }} meh</span>
-                    <span class="bg-red-500/80 px-2 py-0.5 rounded">{{ movie.no_count }} no</span>
+                <div class="flex flex-wrap gap-1 text-xs">
+                    <span class="bg-purple-500/80 px-1.5 py-0.5 rounded">{{ movie.loved_count }} 🤩</span>
+                    <span class="bg-green-500/80 px-1.5 py-0.5 rounded">{{ movie.liked_count }} 🙂</span>
+                    <span class="bg-yellow-500/80 px-1.5 py-0.5 rounded">{{ movie.okay_count }} 😐</span>
+                    <span class="bg-orange-500/80 px-1.5 py-0.5 rounded">{{ movie.disliked_count }} 😕</span>
+                    <span class="bg-red-500/80 px-1.5 py-0.5 rounded">{{ movie.hated_count }} 😡</span>
                 </div>
             </div>
         </a>
@@ -257,13 +273,13 @@
                     <span>Genre</span>
                 </span>
             </a>
-            <a href="?sort=vote" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
-                {% if current_sort == 'vote' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            <a href="?sort=rating" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
+                {% if current_sort == 'rating' %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                 <span class="flex items-center space-x-1">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                     </svg>
-                    <span>My Vote</span>
+                    <span>My Rating</span>
                 </span>
             </a>
             <a href="?sort=popularity" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
@@ -278,28 +294,36 @@
         </div>
     </div>
 
-    {% for category_name, category_data in votes_by_category.items %}
+    {% for category_name, category_data in ratings_by_category.items %}
     <div class="mb-10">
         <!-- Category Header -->
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-gray-800">{{ category_name }}</h2>
-            <div class="flex space-x-4 text-sm">
+            <div class="flex space-x-3 text-sm flex-wrap">
+                <span class="flex items-center space-x-1">
+                    <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    <span class="text-gray-600">{{ category_data.loved_count }}</span>
+                </span>
                 <span class="flex items-center space-x-1">
                     <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                    <span class="text-gray-600">{{ category_data.yes_count }}</span>
+                    <span class="text-gray-600">{{ category_data.liked_count }}</span>
                 </span>
                 <span class="flex items-center space-x-1">
                     <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
-                    <span class="text-gray-600">{{ category_data.meh_count }}</span>
+                    <span class="text-gray-600">{{ category_data.okay_count }}</span>
+                </span>
+                <span class="flex items-center space-x-1">
+                    <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    <span class="text-gray-600">{{ category_data.disliked_count }}</span>
                 </span>
                 <span class="flex items-center space-x-1">
                     <span class="w-2 h-2 bg-red-500 rounded-full"></span>
-                    <span class="text-gray-600">{{ category_data.no_count }}</span>
+                    <span class="text-gray-600">{{ category_data.hated_count }}</span>
                 </span>
-                {% if category_data.not_seen_count %}
+                {% if category_data.no_rating_count %}
                 <span class="flex items-center space-x-1">
                     <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                    <span class="text-gray-600">{{ category_data.not_seen_count }} not seen</span>
+                    <span class="text-gray-600">{{ category_data.no_rating_count }} not rated</span>
                 </span>
                 {% endif %}
             </div>
@@ -307,18 +331,20 @@
 
         <!-- Poster Grid -->
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            {% for vote in category_data.votes %}
-            <a href="{% url 'movie_detail' vote.item.category.slug vote.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer
-                {% if vote.choice == 'yes' %}ring-4 ring-green-500
-                {% elif vote.choice == 'no' %}ring-4 ring-red-500
-                {% elif vote.choice == 'meh' %}ring-4 ring-yellow-500
-                {% elif vote.choice == 'no_answer' %}ring-2 ring-gray-300 opacity-75
+            {% for rating in category_data.ratings %}
+            <a href="{% url 'movie_detail' rating.item.category.slug rating.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer
+                {% if rating.rating == 'loved' %}ring-4 ring-purple-500
+                {% elif rating.rating == 'liked' %}ring-4 ring-green-500
+                {% elif rating.rating == 'okay' %}ring-4 ring-yellow-500
+                {% elif rating.rating == 'disliked' %}ring-4 ring-orange-500
+                {% elif rating.rating == 'hated' %}ring-4 ring-red-500
+                {% elif rating.rating == 'no_rating' %}ring-2 ring-gray-300 opacity-75
                 {% endif %}">
 
                 <!-- Poster Image -->
-                {% if vote.item.poster_url %}
-                <img src="{{ vote.item.poster_url }}" alt="{{ vote.item.title }}"
-                     class="w-full h-full object-cover {% if vote.choice == 'no_answer' %}opacity-60{% endif %}"
+                {% if rating.item.poster_url %}
+                <img src="{{ rating.item.poster_url }}" alt="{{ rating.item.title }}"
+                     class="w-full h-full object-cover {% if rating.rating == 'no_rating' %}opacity-60{% endif %}"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-8 h-8" fill="#9ca3af" viewBox="0 0 24 24">
@@ -333,37 +359,29 @@
                 </div>
                 {% endif %}
 
-                <!-- Vote Badge -->
-                <div class="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-lg
-                    {% if vote.choice == 'yes' %}bg-green-500
-                    {% elif vote.choice == 'no' %}bg-red-500
-                    {% elif vote.choice == 'meh' %}bg-yellow-500
-                    {% elif vote.choice == 'no_answer' %}bg-gray-400
+                <!-- Rating Badge -->
+                <div class="absolute top-1 right-1 w-7 h-7 rounded-full flex items-center justify-center shadow-lg text-white font-bold text-xs
+                    {% if rating.rating == 'loved' %}bg-purple-500
+                    {% elif rating.rating == 'liked' %}bg-green-500
+                    {% elif rating.rating == 'okay' %}bg-yellow-500
+                    {% elif rating.rating == 'disliked' %}bg-orange-500
+                    {% elif rating.rating == 'hated' %}bg-red-500
+                    {% elif rating.rating == 'no_rating' %}bg-gray-400
                     {% endif %}">
-                    {% if vote.choice == 'yes' %}
-                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                    </svg>
-                    {% elif vote.choice == 'no' %}
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    {% elif vote.choice == 'meh' %}
-                    <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 10a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                    {% elif vote.choice == 'no_answer' %}
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                    {% if rating.rating == 'loved' %}🤩
+                    {% elif rating.rating == 'liked' %}🙂
+                    {% elif rating.rating == 'okay' %}😐
+                    {% elif rating.rating == 'disliked' %}😕
+                    {% elif rating.rating == 'hated' %}😡
+                    {% elif rating.rating == 'no_rating' %}⏭️
                     {% endif %}
                 </div>
 
                 <!-- Hover Overlay -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-2">
-                    <p class="text-white text-xs font-semibold leading-tight">{{ vote.item.title }}</p>
-                    {% if vote.item.year %}
-                    <p class="text-white/70 text-xs">{{ vote.item.year }}</p>
+                    <p class="text-white text-xs font-semibold leading-tight">{{ rating.item.title }}</p>
+                    {% if rating.item.year %}
+                    <p class="text-white/70 text-xs">{{ rating.item.year }}</p>
                     {% endif %}
                 </div>
             </a>
@@ -378,11 +396,11 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
         </svg>
     </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">No votes yet</h2>
-    <p class="text-gray-600 mb-6">{{ profile_user.first_name }} hasn't voted on anything yet.</p>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">No ratings yet</h2>
+    <p class="text-gray-600 mb-6">{{ profile_user.first_name }} hasn't rated anything yet.</p>
     {% if user == profile_user %}
     <a href="{% url 'home' %}" class="inline-block bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200">
-        Start Voting
+        Start Rating
     </a>
     {% endif %}
 </div>
