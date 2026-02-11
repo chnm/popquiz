@@ -302,7 +302,9 @@ def fetch_director_filmography(director_id):
                 '(Short' in aria_label or
                 'Video Game' in aria_label or
                 '(Video Game' in aria_label or
-                '(Video' in aria_label
+                '(Video' in aria_label or
+                'Music Video' in aria_label or
+                '(Music Video' in aria_label
             )
 
             # Skip non-movies
