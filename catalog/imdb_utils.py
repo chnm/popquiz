@@ -174,9 +174,10 @@ def search_directors_by_name(director_name):
         page_html = resp.text
         results = []
 
-        # IMDB uses aria-label for names in search results
-        # Pattern: <a...href="/name/nm#######/..."...aria-label="Name">
-        result_pattern = r'<a[^>]+href="/name/(nm\d+)/?"[^>]*aria-label="([^"]+)"'
+        # IMDB search results use this structure:
+        # <a...href="/name/nm#######/?ref=..."...aria-label="Name">
+        # The href comes before aria-label, and includes query parameters
+        result_pattern = r'<a[^>]+href="/name/(nm\d+)/\?[^"]*"[^>]+aria-label="([^"]+)"'
 
         matches = re.finditer(result_pattern, page_html)
         seen_ids = set()
