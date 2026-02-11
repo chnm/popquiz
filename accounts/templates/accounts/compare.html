@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}{{ user1.first_name }} vs {{ user2.first_name }} - PopQuiz{% endblock %}
+{% block title %}{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} vs {% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} - PopQuiz{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -14,7 +14,7 @@
         <!-- User 1 -->
         <div class="text-center">
             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
-                {{ user1.first_name.0 }}{{ user1.last_name.0 }}
+                {% if user1.first_name %}{{ user1.first_name.0 }}{% if user1.last_name %}{{ user1.last_name.0 }}{% endif %}{% else %}{{ user1.username.0 }}{% endif %}
             </div>
             <h2 class="text-xl font-bold">{{ user1|display_name:request.user }}</h2>
             <a href="{% url 'profile' user1.username %}" class="text-white/70 text-sm hover:text-white">@{{ user1.username }}</a>
@@ -35,7 +35,7 @@
         <!-- User 2 -->
         <div class="text-center">
             <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
-                {{ user2.first_name.0 }}{{ user2.last_name.0 }}
+                {% if user2.first_name %}{{ user2.first_name.0 }}{% if user2.last_name %}{{ user2.last_name.0 }}{% endif %}{% else %}{{ user2.username.0 }}{% endif %}
             </div>
             <h2 class="text-xl font-bold">{{ user2|display_name:request.user }}</h2>
             <a href="{% url 'profile' user2.username %}" class="text-white/70 text-sm hover:text-white">@{{ user2.username }}</a>

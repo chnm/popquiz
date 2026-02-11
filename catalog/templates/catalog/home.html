@@ -338,7 +338,7 @@
         <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100">
             {% for member in users %}
                 <a href="{% url 'profile' member.username %}" class="team-member block px-4 py-3 hover:bg-gray-50 transition duration-200 {% if forloop.counter > 5 %}hidden{% endif %}" data-index="{{ forloop.counter }}">
-                    <span class="text-gray-800">{{ member.first_name }} {{ member.last_name }}</span>
+                    <span class="text-gray-800">{% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}</span>
                 </a>
             {% empty %}
                 <p class="px-4 py-3 text-gray-600">No team members yet.</p>
@@ -507,7 +507,7 @@
                     <select id="user1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option value="">Select...</option>
                         {% for member in users %}
-                            <option value="{{ member.username }}">{{ member.first_name }} {{ member.last_name }}</option>
+                            <option value="{{ member.username }}">{% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -516,7 +516,7 @@
                     <select id="user2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option value="">Select...</option>
                         {% for member in users %}
-                            <option value="{{ member.username }}">{{ member.first_name }} {{ member.last_name }}</option>
+                            <option value="{{ member.username }}">{% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -555,7 +555,7 @@
                     <select id="user1-three" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option value="">Select...</option>
                         {% for member in users %}
-                            <option value="{{ member.username }}">{{ member.first_name }} {{ member.last_name }}</option>
+                            <option value="{{ member.username }}">{% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -564,7 +564,7 @@
                     <select id="user2-three" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option value="">Select...</option>
                         {% for member in users %}
-                            <option value="{{ member.username }}">{{ member.first_name }} {{ member.last_name }}</option>
+                            <option value="{{ member.username }}">{% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -573,7 +573,7 @@
                     <select id="user3-three" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option value="">Select...</option>
                         {% for member in users %}
-                            <option value="{{ member.username }}">{{ member.first_name }} {{ member.last_name }}</option>
+                            <option value="{{ member.username }}">{% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>

@@ -80,7 +80,8 @@ class RegisterView(CreateView):
     def form_valid(self, form):
         user = form.save()
         login(self.request, user)
-        messages.success(self.request, f'Welcome to PopQuiz, {user.first_name}!')
+        display_name = user.first_name if user.first_name else user.username
+        messages.success(self.request, f'Welcome to PopQuiz, {display_name}!')
         return redirect(self.success_url)
 
 
@@ -92,7 +93,9 @@ class CustomLoginView(LoginView):
         return reverse_lazy('home')
 
     def form_valid(self, form):
-        messages.success(self.request, f'Welcome back, {form.get_user().first_name}!')
+        user = form.get_user()
+        display_name = user.first_name if user.first_name else user.username
+        messages.success(self.request, f'Welcome back, {display_name}!')
         return super().form_valid(form)
 
 

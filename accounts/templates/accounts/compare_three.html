@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}{{ user1.first_name }} vs {{ user2.first_name }} vs {{ user3.first_name }} - PopQuiz{% endblock %}
+{% block title %}{% if user1.first_name %}{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %}{% else %}{{ user1.username }}{% endif %} vs {% if user2.first_name %}{% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %}{% else %}{{ user2.username }}{% endif %} vs {% if user3.first_name %}{% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %}{% else %}{{ user3.username }}{% endif %} - PopQuiz{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -14,7 +14,7 @@
         <!-- User 1 -->
         <div class="text-center">
             <div class="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full flex items-center justify-center text-2xl md:text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
-                {{ user1.first_name.0 }}{{ user1.last_name.0 }}
+{% if user1.first_name %}{{ user1.first_name.0 }}{% if user1.last_name %}{{ user1.last_name.0 }}{% endif %}{% else %}{{ user1.username.0 }}{% endif %}
             </div>
             <h2 class="text-lg md:text-xl font-bold">{{ user1|display_name:request.user }}</h2>
             <a href="{% url 'profile' user1.username %}" class="text-white/70 text-xs md:text-sm hover:text-white">@{{ user1.username }}</a>
@@ -29,7 +29,7 @@
         <!-- User 2 -->
         <div class="text-center">
             <div class="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full flex items-center justify-center text-2xl md:text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
-                {{ user2.first_name.0 }}{{ user2.last_name.0 }}
+{% if user2.first_name %}{{ user2.first_name.0 }}{% if user2.last_name %}{{ user2.last_name.0 }}{% endif %}{% else %}{{ user2.username.0 }}{% endif %}
             </div>
             <h2 class="text-lg md:text-xl font-bold">{{ user2|display_name:request.user }}</h2>
             <a href="{% url 'profile' user2.username %}" class="text-white/70 text-xs md:text-sm hover:text-white">@{{ user2.username }}</a>
@@ -44,7 +44,7 @@
         <!-- User 3 -->
         <div class="text-center">
             <div class="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-full flex items-center justify-center text-2xl md:text-3xl font-bold backdrop-blur-sm mx-auto mb-2">
-                {{ user3.first_name.0 }}{{ user3.last_name.0 }}
+{% if user3.first_name %}{{ user3.first_name.0 }}{% if user3.last_name %}{{ user3.last_name.0 }}{% endif %}{% else %}{{ user3.username.0 }}{% endif %}
             </div>
             <h2 class="text-lg md:text-xl font-bold">{{ user3|display_name:request.user }}</h2>
             <a href="{% url 'profile' user3.username %}" class="text-white/70 text-xs md:text-sm hover:text-white">@{{ user3.username }}</a>
@@ -84,17 +84,17 @@
 
             <!-- Labels for each region -->
             <!-- Only User 1 (top) -->
-            <text x="250" y="90" text-anchor="middle" class="text-xs font-medium" fill="#6366f1">Only {{ user1.first_name }}</text>
+            <text x="250" y="90" text-anchor="middle" class="text-xs font-medium" fill="#6366f1">Only {% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %}</text>
             <text x="250" y="110" text-anchor="middle" class="text-lg font-bold" fill="#6366f1">{{ only_user1|length }}</text>
 
             <!-- Only User 2 (bottom left) -->
             <text x="120" y="310" text-anchor="middle" class="text-xs font-medium" fill="#9333ea">Only</text>
-            <text x="120" y="325" text-anchor="middle" class="text-xs font-medium" fill="#9333ea">{{ user2.first_name }}</text>
+            <text x="120" y="325" text-anchor="middle" class="text-xs font-medium" fill="#9333ea">{% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %}</text>
             <text x="120" y="345" text-anchor="middle" class="text-lg font-bold" fill="#9333ea">{{ only_user2|length }}</text>
 
             <!-- Only User 3 (bottom right) -->
             <text x="380" y="310" text-anchor="middle" class="text-xs font-medium" fill="#ec4899">Only</text>
-            <text x="380" y="325" text-anchor="middle" class="text-xs font-medium" fill="#ec4899">{{ user3.first_name }}</text>
+            <text x="380" y="325" text-anchor="middle" class="text-xs font-medium" fill="#ec4899">{% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %}</text>
             <text x="380" y="345" text-anchor="middle" class="text-lg font-bold" fill="#ec4899">{{ only_user3|length }}</text>
 
             <!-- User 1 & 2 (top-left overlap) -->
@@ -256,19 +256,19 @@
             <div class="space-y-1 text-xs">
                 <div class="flex items-center">
                     <span class="w-3 h-3 rounded-full mr-2 {% if movie.v1 == 'yes' %}bg-green-500{% elif movie.v1 == 'no' %}bg-red-500{% else %}bg-yellow-500{% endif %}"></span>
-                    <span class="text-gray-600">{{ user1.first_name }}:
+                    <span class="text-gray-600">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %}:
                         {% if movie.v1 == 'yes' %}Love{% elif movie.v1 == 'no' %}Hate{% else %}Meh{% endif %}
                     </span>
                 </div>
                 <div class="flex items-center">
                     <span class="w-3 h-3 rounded-full mr-2 {% if movie.v2 == 'yes' %}bg-green-500{% elif movie.v2 == 'no' %}bg-red-500{% else %}bg-yellow-500{% endif %}"></span>
-                    <span class="text-gray-600">{{ user2.first_name }}:
+                    <span class="text-gray-600">{% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %}:
                         {% if movie.v2 == 'yes' %}Love{% elif movie.v2 == 'no' %}Hate{% else %}Meh{% endif %}
                     </span>
                 </div>
                 <div class="flex items-center">
                     <span class="w-3 h-3 rounded-full mr-2 {% if movie.v3 == 'yes' %}bg-green-500{% elif movie.v3 == 'no' %}bg-red-500{% else %}bg-yellow-500{% endif %}"></span>
-                    <span class="text-gray-600">{{ user3.first_name }}:
+                    <span class="text-gray-600">{% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %}:
                         {% if movie.v3 == 'yes' %}Love{% elif movie.v3 == 'no' %}Hate{% else %}Meh{% endif %}
                     </span>
                 </div>
@@ -283,7 +283,7 @@
 {% if user1_and_2.all_love or user1_and_2.all_hate or user1_and_2.all_meh or user1_and_2.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">{{ user1.first_name }} & {{ user2.first_name }} Only ({{ user3.first_name }} hasn't watched)</h3>
+        <h3 class="text-lg font-bold text-gray-800">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} & {% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} Only ({% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} hasn't watched)</h3>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -310,7 +310,7 @@
 {% if user1_and_3.all_love or user1_and_3.all_hate or user1_and_3.all_meh or user1_and_3.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">{{ user1.first_name }} & {{ user3.first_name }} Only ({{ user2.first_name }} hasn't watched)</h3>
+        <h3 class="text-lg font-bold text-gray-800">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} & {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only ({% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} hasn't watched)</h3>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -337,7 +337,7 @@
 {% if user2_and_3.all_love or user2_and_3.all_hate or user2_and_3.all_meh or user2_and_3.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">{{ user2.first_name }} & {{ user3.first_name }} Only ({{ user1.first_name }} hasn't watched)</h3>
+        <h3 class="text-lg font-bold text-gray-800">{% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} & {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only ({% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} hasn't watched)</h3>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
