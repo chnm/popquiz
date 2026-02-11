@@ -221,12 +221,11 @@ def search_directors_by_name(director_name):
 
 def fetch_director_filmography(director_id):
     """
-    Fetch a director's filmography - ONLY movies where they were director.
+    Fetch a director's filmography - movies they directed.
 
     Filters out:
     - TV Series, TV Movies, TV Episodes, TV Mini-Series
     - Shorts, Video Games, Videos
-    - Projects where they were actor/producer but not director
 
     Returns a dict with:
     - name: str (director's name)
@@ -270,9 +269,9 @@ def fetch_director_filmography(director_id):
         if not name:
             return None
 
-        # Find all movie links with titles
-        # Pattern: <a...href="/title/tt#######/..."...aria-label="Title (Year)">
-        movie_pattern = r'<a[^>]+href="/title/(tt\d+)/?"[^>]*aria-label="([^"]+)"'
+        # Find all movie links with titles from the director's page
+        # Pattern: <a...href="/title/tt#######/?ref=..."...aria-label="Title (Year)">
+        movie_pattern = r'<a[^>]+href="/title/(tt\d+)/\?[^"]*"[^>]*aria-label="([^"]+)"'
 
         potential_movies = []
         matches = re.finditer(movie_pattern, page_html)
@@ -286,44 +285,28 @@ def fetch_director_filmography(director_id):
             if imdb_id in seen_ids:
                 continue
 
-            # Look at the context around this link to determine:
-            # 1. Is this person a director on this project?
-            # 2. Is this a theatrical movie (not TV)?
-            start_pos = max(0, match.start() - 2000)
-            end_pos = min(len(page_html), match.end() + 2000)
-            context = page_html[start_pos:end_pos]
-
-            # Check if this is in a director section or has director indicator
-            # IMDB often uses data-category or section headers
-            is_director_credit = (
-                'data-category="director"' in context or
-                '>Director<' in context or
-                'as Director' in context or
-                # Sometimes the section is marked with heading
-                '<h3[^>]*>Director</h3>' in context
-            )
-
-            # Skip if not a director credit
-            if not is_director_credit:
-                continue
-
-            # Check for TV indicators - we want to EXCLUDE these
-            is_tv = (
+            # Filter out TV content and non-movies by checking the aria-label
+            # When you visit a director's IMDB page, the filmography mainly shows
+            # their directing work. We just need to filter out TV shows and shorts.
+            is_not_movie = (
                 'TV Series' in aria_label or
                 'TV Mini-Series' in aria_label or
+                'TV Mini Series' in aria_label or
                 'TV Movie' in aria_label or
                 'TV Episode' in aria_label or
-                '(TV Series' in context or
-                '(TV Mini-Series' in context or
-                '(TV Movie' in context or
+                'TV Special' in aria_label or
+                '(TV Series' in aria_label or
+                '(TV Mini-Series' in aria_label or
+                '(TV Movie' in aria_label or
                 'Short' in aria_label or
+                '(Short' in aria_label or
                 'Video Game' in aria_label or
-                '(Short' in context or
-                '(Video' in context
+                '(Video Game' in aria_label or
+                '(Video' in aria_label
             )
 
-            # Skip TV shows, shorts, video games
-            if is_tv:
+            # Skip non-movies
+            if is_not_movie:
                 continue
 
             seen_ids.add(imdb_id)

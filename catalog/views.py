@@ -304,7 +304,7 @@ class AddByDirectorView(LoginRequiredMixin, View):
         movies = filmography['movies']
 
         if not movies:
-            messages.warning(request, f'No theatrical movies found where {director_name} was director.')
+            messages.warning(request, f'No movies found for {director_name}.')
             return redirect('add_by_director', slug=slug)
 
         # Automatically add all movies that don't already exist
