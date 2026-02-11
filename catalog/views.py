@@ -336,7 +336,10 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 'TV Movie' in title or
                 'TV Episode' in title or
                 'TV Special' in title or
-                'Music Video' in title
+                'Music Video' in title or
+                'Video Game' in title or
+                'Short' in title or
+                '(Short' in title
             )
             if is_not_movie:
                 skipped_count += 1
