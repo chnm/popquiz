@@ -53,128 +53,162 @@
                 <a href="{{ item.imdb_url }}" target="_blank" class="text-indigo-600 hover:underline mb-6 inline-block">View on IMDB</a>
             {% endif %}
 
-            <!-- Vote Summary -->
-            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-green-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-green-600">{{ yes_count }}</div>
-                    <div class="text-sm text-gray-600">Yes</div>
-                    {% if total_votes > 0 %}
-                        <div class="text-xs text-gray-500">{{ yes_percent }}%</div>
+            <!-- Rating Summary -->
+            <div class="mt-6 grid grid-cols-3 md:grid-cols-6 gap-3">
+                <div class="bg-purple-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-purple-600">{{ loved_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">🤩 Loved</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ loved_percent }}%</div>
                     {% endif %}
                 </div>
-                <div class="bg-yellow-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-yellow-600">{{ meh_count }}</div>
-                    <div class="text-sm text-gray-600">Meh</div>
-                    {% if total_votes > 0 %}
-                        <div class="text-xs text-gray-500">{{ meh_percent }}%</div>
+                <div class="bg-green-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-green-600">{{ liked_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">🙂 Liked</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ liked_percent }}%</div>
                     {% endif %}
                 </div>
-                <div class="bg-red-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-red-600">{{ no_count }}</div>
-                    <div class="text-sm text-gray-600">No</div>
-                    {% if total_votes > 0 %}
-                        <div class="text-xs text-gray-500">{{ no_percent }}%</div>
+                <div class="bg-yellow-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-yellow-600">{{ okay_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">😐 Okay</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ okay_percent }}%</div>
                     {% endif %}
                 </div>
-                <div class="bg-gray-50 rounded-lg p-4 text-center">
-                    <div class="text-3xl font-bold text-gray-600">{{ not_seen_count }}</div>
-                    <div class="text-sm text-gray-600">Not Seen</div>
+                <div class="bg-orange-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-orange-600">{{ disliked_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">😕 Disliked</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ disliked_percent }}%</div>
+                    {% endif %}
+                </div>
+                <div class="bg-red-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-red-600">{{ hated_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">😡 Hated</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ hated_percent }}%</div>
+                    {% endif %}
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-gray-600">{{ no_rating_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">⏭️ Not Rated</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Vote Details -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Yes Votes -->
+<!-- Rating Details -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Loved Ratings -->
     <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-green-600 mb-4 flex items-center">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-            </svg>
-            Yes ({{ yes_count }})
+        <h2 class="text-xl font-bold text-purple-600 mb-4">
+            🤩 Loved ({{ loved_count }})
         </h2>
-        {% if yes_votes %}
+        {% if loved_ratings %}
             <ul class="space-y-2">
-                {% for vote in yes_votes %}
-                    <li><a href="{% url 'profile' vote.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ vote.user|display_name:request.user }}</a></li>
+                {% for rating in loved_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No yes votes yet</p>
+            <p class="text-gray-400 italic">No loved ratings yet</p>
         {% endif %}
     </div>
 
-    <!-- Meh Votes -->
+    <!-- Liked Ratings -->
     <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-yellow-600 mb-4 flex items-center">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 1.745 0 3.227.835 3.776 2M15 13H9m-4-8h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
-            </svg>
-            Meh ({{ meh_count }})
+        <h2 class="text-xl font-bold text-green-600 mb-4">
+            🙂 Liked ({{ liked_count }})
         </h2>
-        {% if meh_votes %}
+        {% if liked_ratings %}
             <ul class="space-y-2">
-                {% for vote in meh_votes %}
-                    <li><a href="{% url 'profile' vote.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ vote.user|display_name:request.user }}</a></li>
+                {% for rating in liked_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No meh votes yet</p>
+            <p class="text-gray-400 italic">No liked ratings yet</p>
         {% endif %}
     </div>
 
-    <!-- No Votes -->
+    <!-- Okay Ratings -->
     <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-red-600 mb-4 flex items-center">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            No ({{ no_count }})
+        <h2 class="text-xl font-bold text-yellow-600 mb-4">
+            😐 Okay ({{ okay_count }})
         </h2>
-        {% if no_votes %}
+        {% if okay_ratings %}
             <ul class="space-y-2">
-                {% for vote in no_votes %}
-                    <li><a href="{% url 'profile' vote.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ vote.user|display_name:request.user }}</a></li>
+                {% for rating in okay_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No no votes yet</p>
+            <p class="text-gray-400 italic">No okay ratings yet</p>
         {% endif %}
     </div>
 
-    <!-- Not Seen Votes -->
+    <!-- Disliked Ratings -->
     <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-gray-600 mb-4 flex items-center">
-            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-            </svg>
-            Haven't Seen ({{ not_seen_count }})
+        <h2 class="text-xl font-bold text-orange-600 mb-4">
+            😕 Disliked ({{ disliked_count }})
         </h2>
-        {% if not_seen_votes %}
+        {% if disliked_ratings %}
             <ul class="space-y-2">
-                {% for vote in not_seen_votes %}
-                    <li><a href="{% url 'profile' vote.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ vote.user|display_name:request.user }}</a></li>
+                {% for rating in disliked_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No one marked as haven't seen</p>
+            <p class="text-gray-400 italic">No disliked ratings yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Hated Ratings -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-red-600 mb-4">
+            😡 Hated ({{ hated_count }})
+        </h2>
+        {% if hated_ratings %}
+            <ul class="space-y-2">
+                {% for rating in hated_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-400 italic">No hated ratings yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Not Yet Rated -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-600 mb-4">
+            ⏭️ Not Yet Rated ({{ no_rating_count }})
+        </h2>
+        {% if no_rating_ratings %}
+            <ul class="space-y-2">
+                {% for rating in no_rating_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-400 italic">No one marked as not yet rated</p>
         {% endif %}
     </div>
 </div>
 
-<!-- No Vote Yet -->
-{% if no_vote_users %}
+<!-- No Rating Yet -->
+{% if no_rating_users %}
 <div class="bg-white rounded-xl shadow-md p-6 mt-6">
     <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 1.745 0 3.227.835 3.776 2M15 13H9m-4-8h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
         </svg>
-        No Vote Yet ({{ no_vote_count }})
+        No Rating Yet ({{ no_rating_user_count }})
     </h2>
     <ul class="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {% for user in no_vote_users %}
+        {% for user in no_rating_users %}
             <li><a href="{% url 'profile' user.username %}" class="text-gray-500 hover:text-indigo-600 transition">{{ user|display_name:request.user }}</a></li>
         {% endfor %}
     </ul>

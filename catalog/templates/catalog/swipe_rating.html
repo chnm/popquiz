@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Vote - {{ category.name }} - PopQuiz{% endblock %}
+{% block title %}Rate - {{ category.name }} - PopQuiz{% endblock %}
 
 {% block content %}
 <div class="mb-3 md:mb-6">
@@ -9,17 +9,17 @@
 
 <div class="text-center mb-2 md:mb-4">
     <h1 class="text-xl md:text-2xl font-bold text-gray-800">{{ category.name }}</h1>
-    <p class="text-sm md:text-base text-gray-600"><span id="voted-count">{{ voted_count }}</span> of <span id="total-count">{{ total_count }}</span> voted</p>
+    <p class="text-sm md:text-base text-gray-600"><span id="rated-count">{{ voted_count }}</span> of <span id="total-count">{{ total_count }}</span> rated</p>
     <div class="w-full bg-gray-200 rounded-full h-1.5 md:h-2 mt-1 md:mt-2 max-w-md mx-auto">
         <div id="progress-bar" class="bg-indigo-600 h-1.5 md:h-2 rounded-full" style="width: {% widthratio voted_count total_count 100 %}%"></div>
     </div>
 </div>
 
-<div id="voting-container">
+<div id="rating-container">
 {% if current_item %}
     <div class="max-w-sm md:max-w-4xl mx-auto">
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row md:items-center">
-            <!-- Vote Buttons (Top on mobile, Right column on desktop) -->
+            <!-- Rating Buttons (Top on mobile, Right column on desktop) -->
             <div class="order-1 md:order-2 md:flex-1 md:flex md:flex-col md:justify-center md:p-8">
                 <input type="hidden" id="current-item-id" value="{{ current_item.id }}">
 
@@ -30,47 +30,57 @@
                     <a id="imdb-link-desktop" href="{% if current_item.imdb_url %}{{ current_item.imdb_url }}{% else %}#{% endif %}" target="_blank" class="text-indigo-600 hover:underline text-sm block h-5" {% if not current_item.imdb_url %}style="visibility: hidden;"{% endif %}>View on IMDB</a>
                 </div>
 
-                <!-- Vote Buttons - Single row on mobile, two rows on desktop -->
-                <div class="p-3 md:p-0 md:h-[140px]">
-                    <!-- Mobile: Single row of 4 buttons -->
-                    <div class="grid grid-cols-4 gap-2 md:hidden">
-                        <button data-choice="yes" class="vote-btn py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition duration-200">
-                            Yes
-                        </button>
-                        <button data-choice="no" class="vote-btn py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-semibold transition duration-200">
-                            No
-                        </button>
-                        <button data-choice="meh" class="vote-btn py-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold transition duration-200">
-                            Meh
-                        </button>
-                        <button data-choice="no_answer" class="vote-btn py-2 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-semibold transition duration-200">
-                            Skip
+                <!-- Rating Buttons -->
+                <div class="p-3 md:p-0">
+                    <!-- Mobile: 5 emoji buttons + skip in 2 rows -->
+                    <div class="md:hidden">
+                        <div class="grid grid-cols-5 gap-1 mb-1">
+                            <button data-choice="loved" class="rating-btn py-3 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-2xl font-semibold transition duration-200" title="🤩 Loved it">
+                                🤩
+                            </button>
+                            <button data-choice="liked" class="rating-btn py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white text-2xl font-semibold transition duration-200" title="🙂 Liked it">
+                                🙂
+                            </button>
+                            <button data-choice="okay" class="rating-btn py-3 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white text-2xl font-semibold transition duration-200" title="😐 It was okay">
+                                😐
+                            </button>
+                            <button data-choice="disliked" class="rating-btn py-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-2xl font-semibold transition duration-200" title="😕 Disliked it">
+                                😕
+                            </button>
+                            <button data-choice="hated" class="rating-btn py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-2xl font-semibold transition duration-200" title="😡 Hated it">
+                                😡
+                            </button>
+                        </div>
+                        <button data-choice="no_rating" class="rating-btn w-full py-2 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-semibold transition duration-200">
+                            Not yet rated
                         </button>
                     </div>
 
-                    <!-- Desktop: Original 2x2 grid -->
+                    <!-- Desktop: 5 emoji buttons + skip -->
                     <div class="hidden md:block">
-                        <div class="grid grid-cols-2 gap-3 mb-3">
-                            <button data-choice="no" class="vote-btn w-full py-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-lg transition duration-200 flex items-center justify-center space-x-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                <span>No</span>
+                        <div class="grid grid-cols-5 gap-2 mb-3">
+                            <button data-choice="loved" class="rating-btn py-5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white text-4xl font-bold transition duration-200 flex flex-col items-center justify-center" title="Loved it">
+                                <span>🤩</span>
                             </button>
-                            <button data-choice="yes" class="vote-btn w-full py-4 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold text-lg transition duration-200 flex items-center justify-center space-x-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                                <span>Yes</span>
+                            <button data-choice="liked" class="rating-btn py-5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-4xl font-bold transition duration-200 flex flex-col items-center justify-center" title="Liked it">
+                                <span>🙂</span>
+                            </button>
+                            <button data-choice="okay" class="rating-btn py-5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white text-4xl font-bold transition duration-200 flex flex-col items-center justify-center" title="It was okay">
+                                <span>😐</span>
+                            </button>
+                            <button data-choice="disliked" class="rating-btn py-5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-4xl font-bold transition duration-200 flex flex-col items-center justify-center" title="Disliked it">
+                                <span>😕</span>
+                            </button>
+                            <button data-choice="hated" class="rating-btn py-5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-4xl font-bold transition duration-200 flex flex-col items-center justify-center" title="Hated it">
+                                <span>😡</span>
                             </button>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button data-choice="meh" class="vote-btn w-full py-3 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-white font-semibold transition duration-200">
-                                Meh
-                            </button>
-                            <button data-choice="no_answer" class="vote-btn w-full py-3 rounded-xl bg-gray-400 hover:bg-gray-500 text-white font-semibold transition duration-200">
-                                Haven't Seen
-                            </button>
+                        <button data-choice="no_rating" class="rating-btn w-full py-3 rounded-xl bg-gray-400 hover:bg-gray-500 text-white font-semibold transition duration-200">
+                            ⏭️ Not yet rated
+                        </button>
+                        <!-- Rating legend -->
+                        <div class="mt-4 text-xs text-gray-500 text-center space-y-1">
+                            <p>🤩 Loved (+2) | 🙂 Liked (+1) | 😐 Okay (0) | 😕 Disliked (-1) | 😡 Hated (-2)</p>
                         </div>
                     </div>
                 </div>
@@ -119,7 +129,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <h2 class="text-2xl font-bold text-gray-800 mb-2">All Done!</h2>
-        <p class="text-gray-600 mb-4">You've voted on all <span id="total-count">{{ total_count }}</span> items in {{ category.name }}.</p>
+        <p class="text-gray-600 mb-4">You've rated all <span id="total-count">{{ total_count }}</span> items in {{ category.name }}.</p>
         <a href="{% url 'category_detail' category.slug %}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
             View All Results
         </a>
@@ -130,7 +140,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const categorySlug = '{{ category.slug }}';
-    const voteButtons = document.querySelectorAll('.vote-btn');
+    const ratingButtons = document.querySelectorAll('.rating-btn');
     const csrfToken = '{{ csrf_token }}';
 
     // Swipe detection variables
@@ -141,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const poster = document.getElementById('movie-poster');
     const swipeIndicator = document.getElementById('swipe-indicator');
     const swipeIcon = document.getElementById('swipe-icon');
-    const SWIPE_THRESHOLD = 100; // pixels needed to trigger vote
+    const SWIPE_THRESHOLD = 100; // pixels needed to trigger rating
 
     // Swipe event handlers
     function handleTouchStart(e) {
@@ -170,10 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (Math.abs(deltaX) > 50) {
                 swipeIndicator.style.opacity = Math.min(Math.abs(deltaX) / 150, 0.7);
                 if (deltaX > 0) {
-                    swipeIcon.textContent = '✓';
-                    swipeIcon.style.color = '#10b981'; // green
+                    swipeIcon.textContent = '🤩';
+                    swipeIcon.style.color = '#a855f7'; // purple
                 } else {
-                    swipeIcon.textContent = '✗';
+                    swipeIcon.textContent = '😡';
                     swipeIcon.style.color = '#ef4444'; // red
                 }
             } else {
@@ -194,8 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Check if swipe threshold was met
         if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-            const choice = deltaX > 0 ? 'yes' : 'no';
-            submitVote(choice);
+            const choice = deltaX > 0 ? 'loved' : 'hated';
+            submitRating(choice);
         } else {
             // Reset poster position
             poster.style.transform = '';
@@ -209,18 +219,18 @@ document.addEventListener('DOMContentLoaded', function() {
         posterContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
     }
 
-    // Vote submission function
-    function submitVote(choice) {
+    // Rating submission function
+    function submitRating(choice) {
         const itemId = document.getElementById('current-item-id').value;
 
         // Disable all buttons and swipe during request
-        voteButtons.forEach(btn => btn.disabled = true);
+        ratingButtons.forEach(btn => btn.disabled = true);
         if (posterContainer) {
             posterContainer.style.pointerEvents = 'none';
         }
 
-        // Send vote via AJAX
-        fetch('{% url "vote_api" %}', {
+        // Send rating via AJAX
+        fetch('{% url "rate_api" %}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -228,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: new URLSearchParams({
                 'item_id': itemId,
-                'choice': choice,
+                'rating': choice,
                 'category_slug': categorySlug
             })
         })
@@ -236,20 +246,20 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Update progress
-                document.getElementById('voted-count').textContent = data.voted_count;
+                document.getElementById('rated-count').textContent = data.voted_count;
                 document.getElementById('total-count').textContent = data.total_count;
                 const progressPercent = Math.round((data.voted_count / data.total_count) * 100);
                 document.getElementById('progress-bar').style.width = progressPercent + '%';
 
                 if (data.completed) {
                     // Show completion screen
-                    document.getElementById('voting-container').innerHTML = `
+                    document.getElementById('rating-container').innerHTML = `
                         <div class="max-w-sm mx-auto bg-white rounded-2xl shadow-xl p-8 text-center">
                             <svg class="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             <h2 class="text-2xl font-bold text-gray-800 mb-2">All Done!</h2>
-                            <p class="text-gray-600 mb-4">You've voted on all ${data.total_count} items in {{ category.name }}.</p>
+                            <p class="text-gray-600 mb-4">You've rated all ${data.total_count} items in {{ category.name }}.</p>
                             <a href="{% url 'category_detail' category.slug %}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
                                 View All Results
                             </a>
@@ -316,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('remaining-count').textContent = data.remaining_count;
 
                     // Re-enable buttons and swipe
-                    voteButtons.forEach(btn => btn.disabled = false);
+                    ratingButtons.forEach(btn => btn.disabled = false);
                     if (posterContainer) {
                         posterContainer.style.pointerEvents = 'auto';
                     }
@@ -325,9 +335,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Failed to submit vote. Please try again.');
+            alert('Failed to submit rating. Please try again.');
             poster.style.transform = '';
-            voteButtons.forEach(btn => btn.disabled = false);
+            ratingButtons.forEach(btn => btn.disabled = false);
             if (posterContainer) {
                 posterContainer.style.pointerEvents = 'auto';
             }
@@ -335,11 +345,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Button click handlers
-    voteButtons.forEach(button => {
+    ratingButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const choice = this.dataset.choice;
-            submitVote(choice);
+            submitRating(choice);
         });
     });
 });

@@ -72,41 +72,57 @@
                     <div class="text-xs text-gray-500">score</div>
                 </div>
 
-                <!-- Vote Breakdown -->
-                <div class="flex-shrink-0 flex items-center space-x-2">
+                <!-- Rating Breakdown -->
+                <div class="flex-shrink-0 flex items-center space-x-1.5">
                     <div class="text-center">
-                        <div class="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
-                            <span class="text-green-700 font-semibold text-sm">{{ item_data.yes_count }}</span>
+                        <div class="flex items-center justify-center w-7 h-7 bg-purple-100 rounded-full">
+                            <span class="text-purple-700 font-semibold text-xs">{{ item_data.loved_count }}</span>
                         </div>
                     </div>
                     <div class="text-center">
-                        <div class="flex items-center justify-center w-8 h-8 bg-yellow-100 rounded-full">
-                            <span class="text-yellow-700 font-semibold text-sm">{{ item_data.meh_count }}</span>
+                        <div class="flex items-center justify-center w-7 h-7 bg-green-100 rounded-full">
+                            <span class="text-green-700 font-semibold text-xs">{{ item_data.liked_count }}</span>
                         </div>
                     </div>
                     <div class="text-center">
-                        <div class="flex items-center justify-center w-8 h-8 bg-red-100 rounded-full">
-                            <span class="text-red-700 font-semibold text-sm">{{ item_data.no_count }}</span>
+                        <div class="flex items-center justify-center w-7 h-7 bg-yellow-100 rounded-full">
+                            <span class="text-yellow-700 font-semibold text-xs">{{ item_data.okay_count }}</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center w-7 h-7 bg-orange-100 rounded-full">
+                            <span class="text-orange-700 font-semibold text-xs">{{ item_data.disliked_count }}</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="flex items-center justify-center w-7 h-7 bg-red-100 rounded-full">
+                            <span class="text-red-700 font-semibold text-xs">{{ item_data.hated_count }}</span>
                         </div>
                     </div>
                 </div>
                 {% else %}
                 <div class="flex-shrink-0 text-gray-400 text-sm italic">
-                    No votes yet
+                    No ratings yet
                 </div>
                 {% endif %}
             </div>
 
-            {% if item_data.total_votes > 0 %}
+            {% if item_data.total_ratings > 0 %}
             <div class="h-1.5 flex">
-                {% if item_data.yes_percent > 0 %}
-                <div class="bg-green-500" style="width: {{ item_data.yes_percent }}%"></div>
+                {% if item_data.loved_percent > 0 %}
+                <div class="bg-purple-500" style="width: {{ item_data.loved_percent }}%"></div>
                 {% endif %}
-                {% if item_data.meh_percent > 0 %}
-                <div class="bg-yellow-400" style="width: {{ item_data.meh_percent }}%"></div>
+                {% if item_data.liked_percent > 0 %}
+                <div class="bg-green-500" style="width: {{ item_data.liked_percent }}%"></div>
                 {% endif %}
-                {% if item_data.no_percent > 0 %}
-                <div class="bg-red-500" style="width: {{ item_data.no_percent }}%"></div>
+                {% if item_data.okay_percent > 0 %}
+                <div class="bg-yellow-400" style="width: {{ item_data.okay_percent }}%"></div>
+                {% endif %}
+                {% if item_data.disliked_percent > 0 %}
+                <div class="bg-orange-500" style="width: {{ item_data.disliked_percent }}%"></div>
+                {% endif %}
+                {% if item_data.hated_percent > 0 %}
+                <div class="bg-red-500" style="width: {{ item_data.hated_percent }}%"></div>
                 {% endif %}
             </div>
             {% endif %}
@@ -154,7 +170,7 @@
                     </div>
                 </div>
                 {% else %}
-                <div class="flex-shrink-0 text-gray-400 text-sm italic">No votes</div>
+                <div class="flex-shrink-0 text-gray-400 text-sm italic">No ratings</div>
                 {% endif %}
             </div>
         </div>
