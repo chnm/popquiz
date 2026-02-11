@@ -198,9 +198,9 @@ def search_directors_by_name(director_name):
         directors = []
 
         # Look for name search results
-        # Pattern to find person entries with their ID and name
-        # IMDB search results typically have: <a href="/name/nm#######/">Name</a>
-        result_pattern = r'<a[^>]*href="/name/(nm\d+)/[^"]*"[^>]*>([^<]+)</a>'
+        # IMDB now uses aria-label for names in search results
+        # Pattern: <a...href="/name/nm#######/..."...aria-label="Name">
+        result_pattern = r'<a[^>]+href="/name/(nm\d+)/[^"]*"[^>]+aria-label="([^"]+)"'
 
         # Find all person results
         matches = re.finditer(result_pattern, page_html)
