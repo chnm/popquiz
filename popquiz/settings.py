@@ -172,11 +172,15 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# Email configuration
+# Disable email sending - no SMTP server configured
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.DummyEmailBackend'
+
 # django-allauth configuration
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Force HTTPS for OAuth callbacks
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Allow login with email or username
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required signup fields
-ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Change to 'mandatory' if email verification is required
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disable email verification (no SMTP configured)
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create accounts on social login
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'accounts.adapter.CustomSocialAccountAdapter'  # Custom adapter for profile data
@@ -194,4 +198,22 @@ SOCIALACCOUNT_PROVIDERS = {
             'auth_type': 'reauthenticate',
         }
     }
+}
+
+# Logging configuration - log errors with full tracebacks
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Log 500 errors with full tracebacks
+            'propagate': False,
+        },
+    },
 }
