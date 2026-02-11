@@ -282,35 +282,41 @@ def fetch_director_filmography(director_url):
         if not name:
             return None
 
-        # Extract filmography - look for director credits
+        # Extract filmography - IMDB now uses aria-label for movie titles
         movies = []
 
-        # Find all movie links with year information
-        # Pattern matches: title/tt1234567/... and extracts the ID and title
-        movie_pattern = r'<a href="/title/(tt\d+)/[^"]*"[^>]*>([^<]+)</a>'
-        year_pattern = r'<span class="year_column">\s*(\d{4})\s*</span>'
+        # Pattern: <a...href="/title/tt#######/..."...aria-label="Title (Year)">
+        # The aria-label contains both title and year
+        movie_pattern = r'<a[^>]+href="/title/(tt\d+)/[^"]*"[^>]+aria-label="([^"]+)"'
 
-        # Look for director filmography section
-        director_section = re.search(r'id="director".*?<div class="filmo-rows.*?</div>\s*</div>', page_html, re.DOTALL)
+        # Find all movies on the page
+        movie_matches = re.finditer(movie_pattern, page_html)
+        seen_ids = set()
 
-        if director_section:
-            section_html = director_section.group(0)
+        for match in movie_matches:
+            imdb_id = match.group(1)
+            aria_label = html.unescape(match.group(2)).strip()
 
-            # Find all movies in this section
-            movie_matches = re.finditer(movie_pattern, section_html)
-            for match in movie_matches:
-                imdb_id = match.group(1)
-                title = html.unescape(match.group(2)).strip()
+            # Skip duplicates
+            if imdb_id in seen_ids:
+                continue
+            seen_ids.add(imdb_id)
 
-                # Try to find the year for this movie (look nearby in the HTML)
-                # Get a snippet around the match
-                start_pos = max(0, match.start() - 200)
-                end_pos = min(len(section_html), match.end() + 200)
-                context = section_html[start_pos:end_pos]
+            # Extract year from aria-label (usually at the end in parentheses)
+            year = None
+            year_match = re.search(r'\((\d{4})\)', aria_label)
+            if year_match:
+                year = int(year_match.group(1))
 
-                year_match = re.search(r'<span class="year_column"[^>]*>\s*(\d{4})', context)
-                year = int(year_match.group(1)) if year_match else None
+            # Clean up title - remove year, actor names, etc.
+            title = aria_label
+            # Remove " in Title" patterns (for actor credits)
+            title = re.sub(r'^[^"]+ in ', '', title)
+            # Remove year in parentheses
+            title = re.sub(r'\s*\(\d{4}\)\s*$', '', title)
+            title = title.strip()
 
+            if title:
                 movies.append({
                     'title': title,
                     'year': year,
