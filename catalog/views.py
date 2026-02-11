@@ -338,20 +338,28 @@ class AddByDirectorView(LoginRequiredMixin, View):
             added_count += 1
 
         # Show summary message
-        message_parts = []
         if added_count > 0:
-            message_parts.append(f'Added {added_count} new movie(s)')
-        if skipped_count > 0:
-            message_parts.append(f'skipped {skipped_count} (already in database)')
-        if failed_count > 0:
-            message_parts.append(f'{failed_count} failed to fetch')
-
-        if added_count > 0:
-            messages.success(request, f'{director_name}: {", ".join(message_parts)}!')
+            # Success message when movies were added
+            message = f'I added {added_count} {director_name} movie{"s" if added_count != 1 else ""} to {category.name}!'
+            if skipped_count > 0:
+                message += f' ({skipped_count} {"was" if skipped_count == 1 else "were"} already in the database)'
+            messages.success(request, message)
         elif skipped_count > 0 and failed_count == 0:
-            messages.info(request, f'{director_name}: All {skipped_count} movies are already in the database.')
+            # Info message when all movies already exist
+            messages.info(request, f'All {skipped_count} {director_name} movies are already in your {category.name} collection.')
+        elif failed_count > 0 and added_count == 0:
+            # Warning when no movies could be added
+            messages.warning(request, f'Could not add {director_name} movies. {failed_count} movie{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
         else:
-            messages.warning(request, f'{director_name}: {", ".join(message_parts)}')
+            # Mixed results
+            message_parts = []
+            if added_count > 0:
+                message_parts.append(f'added {added_count}')
+            if skipped_count > 0:
+                message_parts.append(f'skipped {skipped_count} (already in database)')
+            if failed_count > 0:
+                message_parts.append(f'{failed_count} failed')
+            messages.info(request, f'{director_name}: {", ".join(message_parts)}')
 
         return redirect('home')
 

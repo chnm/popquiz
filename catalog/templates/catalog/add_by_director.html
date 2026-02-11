@@ -51,7 +51,7 @@
         <p class="text-gray-600">Please select the director you want to add movies from:</p>
     </div>
 
-    <form method="post" class="space-y-3">
+    <form method="post" class="space-y-3" id="director-form">
         {% csrf_token %}
 
         <div class="space-y-2">
@@ -74,16 +74,39 @@
             {% endfor %}
         </div>
 
+        <!-- Loading message (hidden by default) -->
+        <div id="loading-message" class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-blue-800 font-medium">Fetching movies from IMDB and adding them to your collection. This may take a minute...</span>
+            </div>
+        </div>
+
         <div class="flex gap-3 mt-6">
             <a href="{% url 'add_by_director' category.slug %}"
                class="flex-1 text-center bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
                 Start Over
             </a>
-            <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
+            <button type="submit" id="submit-btn" class="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
                 Add Movies by Selected Director
             </button>
         </div>
     </form>
+
+    <script>
+        // Show loading message when form is submitted
+        document.getElementById('director-form').addEventListener('submit', function(e) {
+            // Show loading message
+            document.getElementById('loading-message').classList.remove('hidden');
+            // Disable submit button
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('submit-btn').textContent = 'Working...';
+        });
+    </script>
     {% endif %}
 </div>
 {% endblock %}
