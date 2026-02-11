@@ -81,12 +81,12 @@
                         <div>
                             <span class="font-medium text-gray-800">{{ movie.item.title }}</span>
                             <div class="text-xs text-gray-500">
-                                Voted
-                                <span class="{% if movie.user_vote == 'yes' %}text-green-600{% elif movie.user_vote == 'no' %}text-red-600{% else %}text-yellow-600{% endif %} font-semibold">
-                                    {{ movie.user_vote }}
+                                Rated
+                                <span class="{% if movie.user_rating == 'loved' %}text-purple-600{% elif movie.user_rating == 'liked' %}text-green-600{% elif movie.user_rating == 'okay' %}text-yellow-600{% elif movie.user_rating == 'disliked' %}text-orange-600{% else %}text-red-600{% endif %} font-semibold">
+                                    {{ movie.user_rating }}
                                 </span>
                                 vs consensus
-                                <span class="{% if movie.consensus == 'yes' %}text-green-600{% elif movie.consensus == 'no' %}text-red-600{% else %}text-yellow-600{% endif %} font-semibold">
+                                <span class="{% if movie.consensus == 'loved' %}text-purple-600{% elif movie.consensus == 'liked' %}text-green-600{% elif movie.consensus == 'okay' %}text-yellow-600{% elif movie.consensus == 'disliked' %}text-orange-600{% else %}text-red-600{% endif %} font-semibold">
                                     {{ movie.consensus }}
                                 </span>
                             </div>
@@ -105,14 +105,14 @@
 <div class="bg-white rounded-xl shadow-md p-6 mt-8">
     <h3 class="font-semibold text-gray-700 mb-3">How It Works</h3>
     <p class="text-gray-600 text-sm mb-2">
-        The <strong>Eclectic Score</strong> measures how often someone's vote differs from the team consensus.
+        The <strong>Eclectic Score</strong> measures how often someone's rating differs from the team consensus.
         A higher score means more unique taste!
     </p>
     <ul class="text-gray-500 text-sm list-disc list-inside space-y-1">
-        <li>For each movie, the consensus is the most common vote (yes/no/meh)</li>
-        <li>Movies with tied votes or only one vote are excluded</li>
-        <li>Users need at least 3 comparable votes to appear on this list</li>
-        <li>"Contrarian picks" shows movies where this person voted against the majority</li>
+        <li>For each movie, the consensus is the most common rating (loved/liked/okay/disliked/hated)</li>
+        <li>Movies with tied ratings or only one rating are excluded</li>
+        <li>Users need at least 3 comparable ratings to appear on this list</li>
+        <li>"Contrarian picks" shows movies where this person rated against the majority</li>
     </ul>
 </div>
 
@@ -124,8 +124,8 @@
         </svg>
     </div>
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Not Enough Data Yet</h2>
-    <p class="text-gray-600">We need more votes from the team to calculate eclectic scores.</p>
-    <p class="text-gray-500 text-sm mt-2">Each person needs at least 3 votes on movies that others have also voted on.</p>
+    <p class="text-gray-600">We need more ratings from the team to calculate eclectic scores.</p>
+    <p class="text-gray-500 text-sm mt-2">Each person needs at least 3 ratings on movies that others have also rated.</p>
 </div>
 {% endif %}
 {% endblock %}

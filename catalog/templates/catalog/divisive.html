@@ -64,39 +64,63 @@
                 <div class="text-xs text-gray-500">divisive</div>
             </div>
 
-            <!-- Vote Breakdown -->
-            <div class="flex-shrink-0 flex items-center space-x-3">
+            <!-- Rating Breakdown -->
+            <div class="flex-shrink-0 flex items-center space-x-2">
                 <div class="text-center">
-                    <div class="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
-                        <span class="text-green-700 font-semibold">{{ item_data.yes_count }}</span>
+                    <div class="flex items-center justify-center w-9 h-9 bg-purple-100 rounded-full">
+                        <span class="text-purple-700 font-semibold text-sm">{{ item_data.loved_count }}</span>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">yes</div>
+                    <div class="text-xs text-gray-500 mt-1">🤩</div>
                 </div>
                 <div class="text-center">
-                    <div class="flex items-center justify-center w-10 h-10 bg-yellow-100 rounded-full">
-                        <span class="text-yellow-700 font-semibold">{{ item_data.meh_count }}</span>
+                    <div class="flex items-center justify-center w-9 h-9 bg-green-100 rounded-full">
+                        <span class="text-green-700 font-semibold text-sm">{{ item_data.liked_count }}</span>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">meh</div>
+                    <div class="text-xs text-gray-500 mt-1">🙂</div>
                 </div>
                 <div class="text-center">
-                    <div class="flex items-center justify-center w-10 h-10 bg-red-100 rounded-full">
-                        <span class="text-red-700 font-semibold">{{ item_data.no_count }}</span>
+                    <div class="flex items-center justify-center w-9 h-9 bg-yellow-100 rounded-full">
+                        <span class="text-yellow-700 font-semibold text-sm">{{ item_data.okay_count }}</span>
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">no</div>
+                    <div class="text-xs text-gray-500 mt-1">😐</div>
+                </div>
+                <div class="text-center">
+                    <div class="flex items-center justify-center w-9 h-9 bg-orange-100 rounded-full">
+                        <span class="text-orange-700 font-semibold text-sm">{{ item_data.disliked_count }}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">😕</div>
+                </div>
+                <div class="text-center">
+                    <div class="flex items-center justify-center w-9 h-9 bg-red-100 rounded-full">
+                        <span class="text-red-700 font-semibold text-sm">{{ item_data.hated_count }}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">😡</div>
                 </div>
             </div>
         </div>
 
-        <!-- Vote Distribution Bar -->
+        <!-- Rating Distribution Bar -->
         <div class="px-4 pb-4">
             <div class="h-2 bg-gray-100 rounded-full overflow-hidden flex">
-                <div class="bg-green-500" style="width: {{ item_data.yes_percent }}%"></div>
-                <div class="bg-yellow-400" style="width: {{ item_data.meh_percent }}%"></div>
-                <div class="bg-red-500" style="width: {{ item_data.no_percent }}%"></div>
+                {% if item_data.loved_percent > 0 %}
+                <div class="bg-purple-500" style="width: {{ item_data.loved_percent }}%"></div>
+                {% endif %}
+                {% if item_data.liked_percent > 0 %}
+                <div class="bg-green-500" style="width: {{ item_data.liked_percent }}%"></div>
+                {% endif %}
+                {% if item_data.okay_percent > 0 %}
+                <div class="bg-yellow-400" style="width: {{ item_data.okay_percent }}%"></div>
+                {% endif %}
+                {% if item_data.disliked_percent > 0 %}
+                <div class="bg-orange-500" style="width: {{ item_data.disliked_percent }}%"></div>
+                {% endif %}
+                {% if item_data.hated_percent > 0 %}
+                <div class="bg-red-500" style="width: {{ item_data.hated_percent }}%"></div>
+                {% endif %}
             </div>
             <div class="flex justify-between text-xs text-gray-500 mt-1">
-                <span>{{ item_data.yes_percent }}% love it</span>
-                <span>{{ item_data.no_percent }}% hate it</span>
+                <span>Wide range of opinions</span>
+                <span>Std Dev: {{ item_data.std_dev|floatformat:2 }}</span>
             </div>
         </div>
     </div>
@@ -107,13 +131,13 @@
 <div class="bg-white rounded-xl shadow-md p-6 mt-8">
     <h3 class="font-semibold text-gray-700 mb-3">How It Works</h3>
     <p class="text-gray-600 text-sm mb-2">
-        The <strong>Divisiveness Score</strong> measures how many people are on the minority side of the vote.
-        Higher scores mean more people on BOTH sides!
+        The <strong>Divisiveness Score</strong> measures how spread out the ratings are using standard deviation.
+        Higher scores mean more disagreement!
     </p>
     <ul class="text-gray-500 text-sm list-disc list-inside space-y-1">
-        <li>Score = min(yes votes, no votes) - the number of people on the smaller side</li>
-        <li>Only movies with 5+ total votes are included</li>
-        <li>A movie with 10 yes and 10 no votes is more divisive than 10 yes and 1 no</li>
+        <li>Standard deviation shows how much ratings vary from the average</li>
+        <li>Only movies with 5+ ratings are included</li>
+        <li>Movies with a wide spread of ratings (loved AND hated) score higher</li>
         <li>These are the movies that spark the most debate!</li>
     </ul>
 </div>
@@ -126,8 +150,8 @@
         </svg>
     </div>
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Not Enough Data Yet</h2>
-    <p class="text-gray-600">We need more votes from the team to identify divisive movies.</p>
-    <p class="text-gray-500 text-sm mt-2">Each movie needs at least 5 votes to appear on this list.</p>
+    <p class="text-gray-600">We need more ratings from the team to identify divisive movies.</p>
+    <p class="text-gray-500 text-sm mt-2">Each movie needs at least 5 ratings to appear on this list.</p>
 </div>
 {% endif %}
 {% endblock %}

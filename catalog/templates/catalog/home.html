@@ -10,7 +10,7 @@
     <!-- Welcome Header -->
     <div class="flex-shrink-0 lg:w-80 flex flex-col justify-start">
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome to PopQuiz</h1>
-        <p class="text-gray-600">Vote on your favorite pop culture and see how your tastes compare with your team!</p>
+        <p class="text-gray-600">Rate your favorite pop culture and see how your tastes compare with your team!</p>
     </div>
 
     <!-- Featured Movie Section -->
@@ -55,45 +55,63 @@
                         </div>
                     </div>
 
-                    <!-- Vote Statistics -->
+                    <!-- Rating Statistics -->
                     <div class="space-y-3">
                         <div class="flex items-center justify-between text-sm mb-1">
-                            <span class="font-semibold">Team Votes</span>
-                            <span class="text-white/80">{{ featured_movie.total_votes }} vote{{ featured_movie.total_votes|pluralize }}</span>
+                            <span class="font-semibold">Team Ratings</span>
+                            <span class="text-white/80">{{ featured_movie.total_ratings }} rating{{ featured_movie.total_ratings|pluralize }}</span>
                         </div>
 
-                        <!-- Vote Bars -->
+                        <!-- Rating Bars -->
                         <div class="flex h-8 rounded-lg overflow-hidden bg-white/20">
-                            {% if featured_movie.yes_percent > 0 %}
-                            <div class="bg-green-500 flex items-center justify-center" style="width: {{ featured_movie.yes_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.yes_count }}</span>
+                            {% if featured_movie.loved_percent > 0 %}
+                            <div class="bg-purple-500 flex items-center justify-center" style="width: {{ featured_movie.loved_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.loved_count }}</span>
                             </div>
                             {% endif %}
-                            {% if featured_movie.meh_percent > 0 %}
-                            <div class="bg-yellow-500 flex items-center justify-center" style="width: {{ featured_movie.meh_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.meh_count }}</span>
+                            {% if featured_movie.liked_percent > 0 %}
+                            <div class="bg-green-500 flex items-center justify-center" style="width: {{ featured_movie.liked_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.liked_count }}</span>
                             </div>
                             {% endif %}
-                            {% if featured_movie.no_percent > 0 %}
-                            <div class="bg-red-500 flex items-center justify-center" style="width: {{ featured_movie.no_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.no_count }}</span>
+                            {% if featured_movie.okay_percent > 0 %}
+                            <div class="bg-yellow-500 flex items-center justify-center" style="width: {{ featured_movie.okay_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.okay_count }}</span>
+                            </div>
+                            {% endif %}
+                            {% if featured_movie.disliked_percent > 0 %}
+                            <div class="bg-orange-500 flex items-center justify-center" style="width: {{ featured_movie.disliked_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.disliked_count }}</span>
+                            </div>
+                            {% endif %}
+                            {% if featured_movie.hated_percent > 0 %}
+                            <div class="bg-red-500 flex items-center justify-center" style="width: {{ featured_movie.hated_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.hated_count }}</span>
                             </div>
                             {% endif %}
                         </div>
 
                         <!-- Legend -->
-                        <div class="flex flex-wrap gap-4 text-sm">
-                            <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap gap-3 text-xs">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                                <span>{{ featured_movie.loved_count }} 🤩 ({{ featured_movie.loved_percent }}%)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
                                 <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                                <span>{{ featured_movie.yes_count }} Yes ({{ featured_movie.yes_percent }}%)</span>
+                                <span>{{ featured_movie.liked_count }} 🙂 ({{ featured_movie.liked_percent }}%)</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5">
                                 <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                                <span>{{ featured_movie.meh_count }} Meh ({{ featured_movie.meh_percent }}%)</span>
+                                <span>{{ featured_movie.okay_count }} 😐 ({{ featured_movie.okay_percent }}%)</span>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-orange-500 rounded-full"></span>
+                                <span>{{ featured_movie.disliked_count }} 😕 ({{ featured_movie.disliked_percent }}%)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
                                 <span class="w-3 h-3 bg-red-500 rounded-full"></span>
-                                <span>{{ featured_movie.no_count }} No ({{ featured_movie.no_percent }}%)</span>
+                                <span>{{ featured_movie.hated_count }} 😡 ({{ featured_movie.hated_percent }}%)</span>
                             </div>
                         </div>
                     </div>
@@ -205,18 +223,18 @@
                     <h2 class="text-2xl font-bold mb-2">{{ cat_data.category.name }}</h2>
                     {% if cat_data.remaining > 0 %}
                     <p class="text-white/90 text-lg mb-4">
-                        You have <span class="font-bold text-yellow-300">{{ cat_data.remaining }} movie{{ cat_data.remaining|pluralize }}</span> left to vote on!
+                        You have <span class="font-bold text-yellow-300">{{ cat_data.remaining }} movie{{ cat_data.remaining|pluralize }}</span> left to rate!
                     </p>
                     {% else %}
                     <p class="text-white/90 text-lg mb-4">
-                        You've voted on all {{ cat_data.total }} movies!
+                        You've rated all {{ cat_data.total }} movies!
                     </p>
                     {% endif %}
 
                     <!-- Progress Bar -->
                     <div class="mb-2">
                         <div class="flex justify-between text-sm text-white/80 mb-1">
-                            <span>{{ cat_data.voted }} of {{ cat_data.total }} voted</span>
+                            <span>{{ cat_data.voted }} of {{ cat_data.total }} rated</span>
                             <span>{{ cat_data.progress_percent }}% complete</span>
                         </div>
                         <div class="h-3 bg-white/20 rounded-full overflow-hidden">
@@ -227,12 +245,12 @@
 
                 <div class="flex flex-col gap-3">
                     {% if cat_data.remaining > 0 %}
-                    <a href="{% url 'swipe_vote' cat_data.category.slug %}" class="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-indigo-700 transition duration-200 shadow-lg">
+                    <a href="{% url 'swipe_rating' cat_data.category.slug %}" class="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-indigo-700 transition duration-200 shadow-lg">
                         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Start Voting
+                        Start Rating
                     </a>
                     {% else %}
                     <a href="{% url 'category_detail' cat_data.category.slug %}" class="inline-flex items-center justify-center bg-white/20 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/30 transition duration-200">
@@ -284,10 +302,10 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
                     <h2 class="text-2xl font-bold mb-2">{{ cat_data.category.name }}</h2>
-                    <p class="text-white/90 text-lg">{{ cat_data.category.item_count }} movie{{ cat_data.category.item_count|pluralize }} to vote on</p>
+                    <p class="text-white/90 text-lg">{{ cat_data.category.item_count }} movie{{ cat_data.category.item_count|pluralize }} to rate</p>
                 </div>
                 <a href="{% url 'login' %}" class="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-indigo-700 transition duration-200 shadow-lg">
-                    Log in to Vote
+                    Log in to Rate
                 </a>
             </div>
         </div>
@@ -416,24 +434,26 @@
                 <div class="flex items-start gap-3">
                     <!-- Activity Icon -->
                     <div class="flex-shrink-0 mt-1">
-                        {% if activity.type == 'vote' %}
-                            {% if activity.choice == 'yes' %}
+                        {% if activity.type == 'rating' %}
+                            {% if activity.rating == 'loved' %}
+                            <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm">🤩</span>
+                            </div>
+                            {% elif activity.rating == 'liked' %}
                             <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
-                                </svg>
+                                <span class="text-sm">🙂</span>
                             </div>
-                            {% elif activity.choice == 'no' %}
-                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"/>
-                                </svg>
-                            </div>
-                            {% else %}
+                            {% elif activity.rating == 'okay' %}
                             <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
+                                <span class="text-sm">😐</span>
+                            </div>
+                            {% elif activity.rating == 'disliked' %}
+                            <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm">😕</span>
+                            </div>
+                            {% elif activity.rating == 'hated' %}
+                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <span class="text-sm">😡</span>
                             </div>
                             {% endif %}
                         {% else %}
@@ -453,13 +473,17 @@
                             {% else %}
                                 <span class="font-medium">Claude</span>
                             {% endif %}
-                            {% if activity.type == 'vote' %}
-                                {% if activity.choice == 'yes' %}
-                                    <span class="text-green-600 font-semibold">loved</span>
-                                {% elif activity.choice == 'no' %}
-                                    <span class="text-red-600 font-semibold">didn't like</span>
-                                {% else %}
-                                    <span class="text-yellow-600 font-semibold">was meh about</span>
+                            {% if activity.type == 'rating' %}
+                                {% if activity.rating == 'loved' %}
+                                    <span class="text-purple-600 font-semibold">loved</span>
+                                {% elif activity.rating == 'liked' %}
+                                    <span class="text-green-600 font-semibold">liked</span>
+                                {% elif activity.rating == 'okay' %}
+                                    <span class="text-yellow-600 font-semibold">thought was okay</span>
+                                {% elif activity.rating == 'disliked' %}
+                                    <span class="text-orange-600 font-semibold">disliked</span>
+                                {% elif activity.rating == 'hated' %}
+                                    <span class="text-red-600 font-semibold">hated</span>
                                 {% endif %}
                             {% else %}
                                 <span class="text-indigo-600 font-semibold">added</span>
