@@ -327,6 +327,20 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 failed_count += 1
                 continue
 
+            # Double-check: Filter out TV shows that slipped through
+            # IMDB sometimes doesn't include type info in aria-labels on director pages
+            title = movie_data['title']
+            is_tv_show = (
+                'TV Series' in title or
+                'TV Mini-Series' in title or
+                'TV Movie' in title or
+                'TV Episode' in title or
+                'TV Special' in title
+            )
+            if is_tv_show:
+                skipped_count += 1
+                continue
+
             # Create the item
             Item.objects.create(
                 category=category,
