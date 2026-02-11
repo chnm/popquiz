@@ -11,7 +11,7 @@ from django.db.models import Count, Q, Case, When, IntegerField, Value
 from accounts.models import User
 from .models import Category, Item
 from .forms import AddItemForm
-from .imdb_utils import fetch_movie_data, fetch_director_filmography
+from .imdb_utils import fetch_movie_data, fetch_director_filmography, search_directors_by_name
 from votes.models import Vote
 
 
@@ -238,7 +238,7 @@ class AddItemView(LoginRequiredMixin, View):
 
 
 class AddByDirectorView(LoginRequiredMixin, View):
-    """View to add all movies by a director automatically."""
+    """View to add all movies by a director automatically by searching IMDB by name."""
 
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
@@ -248,23 +248,57 @@ class AddByDirectorView(LoginRequiredMixin, View):
 
     def post(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        director_url = request.POST.get('director_url', '').strip()
 
-        if not director_url:
-            messages.error(request, 'Please enter a director IMDB URL.')
+        # Check if user is selecting from search results
+        if 'director_id' in request.POST:
+            return self._add_movies_by_director_id(request, category, slug)
+
+        # Otherwise, search for director by name
+        director_name = request.POST.get('director_name', '').strip()
+
+        if not director_name:
+            messages.error(request, 'Please enter a director name.')
             return render(request, 'catalog/add_by_director.html', {
                 'category': category,
             })
 
-        # Fetch filmography
-        filmography = fetch_director_filmography(director_url)
+        # Search IMDB for directors matching this name
+        search_results = search_directors_by_name(director_name)
+
+        if not search_results:
+            messages.error(request, f'No directors found matching "{director_name}". Please check the spelling and try again.')
+            return render(request, 'catalog/add_by_director.html', {
+                'category': category,
+                'director_name': director_name,
+            })
+
+        # If exactly one result, proceed automatically
+        if len(search_results) == 1:
+            director_id = search_results[0]['imdb_id']
+            return self._add_movies_by_director_id(request, category, slug, director_id)
+
+        # Multiple results - show selection page
+        return render(request, 'catalog/add_by_director.html', {
+            'category': category,
+            'director_name': director_name,
+            'search_results': search_results,
+        })
+
+    def _add_movies_by_director_id(self, request, category, slug, director_id=None):
+        """Helper method to add movies once director is determined."""
+        if director_id is None:
+            director_id = request.POST.get('director_id', '').strip()
+
+        if not director_id:
+            messages.error(request, 'No director selected.')
+            return redirect('add_by_director', slug=slug)
+
+        # Fetch filmography using the director's IMDB ID
+        filmography = fetch_director_filmography(director_id)
 
         if not filmography:
-            messages.error(request, 'Could not fetch director filmography. Please check the URL and try again.')
-            return render(request, 'catalog/add_by_director.html', {
-                'category': category,
-                'director_url': director_url,
-            })
+            messages.error(request, 'Could not fetch director filmography. Please try again.')
+            return redirect('add_by_director', slug=slug)
 
         director_name = filmography['name']
         movies = filmography['movies']

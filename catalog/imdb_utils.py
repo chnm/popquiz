@@ -173,6 +173,80 @@ def extract_director_id(url):
     return None
 
 
+def search_directors_by_name(director_name):
+    """
+    Search IMDB for directors by name.
+
+    Returns a list of dicts, each with:
+    - name: str (director's full name)
+    - imdb_id: str (nm#######)
+    - known_for: str (description of what they're known for)
+
+    Returns empty list if search fails or no results found.
+    """
+    if not director_name or not director_name.strip():
+        return []
+
+    search_url = f"https://www.imdb.com/find/?q={requests.utils.quote(director_name.strip())}&s=nm"
+
+    try:
+        resp = requests.get(search_url, headers=HEADERS, timeout=15)
+        if resp.status_code != 200:
+            return []
+
+        page_html = resp.text
+        directors = []
+
+        # Look for name search results
+        # Pattern to find person entries with their ID and name
+        # IMDB search results typically have: <a href="/name/nm#######/">Name</a>
+        result_pattern = r'<a[^>]*href="/name/(nm\d+)/[^"]*"[^>]*>([^<]+)</a>'
+
+        # Find all person results
+        matches = re.finditer(result_pattern, page_html)
+        seen_ids = set()
+
+        for match in matches:
+            imdb_id = match.group(1)
+            name = html.unescape(match.group(2)).strip()
+
+            # Avoid duplicates
+            if imdb_id in seen_ids:
+                continue
+            seen_ids.add(imdb_id)
+
+            # Try to extract "known for" information
+            # Look for text near this result
+            start_pos = max(0, match.start() - 500)
+            end_pos = min(len(page_html), match.end() + 500)
+            context = page_html[start_pos:end_pos]
+
+            # Try to find credits/known-for information
+            known_for = ""
+            known_for_match = re.search(r'<li[^>]*class="[^"]*known-for[^"]*"[^>]*>([^<]+)</li>', context)
+            if not known_for_match:
+                # Try alternative pattern
+                known_for_match = re.search(r'<span[^>]*class="[^"]*ipc-metadata[^"]*"[^>]*>([^<]+)</span>', context)
+
+            if known_for_match:
+                known_for = html.unescape(known_for_match.group(1)).strip()
+
+            directors.append({
+                'name': name,
+                'imdb_id': imdb_id,
+                'known_for': known_for,
+            })
+
+            # Limit to top 10 results
+            if len(directors) >= 10:
+                break
+
+        return directors
+
+    except requests.RequestException:
+        return []
+
+
 def fetch_director_filmography(director_url):
     """
     Fetch a director's filmography from their IMDB page.

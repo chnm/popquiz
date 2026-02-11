@@ -9,47 +9,81 @@
 
 <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
     <h1 class="text-2xl font-bold text-gray-800 mb-2">Add Movies by Director</h1>
-    <p class="text-gray-600 mb-6">Enter a director's IMDB URL and all their movies will be automatically added to {{ category.name }}.</p>
+    <p class="text-gray-600 mb-6">Enter a director's name and all their movies will be automatically added to {{ category.name }}.</p>
 
+    {% if not search_results %}
+    <!-- Step 1: Enter Director Name -->
     <form method="post" class="space-y-4">
         {% csrf_token %}
 
         <div>
-            <label for="director_url" class="block text-sm font-medium text-gray-700 mb-1">Director IMDB URL</label>
+            <label for="director_name" class="block text-sm font-medium text-gray-700 mb-1">Director Name</label>
             <input type="text"
-                   name="director_url"
-                   id="director_url"
+                   name="director_name"
+                   id="director_name"
                    required
-                   value="{{ director_url|default:'' }}"
-                   placeholder="https://www.imdb.com/name/nm0000165/"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <p class="text-gray-500 text-xs mt-1">Example: https://www.imdb.com/name/nm0001392/ (Rob Reiner)</p>
+                   value="{{ director_name|default:'' }}"
+                   placeholder="e.g., Christopher Nolan"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   autofocus>
+            <p class="text-gray-500 text-xs mt-1">Enter the director's full name</p>
         </div>
 
         <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
-            Add All Movies by Director
+            Search Director
         </button>
     </form>
 
     <div class="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
         <h3 class="text-sm font-semibold text-indigo-800 mb-2">How it works:</h3>
         <ol class="text-sm text-gray-700 space-y-1 list-decimal list-inside">
-            <li>Enter the director's IMDB URL below</li>
-            <li>Click "Add All Movies by Director"</li>
+            <li>Enter the director's name</li>
+            <li>If multiple directors match, you'll be able to select the right one</li>
             <li>All movies by that director will be automatically added</li>
             <li>Duplicate movies already in the database will be skipped</li>
         </ol>
     </div>
 
-    <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-        <h3 class="text-sm font-medium text-gray-700 mb-2">How to find a director's IMDB URL:</h3>
-        <ol class="text-sm text-gray-600 space-y-1 list-decimal list-inside">
-            <li>Go to <a href="https://www.imdb.com" target="_blank" class="text-indigo-600 hover:underline">imdb.com</a></li>
-            <li>Search for the director's name</li>
-            <li>Click on their profile page</li>
-            <li>Copy the URL from your browser's address bar</li>
-        </ol>
-        <p class="text-xs text-gray-500 mt-3">The URL should look like: <span class="font-mono">https://www.imdb.com/name/nm#######/</span></p>
+    {% else %}
+    <!-- Step 2: Select from Multiple Directors -->
+    <div class="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+        <h2 class="text-lg font-bold text-gray-800 mb-2">Multiple directors found for "{{ director_name }}"</h2>
+        <p class="text-gray-600">Please select the director you want to add movies from:</p>
     </div>
+
+    <form method="post" class="space-y-3">
+        {% csrf_token %}
+
+        <div class="space-y-2">
+            {% for result in search_results %}
+            <label class="block p-4 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                <div class="flex items-start">
+                    <input type="radio"
+                           name="director_id"
+                           value="{{ result.imdb_id }}"
+                           required
+                           class="mt-1 w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                    <div class="ml-3 flex-1">
+                        <div class="font-semibold text-gray-900">{{ result.name }}</div>
+                        {% if result.known_for %}
+                            <div class="text-sm text-gray-600 mt-1">{{ result.known_for }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <a href="{% url 'add_by_director' category.slug %}"
+               class="flex-1 text-center bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
+                Start Over
+            </a>
+            <button type="submit" class="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
+                Add Movies by Selected Director
+            </button>
+        </div>
+    </form>
+    {% endif %}
 </div>
 {% endblock %}
