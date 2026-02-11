@@ -25,7 +25,15 @@ class HomeView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['users'] = User.objects.filter(is_staff=False).order_by('last_name', 'first_name')
+        # Order users: those with last names first (alphabetically), then by username
+        # This handles users who sign up without providing first_name/last_name
+        context['users'] = User.objects.filter(is_staff=False).annotate(
+            has_last_name=Case(
+                When(last_name='', then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField()
+            )
+        ).order_by('-has_last_name', 'last_name', 'first_name', 'username')
 
         # Get voting progress for logged-in user
         if self.request.user.is_authenticated:
