@@ -118,16 +118,16 @@
     <!-- Quick Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-center">
         <div class="bg-green-50 rounded-xl p-3 md:p-4">
-            <div class="text-2xl md:text-3xl font-bold text-green-600">{{ all_three.all_love|length }}</div>
-            <div class="text-xs md:text-sm text-green-700">All Love</div>
-        </div>
-        <div class="bg-red-50 rounded-xl p-3 md:p-4">
-            <div class="text-2xl md:text-3xl font-bold text-red-600">{{ all_three.all_hate|length }}</div>
-            <div class="text-xs md:text-sm text-red-700">All Hate</div>
+            <div class="text-2xl md:text-3xl font-bold text-green-600">{{ all_three.all_positive|length }}</div>
+            <div class="text-xs md:text-sm text-green-700">All Positive</div>
         </div>
         <div class="bg-yellow-50 rounded-xl p-3 md:p-4">
-            <div class="text-2xl md:text-3xl font-bold text-yellow-600">{{ all_three.all_meh|length }}</div>
-            <div class="text-xs md:text-sm text-yellow-700">All Meh</div>
+            <div class="text-2xl md:text-3xl font-bold text-yellow-600">{{ all_three.all_neutral|length }}</div>
+            <div class="text-xs md:text-sm text-yellow-700">All Neutral</div>
+        </div>
+        <div class="bg-red-50 rounded-xl p-3 md:p-4">
+            <div class="text-2xl md:text-3xl font-bold text-red-600">{{ all_three.all_negative|length }}</div>
+            <div class="text-xs md:text-sm text-red-700">All Negative</div>
         </div>
         <div class="bg-purple-50 rounded-xl p-3 md:p-4">
             <div class="text-2xl md:text-3xl font-bold text-purple-600">{{ all_three.mixed|length }}</div>
@@ -136,8 +136,8 @@
     </div>
 </div>
 
-<!-- Movies All Three Love -->
-{% if all_three.all_love %}
+<!-- Movies All Three Rated Positively -->
+{% if all_three.all_positive %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
@@ -145,10 +145,10 @@
                 <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
             </svg>
         </div>
-        <h3 class="text-lg font-bold text-gray-800">Movies All Three Love ({{ all_three.all_love|length }})</h3>
+        <h3 class="text-lg font-bold text-gray-800">Movies All Three Liked ({{ all_three.all_positive|length }})</h3>
     </div>
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {% for item in all_three.all_love %}
+        {% for item in all_three.all_positive %}
         <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
             {% if item.poster_url %}
             <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
@@ -170,20 +170,18 @@
 </div>
 {% endif %}
 
-<!-- Movies All Three Hate -->
-{% if all_three.all_hate %}
+<!-- Movies All Three Found Neutral -->
+{% if all_three.all_neutral %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
-        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
-            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
+        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+            <span class="text-2xl">😐</span>
         </div>
-        <h3 class="text-lg font-bold text-gray-800">Movies All Three Dislike ({{ all_three.all_hate|length }})</h3>
+        <h3 class="text-lg font-bold text-gray-800">Movies All Three Found Okay ({{ all_three.all_neutral|length }})</h3>
     </div>
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {% for item in all_three.all_hate %}
-        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75 hover:opacity-100">
+        {% for item in all_three.all_neutral %}
+        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90 hover:opacity-100">
             {% if item.poster_url %}
             <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -204,20 +202,20 @@
 </div>
 {% endif %}
 
-<!-- Movies All Three Feel Meh About -->
-{% if all_three.all_meh %}
+<!-- Movies All Three Disliked -->
+{% if all_three.all_negative %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
-        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </div>
-        <h3 class="text-lg font-bold text-gray-800">Movies All Three Feel Meh About ({{ all_three.all_meh|length }})</h3>
+        <h3 class="text-lg font-bold text-gray-800">Movies All Three Disliked ({{ all_three.all_negative|length }})</h3>
     </div>
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {% for item in all_three.all_meh %}
-        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-60 hover:opacity-100">
+        {% for item in all_three.all_negative %}
+        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75 hover:opacity-100">
             {% if item.poster_url %}
             <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -280,7 +278,7 @@
 {% endif %}
 
 <!-- Two-way overlaps sections -->
-{% if user1_and_2.all_love or user1_and_2.all_hate or user1_and_2.all_meh or user1_and_2.mixed %}
+{% if user1_and_2.all_positive or user1_and_2.all_negative or user1_and_2.all_neutral or user1_and_2.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <h3 class="text-lg font-bold text-gray-800">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} & {% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} Only ({% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} hasn't watched)</h3>
@@ -288,16 +286,16 @@
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div class="bg-green-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-green-600">{{ user1_and_2.all_love|length }}</div>
-            <div class="text-xs text-green-700">Both Love</div>
-        </div>
-        <div class="bg-red-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-red-600">{{ user1_and_2.all_hate|length }}</div>
-            <div class="text-xs text-red-700">Both Hate</div>
+            <div class="text-xl font-bold text-green-600">{{ user1_and_2.all_positive|length }}</div>
+            <div class="text-xs text-green-700">Both Positive</div>
         </div>
         <div class="bg-yellow-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-yellow-600">{{ user1_and_2.all_meh|length }}</div>
-            <div class="text-xs text-yellow-700">Both Meh</div>
+            <div class="text-xl font-bold text-yellow-600">{{ user1_and_2.all_neutral|length }}</div>
+            <div class="text-xs text-yellow-700">Both Neutral</div>
+        </div>
+        <div class="bg-red-50 rounded-lg p-3 text-center">
+            <div class="text-xl font-bold text-red-600">{{ user1_and_2.all_negative|length }}</div>
+            <div class="text-xs text-red-700">Both Negative</div>
         </div>
         <div class="bg-purple-50 rounded-lg p-3 text-center">
             <div class="text-xl font-bold text-purple-600">{{ user1_and_2.mixed|length }}</div>
@@ -307,7 +305,7 @@
 </div>
 {% endif %}
 
-{% if user1_and_3.all_love or user1_and_3.all_hate or user1_and_3.all_meh or user1_and_3.mixed %}
+{% if user1_and_3.all_positive or user1_and_3.all_negative or user1_and_3.all_neutral or user1_and_3.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <h3 class="text-lg font-bold text-gray-800">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} & {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only ({% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} hasn't watched)</h3>
@@ -315,16 +313,16 @@
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div class="bg-green-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-green-600">{{ user1_and_3.all_love|length }}</div>
-            <div class="text-xs text-green-700">Both Love</div>
-        </div>
-        <div class="bg-red-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-red-600">{{ user1_and_3.all_hate|length }}</div>
-            <div class="text-xs text-red-700">Both Hate</div>
+            <div class="text-xl font-bold text-green-600">{{ user1_and_3.all_positive|length }}</div>
+            <div class="text-xs text-green-700">Both Positive</div>
         </div>
         <div class="bg-yellow-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-yellow-600">{{ user1_and_3.all_meh|length }}</div>
-            <div class="text-xs text-yellow-700">Both Meh</div>
+            <div class="text-xl font-bold text-yellow-600">{{ user1_and_3.all_neutral|length }}</div>
+            <div class="text-xs text-yellow-700">Both Neutral</div>
+        </div>
+        <div class="bg-red-50 rounded-lg p-3 text-center">
+            <div class="text-xl font-bold text-red-600">{{ user1_and_3.all_negative|length }}</div>
+            <div class="text-xs text-red-700">Both Negative</div>
         </div>
         <div class="bg-purple-50 rounded-lg p-3 text-center">
             <div class="text-xl font-bold text-purple-600">{{ user1_and_3.mixed|length }}</div>
@@ -334,7 +332,7 @@
 </div>
 {% endif %}
 
-{% if user2_and_3.all_love or user2_and_3.all_hate or user2_and_3.all_meh or user2_and_3.mixed %}
+{% if user2_and_3.all_positive or user2_and_3.all_negative or user2_and_3.all_neutral or user2_and_3.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <h3 class="text-lg font-bold text-gray-800">{% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} & {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only ({% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} hasn't watched)</h3>
@@ -342,16 +340,16 @@
 
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         <div class="bg-green-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-green-600">{{ user2_and_3.all_love|length }}</div>
-            <div class="text-xs text-green-700">Both Love</div>
-        </div>
-        <div class="bg-red-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-red-600">{{ user2_and_3.all_hate|length }}</div>
-            <div class="text-xs text-red-700">Both Hate</div>
+            <div class="text-xl font-bold text-green-600">{{ user2_and_3.all_positive|length }}</div>
+            <div class="text-xs text-green-700">Both Positive</div>
         </div>
         <div class="bg-yellow-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-yellow-600">{{ user2_and_3.all_meh|length }}</div>
-            <div class="text-xs text-yellow-700">Both Meh</div>
+            <div class="text-xl font-bold text-yellow-600">{{ user2_and_3.all_neutral|length }}</div>
+            <div class="text-xs text-yellow-700">Both Neutral</div>
+        </div>
+        <div class="bg-red-50 rounded-lg p-3 text-center">
+            <div class="text-xl font-bold text-red-600">{{ user2_and_3.all_negative|length }}</div>
+            <div class="text-xs text-red-700">Both Negative</div>
         </div>
         <div class="bg-purple-50 rounded-lg p-3 text-center">
             <div class="text-xl font-bold text-purple-600">{{ user2_and_3.mixed|length }}</div>

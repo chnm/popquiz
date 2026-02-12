@@ -371,35 +371,52 @@ class ProfileView(DetailView):
 
 
 class CompareUsersView(View):
-    """View to compare two users' movie preferences (love/hate only)."""
+    """View to compare two users' movie preferences (positive/negative/neutral)."""
+
+    def _categorize_rating(self, rating):
+        """Categorize a rating as positive, negative, or neutral."""
+        if rating in [Rating.Level.LOVED, Rating.Level.LIKED]:
+            return 'positive'
+        elif rating in [Rating.Level.HATED, Rating.Level.DISLIKED]:
+            return 'negative'
+        elif rating == Rating.Level.OKAY:
+            return 'neutral'
+        return None
 
     def get(self, request, username1, username2):
         user1 = get_object_or_404(User, username=username1)
         user2 = get_object_or_404(User, username=username2)
 
-        # Get ratings for both users (only LOVED and HATED)
+        # Get all ratings for both users (exclude NO_RATING)
         user1_ratings = {
             r.item_id: {'rating': r.rating, 'item': r.item}
             for r in Rating.objects.filter(
-                user=user1,
-                rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+                user=user1
+            ).exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related('item', 'item__category')
         }
         user2_ratings = {
             r.item_id: {'rating': r.rating, 'item': r.item}
             for r in Rating.objects.filter(
-                user=user2,
-                rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+                user=user2
+            ).exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related('item', 'item__category')
         }
 
-        # Categorize movies (only love/hate comparisons)
-        both_love = []      # Both rated LOVED
-        both_hate = []      # Both rated HATED
-        user1_loves_user2_hates = []  # user1 LOVED, user2 HATED
-        user1_hates_user2_loves = []  # user1 HATED, user2 LOVED
-        only_user1 = []     # Only user1 has rated (with love/hate)
-        only_user2 = []     # Only user2 has rated (with love/hate)
+        # Categorize movies by agreement type
+        both_positive = []      # Both rated positively (loved/liked)
+        both_negative = []      # Both rated negatively (hated/disliked)
+        both_neutral = []       # Both rated neutral (okay)
+        user1_positive_user2_negative = []  # user1 positive, user2 negative
+        user1_negative_user2_positive = []  # user1 negative, user2 positive
+        user1_positive_user2_neutral = []   # user1 positive, user2 neutral
+        user1_negative_user2_neutral = []   # user1 negative, user2 neutral
+        user1_neutral_user2_positive = []   # user1 neutral, user2 positive
+        user1_neutral_user2_negative = []   # user1 neutral, user2 negative
+        only_user1 = []         # Only user1 has rated
+        only_user2 = []         # Only user2 has rated
 
         all_items = set(user1_ratings.keys()) | set(user2_ratings.keys())
 
@@ -412,24 +429,40 @@ class CompareUsersView(View):
                 r2 = user2_ratings[item_id]['rating']
                 item = user1_ratings[item_id]['item']
 
-                if r1 == r2:
-                    if r1 == Rating.Level.LOVED:
-                        both_love.append(item)
-                    else:  # HATED
-                        both_hate.append(item)
+                cat1 = self._categorize_rating(r1)
+                cat2 = self._categorize_rating(r2)
+
+                if cat1 == cat2:
+                    if cat1 == 'positive':
+                        both_positive.append(item)
+                    elif cat1 == 'negative':
+                        both_negative.append(item)
+                    elif cat1 == 'neutral':
+                        both_neutral.append(item)
                 else:
-                    if r1 == Rating.Level.LOVED and r2 == Rating.Level.HATED:
-                        user1_loves_user2_hates.append(item)
-                    else:  # r1 == HATED and r2 == LOVED
-                        user1_hates_user2_loves.append(item)
+                    if cat1 == 'positive' and cat2 == 'negative':
+                        user1_positive_user2_negative.append(item)
+                    elif cat1 == 'negative' and cat2 == 'positive':
+                        user1_negative_user2_positive.append(item)
+                    elif cat1 == 'positive' and cat2 == 'neutral':
+                        user1_positive_user2_neutral.append(item)
+                    elif cat1 == 'negative' and cat2 == 'neutral':
+                        user1_negative_user2_neutral.append(item)
+                    elif cat1 == 'neutral' and cat2 == 'positive':
+                        user1_neutral_user2_positive.append(item)
+                    elif cat1 == 'neutral' and cat2 == 'negative':
+                        user1_neutral_user2_negative.append(item)
             elif in_user1:
                 only_user1.append(user1_ratings[item_id]['item'])
             else:
                 only_user2.append(user2_ratings[item_id]['item'])
 
         # Sort all lists by title
-        for lst in [both_love, both_hate, user1_loves_user2_hates,
-                    user1_hates_user2_loves, only_user1, only_user2]:
+        for lst in [both_positive, both_negative, both_neutral,
+                    user1_positive_user2_negative, user1_negative_user2_positive,
+                    user1_positive_user2_neutral, user1_negative_user2_neutral,
+                    user1_neutral_user2_positive, user1_neutral_user2_negative,
+                    only_user1, only_user2]:
             lst.sort(key=lambda x: x.title.lower())
 
         # Calculate compatibility
@@ -439,54 +472,72 @@ class CompareUsersView(View):
             'user1': user1,
             'user2': user2,
             'compatibility': compat,
-            'both_love': both_love,
-            'both_hate': both_hate,
-            'user1_loves_user2_hates': user1_loves_user2_hates,
-            'user1_hates_user2_loves': user1_hates_user2_loves,
+            'both_positive': both_positive,
+            'both_negative': both_negative,
+            'both_neutral': both_neutral,
+            'user1_positive_user2_negative': user1_positive_user2_negative,
+            'user1_negative_user2_positive': user1_negative_user2_positive,
+            'user1_positive_user2_neutral': user1_positive_user2_neutral,
+            'user1_negative_user2_neutral': user1_negative_user2_neutral,
+            'user1_neutral_user2_positive': user1_neutral_user2_positive,
+            'user1_neutral_user2_negative': user1_neutral_user2_negative,
             'only_user1': only_user1,
             'only_user2': only_user2,
         })
 
 
 class CompareThreeUsersView(View):
-    """View to compare three users' movie preferences with a 3-way Venn diagram (love/hate only)."""
+    """View to compare three users' movie preferences with a 3-way Venn diagram (positive/negative/neutral)."""
+
+    def _categorize_rating(self, rating):
+        """Categorize a rating as positive, negative, or neutral."""
+        if rating in [Rating.Level.LOVED, Rating.Level.LIKED]:
+            return 'positive'
+        elif rating in [Rating.Level.HATED, Rating.Level.DISLIKED]:
+            return 'negative'
+        elif rating == Rating.Level.OKAY:
+            return 'neutral'
+        return None
 
     def get(self, request, username1, username2, username3):
         user1 = get_object_or_404(User, username=username1)
         user2 = get_object_or_404(User, username=username2)
         user3 = get_object_or_404(User, username=username3)
 
-        # Get ratings for all three users (only LOVED and HATED)
+        # Get all ratings for three users (exclude NO_RATING)
         user1_ratings = {
             r.item_id: {'rating': r.rating, 'item': r.item}
             for r in Rating.objects.filter(
-                user=user1,
-                rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+                user=user1
+            ).exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related('item', 'item__category')
         }
         user2_ratings = {
             r.item_id: {'rating': r.rating, 'item': r.item}
             for r in Rating.objects.filter(
-                user=user2,
-                rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+                user=user2
+            ).exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related('item', 'item__category')
         }
         user3_ratings = {
             r.item_id: {'rating': r.rating, 'item': r.item}
             for r in Rating.objects.filter(
-                user=user3,
-                rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+                user=user3
+            ).exclude(
+                rating=Rating.Level.NO_RATING
             ).select_related('item', 'item__category')
         }
 
-        # Seven regions for 3-way Venn diagram (love/hate only, no meh)
+        # Seven regions for 3-way Venn diagram
         only_user1 = []
         only_user2 = []
         only_user3 = []
-        user1_and_2 = {'all_love': [], 'all_hate': [], 'mixed': []}
-        user1_and_3 = {'all_love': [], 'all_hate': [], 'mixed': []}
-        user2_and_3 = {'all_love': [], 'all_hate': [], 'mixed': []}
-        all_three = {'all_love': [], 'all_hate': [], 'mixed': []}
+        user1_and_2 = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
+        user1_and_3 = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
+        user2_and_3 = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
+        all_three = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
 
         all_items = set(user1_ratings.keys()) | set(user2_ratings.keys()) | set(user3_ratings.keys())
 
@@ -503,11 +554,17 @@ class CompareThreeUsersView(View):
                 r3 = user3_ratings[item_id]['rating']
                 item = user1_ratings[item_id]['item']
 
-                if r1 == r2 == r3:
-                    if r1 == Rating.Level.LOVED:
-                        all_three['all_love'].append(item)
-                    elif r1 == Rating.Level.HATED:
-                        all_three['all_hate'].append(item)
+                cat1 = self._categorize_rating(r1)
+                cat2 = self._categorize_rating(r2)
+                cat3 = self._categorize_rating(r3)
+
+                if cat1 == cat2 == cat3:
+                    if cat1 == 'positive':
+                        all_three['all_positive'].append(item)
+                    elif cat1 == 'negative':
+                        all_three['all_negative'].append(item)
+                    elif cat1 == 'neutral':
+                        all_three['all_neutral'].append(item)
                 else:
                     all_three['mixed'].append({'item': item, 'r1': r1, 'r2': r2, 'r3': r3})
 
@@ -517,11 +574,16 @@ class CompareThreeUsersView(View):
                 r2 = user2_ratings[item_id]['rating']
                 item = user1_ratings[item_id]['item']
 
-                if r1 == r2:
-                    if r1 == Rating.Level.LOVED:
-                        user1_and_2['all_love'].append(item)
-                    elif r1 == Rating.Level.HATED:
-                        user1_and_2['all_hate'].append(item)
+                cat1 = self._categorize_rating(r1)
+                cat2 = self._categorize_rating(r2)
+
+                if cat1 == cat2:
+                    if cat1 == 'positive':
+                        user1_and_2['all_positive'].append(item)
+                    elif cat1 == 'negative':
+                        user1_and_2['all_negative'].append(item)
+                    elif cat1 == 'neutral':
+                        user1_and_2['all_neutral'].append(item)
                 else:
                     user1_and_2['mixed'].append({'item': item, 'r1': r1, 'r2': r2})
 
@@ -531,11 +593,16 @@ class CompareThreeUsersView(View):
                 r3 = user3_ratings[item_id]['rating']
                 item = user1_ratings[item_id]['item']
 
-                if r1 == r3:
-                    if r1 == Rating.Level.LOVED:
-                        user1_and_3['all_love'].append(item)
-                    elif r1 == Rating.Level.HATED:
-                        user1_and_3['all_hate'].append(item)
+                cat1 = self._categorize_rating(r1)
+                cat3 = self._categorize_rating(r3)
+
+                if cat1 == cat3:
+                    if cat1 == 'positive':
+                        user1_and_3['all_positive'].append(item)
+                    elif cat1 == 'negative':
+                        user1_and_3['all_negative'].append(item)
+                    elif cat1 == 'neutral':
+                        user1_and_3['all_neutral'].append(item)
                 else:
                     user1_and_3['mixed'].append({'item': item, 'r1': r1, 'r3': r3})
 
@@ -545,11 +612,16 @@ class CompareThreeUsersView(View):
                 r3 = user3_ratings[item_id]['rating']
                 item = user2_ratings[item_id]['item']
 
-                if r2 == r3:
-                    if r2 == Rating.Level.LOVED:
-                        user2_and_3['all_love'].append(item)
-                    elif r2 == Rating.Level.HATED:
-                        user2_and_3['all_hate'].append(item)
+                cat2 = self._categorize_rating(r2)
+                cat3 = self._categorize_rating(r3)
+
+                if cat2 == cat3:
+                    if cat2 == 'positive':
+                        user2_and_3['all_positive'].append(item)
+                    elif cat2 == 'negative':
+                        user2_and_3['all_negative'].append(item)
+                    elif cat2 == 'neutral':
+                        user2_and_3['all_neutral'].append(item)
                 else:
                     user2_and_3['mixed'].append({'item': item, 'r2': r2, 'r3': r3})
 
@@ -566,19 +638,19 @@ class CompareThreeUsersView(View):
         only_user3.sort(key=lambda x: x.title.lower())
 
         for region in [user1_and_2, user1_and_3, user2_and_3, all_three]:
-            for category in ['all_love', 'all_hate']:
+            for category in ['all_positive', 'all_negative', 'all_neutral']:
                 region[category].sort(key=lambda x: x.title.lower())
             region['mixed'].sort(key=lambda x: x['item'].title.lower())
 
         # Calculate statistics
-        total_all_three = (len(all_three['all_love']) + len(all_three['all_hate']) +
-                          len(all_three['mixed']))
-        total_user1_and_2 = (len(user1_and_2['all_love']) + len(user1_and_2['all_hate']) +
-                            len(user1_and_2['mixed']))
-        total_user1_and_3 = (len(user1_and_3['all_love']) + len(user1_and_3['all_hate']) +
-                            len(user1_and_3['mixed']))
-        total_user2_and_3 = (len(user2_and_3['all_love']) + len(user2_and_3['all_hate']) +
-                            len(user2_and_3['mixed']))
+        total_all_three = (len(all_three['all_positive']) + len(all_three['all_negative']) +
+                          len(all_three['all_neutral']) + len(all_three['mixed']))
+        total_user1_and_2 = (len(user1_and_2['all_positive']) + len(user1_and_2['all_negative']) +
+                            len(user1_and_2['all_neutral']) + len(user1_and_2['mixed']))
+        total_user1_and_3 = (len(user1_and_3['all_positive']) + len(user1_and_3['all_negative']) +
+                            len(user1_and_3['all_neutral']) + len(user1_and_3['mixed']))
+        total_user2_and_3 = (len(user2_and_3['all_positive']) + len(user2_and_3['all_negative']) +
+                            len(user2_and_3['all_neutral']) + len(user2_and_3['mixed']))
 
         return render(request, 'accounts/compare_three.html', {
             'user1': user1,

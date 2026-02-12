@@ -83,25 +83,25 @@
     <!-- Quick Stats -->
     <div class="grid grid-cols-3 gap-4 text-center max-w-2xl mx-auto">
         <div class="bg-green-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-green-600">{{ both_love|length }}</div>
-            <div class="text-sm text-green-700">Both Love 🤩</div>
+            <div class="text-3xl font-bold text-green-600">{{ both_positive|length }}</div>
+            <div class="text-sm text-green-700">Both Positive 🙂</div>
+        </div>
+        <div class="bg-yellow-50 rounded-xl p-4">
+            <div class="text-3xl font-bold text-yellow-600">{{ both_neutral|length }}</div>
+            <div class="text-sm text-yellow-700">Both Neutral 😐</div>
         </div>
         <div class="bg-red-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-red-600">{{ both_hate|length }}</div>
-            <div class="text-sm text-red-700">Both Hate 😡</div>
-        </div>
-        <div class="bg-purple-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-purple-600">{{ user1_loves_user2_hates|length|add:user1_hates_user2_loves|length }}</div>
-            <div class="text-sm text-purple-700">Major Disagreements</div>
+            <div class="text-3xl font-bold text-red-600">{{ both_negative|length }}</div>
+            <div class="text-sm text-red-700">Both Negative 😕</div>
         </div>
     </div>
     <p class="text-center text-gray-500 text-sm mt-4">
-        Comparing only 🤩 Loved and 😡 Hated ratings
+        Positive (🤩 Loved, 🙂 Liked) &bull; Neutral (😐 Okay) &bull; Negative (😕 Disliked, 😡 Hated)
     </p>
 </div>
 
-<!-- Movies They Both Love -->
-{% if both_love %}
+<!-- Movies They Both Rated Positively -->
+{% if both_positive %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
@@ -109,10 +109,10 @@
                 <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
             </svg>
         </div>
-        <h3 class="text-lg font-bold text-gray-800">Movies You Both Love ({{ both_love|length }})</h3>
+        <h3 class="text-lg font-bold text-gray-800">Movies You Both Liked ({{ both_positive|length }})</h3>
     </div>
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {% for item in both_love %}
+        {% for item in both_positive %}
         <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
             {% if item.poster_url %}
             <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
@@ -134,8 +134,40 @@
 </div>
 {% endif %}
 
-<!-- Movies They Both Hate -->
-{% if both_hate %}
+<!-- Movies They Both Rated Neutrally -->
+{% if both_neutral %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
+    <div class="flex items-center mb-4">
+        <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+            <span class="text-2xl">😐</span>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800">Movies You Both Found Okay ({{ both_neutral|length }})</h3>
+    </div>
+    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+        {% for item in both_neutral %}
+        <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90 hover:opacity-100">
+            {% if item.poster_url %}
+            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+            </div>
+            {% else %}
+            <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+            </div>
+            {% endif %}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Movies They Both Disliked -->
+{% if both_negative %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
@@ -143,10 +175,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </div>
-        <h3 class="text-lg font-bold text-gray-800">Movies You Both Dislike ({{ both_hate|length }})</h3>
+        <h3 class="text-lg font-bold text-gray-800">Movies You Both Disliked ({{ both_negative|length }})</h3>
     </div>
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-        {% for item in both_hate %}
+        {% for item in both_negative %}
         <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75 hover:opacity-100">
             {% if item.poster_url %}
             <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
@@ -168,8 +200,8 @@
 </div>
 {% endif %}
 
-<!-- Major Disagreements -->
-{% if user1_loves_user2_hates or user1_hates_user2_loves %}
+<!-- Major Disagreements (Positive vs Negative) -->
+{% if user1_positive_user2_negative or user1_negative_user2_positive %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
     <div class="flex items-center mb-4">
         <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
@@ -180,14 +212,14 @@
         <h3 class="text-lg font-bold text-gray-800">Major Disagreements</h3>
     </div>
 
-    {% if user1_loves_user2_hates %}
+    {% if user1_positive_user2_negative %}
     <div class="mb-6">
         <p class="text-sm text-gray-600 mb-3">
-            <span class="font-semibold text-green-600">{{ user1|display_name:request.user }} loves</span> but
-            <span class="font-semibold text-red-600">{{ user2|display_name:request.user }} hates</span> ({{ user1_loves_user2_hates|length }}):
+            <span class="font-semibold text-green-600">{{ user1|display_name:request.user }} liked</span> but
+            <span class="font-semibold text-red-600">{{ user2|display_name:request.user }} disliked</span> ({{ user1_positive_user2_negative|length }}):
         </p>
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-            {% for item in user1_loves_user2_hates %}
+            {% for item in user1_positive_user2_negative %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm ring-2 ring-l-green-500 ring-r-red-500" style="box-shadow: -2px 0 0 #22c55e, 2px 0 0 #ef4444;">
                 {% if item.poster_url %}
                 <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
@@ -209,14 +241,14 @@
     </div>
     {% endif %}
 
-    {% if user1_hates_user2_loves %}
+    {% if user1_negative_user2_positive %}
     <div>
         <p class="text-sm text-gray-600 mb-3">
-            <span class="font-semibold text-red-600">{{ user1|display_name:request.user }} hates</span> but
-            <span class="font-semibold text-green-600">{{ user2|display_name:request.user }} loves</span> ({{ user1_hates_user2_loves|length }}):
+            <span class="font-semibold text-red-600">{{ user1|display_name:request.user }} disliked</span> but
+            <span class="font-semibold text-green-600">{{ user2|display_name:request.user }} liked</span> ({{ user1_negative_user2_positive|length }}):
         </p>
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-            {% for item in user1_hates_user2_loves %}
+            {% for item in user1_negative_user2_positive %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm" style="box-shadow: -2px 0 0 #ef4444, 2px 0 0 #22c55e;">
                 {% if item.poster_url %}
                 <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
