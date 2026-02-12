@@ -55,10 +55,11 @@
 
 <!-- Venn Diagram Visualization -->
 <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-    <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Movie Taste Overlap</h2>
+    <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">Positive Rating Overlap</h2>
+    <p class="text-sm text-gray-600 text-center mb-6">Shows movies where users gave positive ratings (Loved 🤩 or Liked 🙂)</p>
 
     <!-- SVG Venn Diagram -->
-    <div class="flex justify-center mb-8">
+    <div class="flex justify-center">
         <svg viewBox="0 0 400 250" class="w-full max-w-lg">
             <!-- User 1 circle (left) -->
             <circle cx="140" cy="125" r="100" fill="rgba(99, 102, 241, 0.3)" stroke="#6366f1" stroke-width="2"/>
@@ -71,33 +72,14 @@
             <text x="80" y="165" text-anchor="middle" class="text-lg font-bold" fill="#6366f1">{{ only_user1|length }}</text>
 
             <text x="200" y="110" text-anchor="middle" class="text-sm font-medium" fill="#7c3aed">Both</text>
-            <text x="200" y="130" text-anchor="middle" class="text-sm font-medium" fill="#7c3aed">Watched</text>
-            <text x="200" y="155" text-anchor="middle" class="text-2xl font-bold" fill="#7c3aed">{{ compatibility.common_count }}</text>
+            <text x="200" y="130" text-anchor="middle" class="text-sm font-medium" fill="#7c3aed">Positive</text>
+            <text x="200" y="155" text-anchor="middle" class="text-2xl font-bold" fill="#7c3aed">{{ both_positive|length }}</text>
 
             <text x="320" y="125" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">Only</text>
             <text x="320" y="145" text-anchor="middle" class="text-sm font-medium" fill="#ec4899">{{ user2|display_name:request.user }}</text>
             <text x="320" y="165" text-anchor="middle" class="text-lg font-bold" fill="#ec4899">{{ only_user2|length }}</text>
         </svg>
     </div>
-
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-3 gap-4 text-center max-w-2xl mx-auto">
-        <div class="bg-green-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-green-600">{{ both_positive|length }}</div>
-            <div class="text-sm text-green-700">Both Positive 🙂</div>
-        </div>
-        <div class="bg-yellow-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-yellow-600">{{ both_neutral|length }}</div>
-            <div class="text-sm text-yellow-700">Both Neutral 😐</div>
-        </div>
-        <div class="bg-red-50 rounded-xl p-4">
-            <div class="text-3xl font-bold text-red-600">{{ both_negative|length }}</div>
-            <div class="text-sm text-red-700">Both Negative 😕</div>
-        </div>
-    </div>
-    <p class="text-center text-gray-500 text-sm mt-4">
-        Positive (🤩 Loved, 🙂 Liked) &bull; Neutral (😐 Okay) &bull; Negative (😕 Disliked, 😡 Hated)
-    </p>
 </div>
 
 <!-- Movies They Both Rated Positively -->
