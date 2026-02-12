@@ -791,6 +791,15 @@ class MovieDetailView(TemplateView):
         context['category'] = category
         context['item'] = item
 
+        # Get current user's rating if authenticated
+        user_rating = None
+        if self.request.user.is_authenticated:
+            try:
+                user_rating = Rating.objects.get(item=item, user=self.request.user)
+                context['user_rating'] = user_rating.rating
+            except Rating.DoesNotExist:
+                context['user_rating'] = Rating.Level.NO_RATING
+
         # Get all ratings for this item, grouped by rating level
         all_ratings = Rating.objects.filter(item=item).select_related('user').order_by('user__last_name', 'user__first_name')
 
