@@ -42,18 +42,20 @@ PopQuiz follows standard Django project structure with three main apps:
 - Manages categories (e.g., "Movies", "TV Shows") and items (individual movies)
 - Handles IMDB data fetching and movie metadata (title, year, director, genre, poster)
 - Provides category browsing, item adding, and movie detail views
-- Statistics views: team rankings, decade rankings, eclectic tastes
+- Statistics views: team rankings, decade rankings, eclectic tastes, divisive movies
 
-### 2. **votes** - Voting System
-- Manages user votes with four choices: Yes, No, Meh, No Answer
-- AJAX-based voting API for smooth UX
-- Enforces unique votes per user/item combination
+### 2. **ratings** - Rating System
+- Manages user ratings with 5-point scale: Loved (🤩), Liked (🙂), Okay (😐), Disliked (😕), Hated (😡), plus No Rating/Haven't Seen (⏭️)
+- Numeric values: Loved (+2), Liked (+1), Okay (0), Disliked (-1), Hated (-2)
+- AJAX-based rating API for smooth UX
+- Enforces unique ratings per user/item combination
+- Rating scale displayed consistently from Hated (left) to Loved (right) across all UI
 
 ### 3. **accounts** - User Management & Social Features
 - User registration, login, logout
-- Profile pages showing user's voting history
+- Profile pages showing user's rating history
 - User comparison feature showing compatibility and disagreements
-- Profile sorting: by category, title, year, director, genre, vote, popularity
+- Profile sorting: by category, title, year, director, genre, rating, popularity
 
 ## Database Models
 
@@ -77,13 +79,14 @@ added_by = ForeignKey(User, null=True)
 created_at = DateTimeField(auto_now_add=True)
 ```
 
-### votes.Vote
+### ratings.Rating
 ```python
 user = ForeignKey(User)
 item = ForeignKey(Item)
-choice = CharField(choices=['yes', 'no', 'meh', 'no_answer'])
+rating = CharField(choices=['loved', 'liked', 'okay', 'disliked', 'hated', 'no_rating'])
 updated_at = DateTimeField(auto_now=True)
 # Unique constraint: (user, item)
+# Note: Database table name is 'ratings_rating' (using db_table meta option)
 ```
 
 ## URL Structure
@@ -99,24 +102,26 @@ updated_at = DateTimeField(auto_now=True)
 - `/accounts/` - django-allauth URLs (includes social auth, password reset, email verification, etc.)
 
 ### Category & Movies
-- `/category/<slug:slug>/` - Browse all items in category (CategoryDetailView)
+- `/category/<slug:slug>/` - Browse all items in category with inline rating buttons (CategoryDetailView)
 - `/category/<slug:slug>/add/` - Add new item to category (AddItemView)
-- `/category/<slug:slug>/vote/` - Swipe voting interface (SwipeVoteView)
-- `/category/<slug:category_slug>/movie/<int:item_id>/` - Individual movie detail with all votes (MovieDetailView)
+- `/category/<slug:slug>/rate/` - Swipe rating interface (SwipeRatingView)
+- `/category/<slug:category_slug>/movie/<int:item_id>/` - Individual movie detail with all ratings and user rating editor (MovieDetailView)
 
 ### Statistics
-- `/category/<slug:slug>/stats/` - Team rankings with Bayesian average algorithm (StatsView)
+- `/category/<slug:slug>/stats/` - Team rankings with simple average algorithm (StatsView)
 - `/category/<slug:slug>/decades/` - Movies grouped and ranked by decade (DecadeStatsView)
 - `/category/<slug:slug>/eclectic/` - Users with most unique opinions (EclecticView)
+- `/category/<slug:slug>/divisive/` - Movies with most polarized ratings (DivisiveView)
 
 ### User Features
-- `/profile/<str:username>/` - User's voting history and stats (ProfileView)
-- `/profile/<str:username>/?sort=<option>` - Sort by: title, year, director, genre, vote, popularity
+- `/profile/<str:username>/` - User's rating history and stats (ProfileView)
+- `/profile/<str:username>/?sort=<option>` - Sort by: title, year, director, genre, rating, popularity
 - `/compare/<str:username1>/<str:username2>/` - Compare two users' tastes (CompareUsersView)
+- `/compare/<str:username1>/<str:username2>/<str:username3>/` - Compare three users' tastes (3-way Venn)
 
-### API & Voting
-- `/api/vote/` - POST endpoint for AJAX voting (vote_api)
-- `/vote/` - Vote view (vote_view)
+### API & Rating
+- `/api/rate/` - POST endpoint for AJAX rating (rate_api)
+- `/rate/` - Rating form submission endpoint (rate_view)
 
 ## Key Features & Implementation
 
@@ -130,51 +135,61 @@ updated_at = DateTimeField(auto_now=True)
 - Handles HTML entity decoding for special characters
 
 ### 2. Ranking Algorithm
-PopQuiz uses **Bayesian averaging** for fair rankings, especially with limited votes:
+PopQuiz uses **simple averaging** for rankings:
 
 ```python
-bayesian_score = (v / (v + m)) * R + (m / (v + m)) * C
-# v = votes for this item
-# m = minimum votes threshold (e.g., 3)
-# R = average rating for this item
-# C = mean rating across all items
+# Each rating has a numeric value
+# Loved: +2, Liked: +1, Okay: 0, Disliked: -1, Hated: -2
+average_score = sum(rating_values) / count(ratings)
+# Score is then converted to 0-100 scale for display
+display_score = ((average_score + 2) / 4) * 100
 ```
 
-This prevents items with 1-2 highly positive votes from dominating the rankings.
+The average score represents the mean rating across all users who have rated the item. Items with no ratings show a score of 0.
 
-### 3. Swipe Voting UX
-**Files:** `catalog/views.py:SwipeVoteView`, `catalog/templates/catalog/swipe_vote.html`
+### 3. Swipe Rating UX
+**Files:** `catalog/views.py:SwipeRatingView`, `catalog/templates/catalog/swipe_rating.html`
 
-- Tinder-style card interface
-- AJAX voting without page reload
-- Shows next unvoted item immediately
+- Tinder-style card interface with 5-point rating scale
+- AJAX rating submission without page reload
+- Shows next unrated item immediately
+- Large emoji buttons (text-xl and text-4xl) for easy clicking
+- Rating scale ordered Hated → Disliked → Okay → Liked → Loved (left to right)
 - Mobile-optimized with touch gestures
 - Fixed layout heights to prevent jitter
+- Separate mobile and desktop layouts for optimal UX
 
 ### 4. Profile Grouping
 **File:** `accounts/views.py:ProfileView`
 
-User votes can be grouped by:
+User ratings can be grouped by:
 - **Category** (default) - Groups by movie category
 - **Director** - All movies by each director
 - **Genre** - Movies by genre (can appear in multiple groups)
 - **Title** - Alphabetical sorting
 - **Year** - Chronological sorting
-- **Vote** - Grouped by user's choice (Yes/Meh/No)
-- **Popularity** - Sorted by total vote count
+- **Rating** - Grouped by user's rating (Loved/Liked/Okay/Disliked/Hated)
+- **Popularity** - Sorted by total rating count
+
+Profile page features:
+- Stats bar showing rating distribution with color-coded segments
+- Large emoji badges on movie poster grids
+- Enlarged emojis (text-lg) in header legend for better visibility
 
 ### 5. User Comparison
 **File:** `accounts/views.py:CompareUsersView`
 
 Categories of agreement/disagreement:
-- Both Love (both voted Yes)
-- Both Hate (both voted No)
-- Both Meh (both voted Meh)
-- User1 loves, User2 hates
-- User1 hates, User2 loves
-- Other disagreements (Meh vs Yes/No)
-- Only User1 voted
-- Only User2 voted
+- Both Love (both rated Loved)
+- Both Hate (both rated Hated)
+- Both Like/Dislike/Okay (matching ratings at other levels)
+- User1 loves, User2 hates (opposite extremes)
+- User1 hates, User2 loves (opposite extremes)
+- Other disagreements (mixed ratings)
+- Only User1 rated
+- Only User2 rated
+
+Supports both 2-way and 3-way comparisons (Venn diagram style)
 
 ## File Structure
 
@@ -201,26 +216,28 @@ popquiz/
 │   ├── templatetags/
 │   │   └── custom_filters.py  # Template filters
 │   └── templates/catalog/
-│       ├── home.html           # Landing page
-│       ├── category_detail.html
-│       ├── swipe_vote.html     # Voting interface
-│       ├── add_item.html
-│       ├── movie_detail.html
-│       ├── stats.html
-│       ├── decade_stats.html
-│       └── eclectic.html
-├── votes/                       # Voting app
-│   ├── models.py               # Vote model
-│   ├── views.py                # Voting logic
-│   └── urls.py                 # Vote API endpoints
+│       ├── home.html           # Landing page with featured movie
+│       ├── category_detail.html # Browse items with inline rating buttons
+│       ├── swipe_rating.html   # Swipe rating interface
+│       ├── add_item.html       # Add new item via IMDB
+│       ├── movie_detail.html   # Movie details with user rating editor
+│       ├── stats.html          # Team rankings
+│       ├── decade_stats.html   # Rankings by decade
+│       ├── eclectic.html       # Most unique opinions
+│       └── divisive.html       # Most polarized movies
+├── ratings/                     # Rating app
+│   ├── models.py               # Rating model
+│   ├── views.py                # Rating logic
+│   └── urls.py                 # Rating API endpoints
 └── accounts/                    # User management app
-    ├── models.py               # (Uses Django's User model)
+    ├── models.py               # Custom User model
     ├── views.py                # Auth & profile views
     ├── urls.py                 # Account URL patterns
     └── templates/accounts/
         ├── register.html
         ├── login.html
-        └── profile.html
+        ├── profile.html        # User rating history
+        └── compare.html        # User comparison (2-way and 3-way)
 ```
 
 ## Development Setup
@@ -302,12 +319,13 @@ Edit the ranking logic in `catalog/views.py:StatsView`:
 - Look for Bayesian average calculation
 - Adjust `m` (minimum votes) or `C` (mean rating) as needed
 
-### Adding New Vote Types
-If adding beyond Yes/No/Meh:
-1. Update `votes.models.Vote.Choice` enum
-2. Update voting UI in `swipe_vote.html`
-3. Update vote counting logic in statistics views
+### Adding New Rating Types
+If adding beyond the current 5-point scale:
+1. Update `ratings.models.Rating.Level` enum
+2. Update rating UI in `swipe_rating.html` and other templates
+3. Update rating counting logic in statistics views
 4. Update profile display logic
+5. Update numeric value mappings for score calculations
 
 ### Customizing Profile Sorting
 Edit `accounts/views.py:ProfileView`:
@@ -343,11 +361,11 @@ Genres are stored as comma-separated strings (e.g., "Drama, Thriller, Crime"):
 - WhiteNoise serves static files in production without needing nginx
 - Static files use cache-busting hashes in production (e.g., `founder_transparent.d6d8442a3c35.png`)
 
-### 4. Vote Uniqueness
+### 4. Rating Uniqueness
 The `(user, item)` unique constraint means:
-- Users can only vote once per item
-- Changing vote updates existing record (doesn't create duplicate)
-- `NO_ANSWER` is the default for unvoted items
+- Users can only rate once per item
+- Changing rating updates existing record (doesn't create duplicate)
+- `NO_RATING` (Haven't Seen) is the default for unrated items
 
 ### 5. Authentication Requirements
 Most views require authentication:
@@ -358,22 +376,47 @@ Most views require authentication:
 ### 6. Mobile Optimization
 The app is heavily optimized for mobile:
 - Tailwind responsive classes (md: breakpoints)
-- Touch-friendly voting interface
+- Touch-friendly rating interface with large emoji buttons
 - Hamburger menu for navigation on small screens
 - Fixed heights prevent layout jitter during AJAX updates
+- Separate mobile and desktop layouts for rating interface
 
-### 7. Bayesian Ranking Edge Cases
-- Items with 0 votes get score of 0 (filtered from rankings)
-- Items with 1-2 votes are heavily pulled toward mean rating
-- Adjust `m` threshold based on team size (currently ~3)
+### 7. Emoji Sizing for UX
+Emojis are intentionally enlarged throughout the app for better visibility and usability:
+- **Swipe rating page**: text-xl (mobile) and text-4xl (desktop) for main buttons
+- **Category detail page**: text-xl for inline rating buttons
+- **Stats page**: text-lg for rating breakdown and legend
+- **Profile page**: text-lg for header legend, text-sm for movie cards, text-base for badges
+- **Home dashboard**: text-lg for featured movie legend and recent activity icons
+- **Movie detail page**: text-xl for user rating buttons
+- Use `inline-flex items-center gap-1` with `leading-none` on emoji spans to prevent vertical misalignment
 
-### 8. Profile Performance
-Profile pages with many votes can be slow:
+### 8. Rating Scale Order
+The rating scale is consistently displayed as **Hated → Disliked → Okay → Liked → Loved** (left to right) across all UI:
+- Aligns with natural expectation (negative on left, positive on right)
+- Matches color progression (red → orange → yellow → green → purple)
+- Applied to: swipe interface, stats page, profile page, movie detail page, comparison pages
+
+### 9. Simple Average Ranking
+- Items with 0 ratings get score of 0 (filtered from rankings)
+- Score calculated as: `((average_rating + 2) / 4) * 100` to convert -2/+2 range to 0-100 scale
+- All ratings weighted equally (no Bayesian adjustment)
+
+### 10. Profile Performance
+Profile pages with many ratings can be slow:
 - Uses `.select_related()` to reduce queries
-- Annotates vote counts for popularity sorting
-- Consider pagination for users with 100+ votes
+- Annotates rating counts for popularity sorting
+- Consider pagination for users with 100+ ratings
 
-### 9. Social Media Meta Tags
+### 11. Movie Detail Page User Rating
+The movie detail page (`MovieDetailView`) allows users to see and change their ratings:
+- User's current rating is fetched and highlighted with colored background + ring indicator
+- Rating buttons positioned below team rating summary
+- Uses form POST to `/rate/` with `next` parameter to redirect back to same page
+- Rating scale follows standard Hated → Loved order
+- Large emoji buttons (text-xl) for easy clicking
+
+### 12. Social Media Meta Tags
 The base template includes comprehensive social media meta tags:
 - **SEO**: Meta description for search engines
 - **Open Graph**: For Facebook, LinkedIn sharing (og:title, og:description, og:image, og:url)
