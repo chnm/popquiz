@@ -70,7 +70,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                             <input type="hidden" name="rating" value="loved">
-                            <button type="submit" class="px-2 py-1 rounded-full text-xs font-medium transition duration-200
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
                                 {% if item_data.rating == 'loved' %}bg-purple-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-purple-100{% endif %}">
                                 🤩
                             </button>
@@ -79,7 +79,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                             <input type="hidden" name="rating" value="liked">
-                            <button type="submit" class="px-2 py-1 rounded-full text-xs font-medium transition duration-200
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
                                 {% if item_data.rating == 'liked' %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-green-100{% endif %}">
                                 🙂
                             </button>
@@ -88,7 +88,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                             <input type="hidden" name="rating" value="okay">
-                            <button type="submit" class="px-2 py-1 rounded-full text-xs font-medium transition duration-200
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
                                 {% if item_data.rating == 'okay' %}bg-yellow-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-yellow-100{% endif %}">
                                 😐
                             </button>
@@ -97,7 +97,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                             <input type="hidden" name="rating" value="disliked">
-                            <button type="submit" class="px-2 py-1 rounded-full text-xs font-medium transition duration-200
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
                                 {% if item_data.rating == 'disliked' %}bg-orange-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-orange-100{% endif %}">
                                 😕
                             </button>
@@ -106,7 +106,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                             <input type="hidden" name="rating" value="hated">
-                            <button type="submit" class="px-2 py-1 rounded-full text-xs font-medium transition duration-200
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
                                 {% if item_data.rating == 'hated' %}bg-red-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-red-100{% endif %}">
                                 😡
                             </button>
@@ -115,7 +115,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                             <input type="hidden" name="rating" value="no_rating">
-                            <button type="submit" class="px-2 py-1 rounded-full text-xs font-medium transition duration-200
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
                                 {% if item_data.rating == 'no_rating' %}bg-gray-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
                                 ⏭️
                             </button>
