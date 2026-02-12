@@ -233,85 +233,384 @@
 </div>
 {% endif %}
 
-<!-- Two-way overlaps sections -->
+<!-- Two-way overlap: User 1 & 2 -->
 {% if user1_and_2.all_positive or user1_and_2.all_negative or user1_and_2.all_neutral or user1_and_2.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-    <div class="flex items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} & {% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} Only ({% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} hasn't watched)</h3>
-    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-4">
+        {% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} &
+        {% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} Only
+        <span class="text-sm font-normal text-gray-500">({% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} hasn't watched)</span>
+    </h3>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div class="bg-green-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-green-600">{{ user1_and_2.all_positive|length }}</div>
-            <div class="text-xs text-green-700">Both Positive</div>
-        </div>
-        <div class="bg-yellow-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-yellow-600">{{ user1_and_2.all_neutral|length }}</div>
-            <div class="text-xs text-yellow-700">Both Neutral</div>
-        </div>
-        <div class="bg-red-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-red-600">{{ user1_and_2.all_negative|length }}</div>
-            <div class="text-xs text-red-700">Both Negative</div>
-        </div>
-        <div class="bg-purple-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-purple-600">{{ user1_and_2.mixed|length }}</div>
-            <div class="text-xs text-purple-700">Disagree</div>
+    {% if user1_and_2.all_positive %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-green-700 mb-2">✓ Both Positive ({{ user1_and_2.all_positive|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_and_2.all_positive %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
+
+    {% if user1_and_2.all_neutral %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-yellow-700 mb-2">😐 Both Neutral ({{ user1_and_2.all_neutral|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_and_2.all_neutral %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user1_and_2.all_negative %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-red-700 mb-2">✗ Both Negative ({{ user1_and_2.all_negative|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_and_2.all_negative %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user1_and_2.mixed %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-purple-700 mb-2">⚡ Disagree ({{ user1_and_2.mixed|length }})</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {% for rating_data in user1_and_2.mixed %}
+            <div class="group relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div class="aspect-[2/3] relative">
+                    {% if rating_data.item.poster_url %}
+                    <img src="{{ rating_data.item.poster_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                        <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                    </div>
+                    {% else %}
+                    <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                        <p class="text-white text-xs font-medium leading-tight">{{ rating_data.item.title }}</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-2 flex justify-between text-xs">
+                    <span class="font-medium">
+                        {{ user1.first_name|default:user1.username|slice:":1" }}:
+                        {% if rating_data.r1 == 'loved' %}🤩{% elif rating_data.r1 == 'liked' %}🙂{% elif rating_data.r1 == 'okay' %}😐{% elif rating_data.r1 == 'disliked' %}😕{% elif rating_data.r1 == 'hated' %}😡{% endif %}
+                    </span>
+                    <span class="font-medium">
+                        {{ user2.first_name|default:user2.username|slice:":1" }}:
+                        {% if rating_data.r2 == 'loved' %}🤩{% elif rating_data.r2 == 'liked' %}🙂{% elif rating_data.r2 == 'okay' %}😐{% elif rating_data.r2 == 'disliked' %}😕{% elif rating_data.r2 == 'hated' %}😡{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
+<!-- Two-way overlap: User 1 & 3 -->
 {% if user1_and_3.all_positive or user1_and_3.all_negative or user1_and_3.all_neutral or user1_and_3.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-    <div class="flex items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">{% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} & {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only ({% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} hasn't watched)</h3>
-    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-4">
+        {% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} &
+        {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only
+        <span class="text-sm font-normal text-gray-500">({% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} hasn't watched)</span>
+    </h3>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div class="bg-green-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-green-600">{{ user1_and_3.all_positive|length }}</div>
-            <div class="text-xs text-green-700">Both Positive</div>
-        </div>
-        <div class="bg-yellow-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-yellow-600">{{ user1_and_3.all_neutral|length }}</div>
-            <div class="text-xs text-yellow-700">Both Neutral</div>
-        </div>
-        <div class="bg-red-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-red-600">{{ user1_and_3.all_negative|length }}</div>
-            <div class="text-xs text-red-700">Both Negative</div>
-        </div>
-        <div class="bg-purple-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-purple-600">{{ user1_and_3.mixed|length }}</div>
-            <div class="text-xs text-purple-700">Disagree</div>
+    {% if user1_and_3.all_positive %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-green-700 mb-2">✓ Both Positive ({{ user1_and_3.all_positive|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_and_3.all_positive %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
+
+    {% if user1_and_3.all_neutral %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-yellow-700 mb-2">😐 Both Neutral ({{ user1_and_3.all_neutral|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_and_3.all_neutral %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user1_and_3.all_negative %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-red-700 mb-2">✗ Both Negative ({{ user1_and_3.all_negative|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user1_and_3.all_negative %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user1_and_3.mixed %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-purple-700 mb-2">⚡ Disagree ({{ user1_and_3.mixed|length }})</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {% for rating_data in user1_and_3.mixed %}
+            <div class="group relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div class="aspect-[2/3] relative">
+                    {% if rating_data.item.poster_url %}
+                    <img src="{{ rating_data.item.poster_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                        <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                    </div>
+                    {% else %}
+                    <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                        <p class="text-white text-xs font-medium leading-tight">{{ rating_data.item.title }}</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-2 flex justify-between text-xs">
+                    <span class="font-medium">
+                        {{ user1.first_name|default:user1.username|slice:":1" }}:
+                        {% if rating_data.r1 == 'loved' %}🤩{% elif rating_data.r1 == 'liked' %}🙂{% elif rating_data.r1 == 'okay' %}😐{% elif rating_data.r1 == 'disliked' %}😕{% elif rating_data.r1 == 'hated' %}😡{% endif %}
+                    </span>
+                    <span class="font-medium">
+                        {{ user3.first_name|default:user3.username|slice:":1" }}:
+                        {% if rating_data.r3 == 'loved' %}🤩{% elif rating_data.r3 == 'liked' %}🙂{% elif rating_data.r3 == 'okay' %}😐{% elif rating_data.r3 == 'disliked' %}😕{% elif rating_data.r3 == 'hated' %}😡{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
+<!-- Two-way overlap: User 2 & 3 -->
 {% if user2_and_3.all_positive or user2_and_3.all_negative or user2_and_3.all_neutral or user2_and_3.mixed %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6">
-    <div class="flex items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-800">{% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} & {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only ({% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} hasn't watched)</h3>
-    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-4">
+        {% if user2.first_name %}{{ user2.first_name }}{% else %}{{ user2.username }}{% endif %} &
+        {% if user3.first_name %}{{ user3.first_name }}{% else %}{{ user3.username }}{% endif %} Only
+        <span class="text-sm font-normal text-gray-500">({% if user1.first_name %}{{ user1.first_name }}{% else %}{{ user1.username }}{% endif %} hasn't watched)</span>
+    </h3>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <div class="bg-green-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-green-600">{{ user2_and_3.all_positive|length }}</div>
-            <div class="text-xs text-green-700">Both Positive</div>
-        </div>
-        <div class="bg-yellow-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-yellow-600">{{ user2_and_3.all_neutral|length }}</div>
-            <div class="text-xs text-yellow-700">Both Neutral</div>
-        </div>
-        <div class="bg-red-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-red-600">{{ user2_and_3.all_negative|length }}</div>
-            <div class="text-xs text-red-700">Both Negative</div>
-        </div>
-        <div class="bg-purple-50 rounded-lg p-3 text-center">
-            <div class="text-xl font-bold text-purple-600">{{ user2_and_3.mixed|length }}</div>
-            <div class="text-xs text-purple-700">Disagree</div>
+    {% if user2_and_3.all_positive %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-green-700 mb-2">✓ Both Positive ({{ user2_and_3.all_positive|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user2_and_3.all_positive %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
+    {% endif %}
+
+    {% if user2_and_3.all_neutral %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-yellow-700 mb-2">😐 Both Neutral ({{ user2_and_3.all_neutral|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user2_and_3.all_neutral %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user2_and_3.all_negative %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-red-700 mb-2">✗ Both Negative ({{ user2_and_3.all_negative|length }})</h4>
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+            {% for item in user2_and_3.all_negative %}
+            <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                </div>
+                {% endif %}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                    <p class="text-white text-xs font-medium leading-tight">{{ item.title }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user2_and_3.mixed %}
+    <div class="mb-6">
+        <h4 class="text-md font-semibold text-purple-700 mb-2">⚡ Disagree ({{ user2_and_3.mixed|length }})</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            {% for rating_data in user2_and_3.mixed %}
+            <div class="group relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+                <div class="aspect-[2/3] relative">
+                    {% if rating_data.item.poster_url %}
+                    <img src="{{ rating_data.item.poster_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
+                        <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                    </div>
+                    {% else %}
+                    <div class="w-full h-full bg-gray-300 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
+                    </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-1">
+                        <p class="text-white text-xs font-medium leading-tight">{{ rating_data.item.title }}</p>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-2 flex justify-between text-xs">
+                    <span class="font-medium">
+                        {{ user2.first_name|default:user2.username|slice:":1" }}:
+                        {% if rating_data.r2 == 'loved' %}🤩{% elif rating_data.r2 == 'liked' %}🙂{% elif rating_data.r2 == 'okay' %}😐{% elif rating_data.r2 == 'disliked' %}😕{% elif rating_data.r2 == 'hated' %}😡{% endif %}
+                    </span>
+                    <span class="font-medium">
+                        {{ user3.first_name|default:user3.username|slice:":1" }}:
+                        {% if rating_data.r3 == 'loved' %}🤩{% elif rating_data.r3 == 'liked' %}🙂{% elif rating_data.r3 == 'okay' %}😐{% elif rating_data.r3 == 'disliked' %}😕{% elif rating_data.r3 == 'hated' %}😡{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endif %}
 
