@@ -64,19 +64,9 @@
 
                         <!-- Rating Bars -->
                         <div class="flex h-8 rounded-lg overflow-hidden bg-white/20">
-                            {% if featured_movie.loved_percent > 0 %}
-                            <div class="bg-purple-500 flex items-center justify-center" style="width: {{ featured_movie.loved_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.loved_count }}</span>
-                            </div>
-                            {% endif %}
-                            {% if featured_movie.liked_percent > 0 %}
-                            <div class="bg-green-500 flex items-center justify-center" style="width: {{ featured_movie.liked_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.liked_count }}</span>
-                            </div>
-                            {% endif %}
-                            {% if featured_movie.okay_percent > 0 %}
-                            <div class="bg-yellow-500 flex items-center justify-center" style="width: {{ featured_movie.okay_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.okay_count }}</span>
+                            {% if featured_movie.hated_percent > 0 %}
+                            <div class="bg-red-500 flex items-center justify-center" style="width: {{ featured_movie.hated_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.hated_count }}</span>
                             </div>
                             {% endif %}
                             {% if featured_movie.disliked_percent > 0 %}
@@ -84,9 +74,19 @@
                                 <span class="text-xs font-bold text-white">{{ featured_movie.disliked_count }}</span>
                             </div>
                             {% endif %}
-                            {% if featured_movie.hated_percent > 0 %}
-                            <div class="bg-red-500 flex items-center justify-center" style="width: {{ featured_movie.hated_percent }}%">
-                                <span class="text-xs font-bold text-white">{{ featured_movie.hated_count }}</span>
+                            {% if featured_movie.okay_percent > 0 %}
+                            <div class="bg-yellow-500 flex items-center justify-center" style="width: {{ featured_movie.okay_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.okay_count }}</span>
+                            </div>
+                            {% endif %}
+                            {% if featured_movie.liked_percent > 0 %}
+                            <div class="bg-green-500 flex items-center justify-center" style="width: {{ featured_movie.liked_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.liked_count }}</span>
+                            </div>
+                            {% endif %}
+                            {% if featured_movie.loved_percent > 0 %}
+                            <div class="bg-purple-500 flex items-center justify-center" style="width: {{ featured_movie.loved_percent }}%">
+                                <span class="text-xs font-bold text-white">{{ featured_movie.loved_count }}</span>
                             </div>
                             {% endif %}
                         </div>
@@ -94,24 +94,24 @@
                         <!-- Legend -->
                         <div class="flex flex-wrap gap-3 text-xs">
                             <div class="flex items-center gap-1.5">
-                                <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
-                                <span>{{ featured_movie.loved_count }} 🤩 ({{ featured_movie.loved_percent }}%)</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                                <span>{{ featured_movie.liked_count }} 🙂 ({{ featured_movie.liked_percent }}%)</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                                <span>{{ featured_movie.okay_count }} 😐 ({{ featured_movie.okay_percent }}%)</span>
+                                <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                                <span>{{ featured_movie.hated_count }} <span class="text-lg">😡</span> ({{ featured_movie.hated_percent }}%)</span>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <span class="w-3 h-3 bg-orange-500 rounded-full"></span>
-                                <span>{{ featured_movie.disliked_count }} 😕 ({{ featured_movie.disliked_percent }}%)</span>
+                                <span>{{ featured_movie.disliked_count }} <span class="text-lg">😕</span> ({{ featured_movie.disliked_percent }}%)</span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <span class="w-3 h-3 bg-red-500 rounded-full"></span>
-                                <span>{{ featured_movie.hated_count }} 😡 ({{ featured_movie.hated_percent }}%)</span>
+                                <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                                <span>{{ featured_movie.okay_count }} <span class="text-lg">😐</span> ({{ featured_movie.okay_percent }}%)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                <span>{{ featured_movie.liked_count }} <span class="text-lg">🙂</span> ({{ featured_movie.liked_percent }}%)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
+                                <span>{{ featured_movie.loved_count }} <span class="text-lg">🤩</span> ({{ featured_movie.loved_percent }}%)</span>
                             </div>
                         </div>
                     </div>
@@ -437,23 +437,23 @@
                         {% if activity.type == 'rating' %}
                             {% if activity.rating == 'loved' %}
                             <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                <span class="text-sm">🤩</span>
+                                <span class="text-lg">🤩</span>
                             </div>
                             {% elif activity.rating == 'liked' %}
                             <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <span class="text-sm">🙂</span>
+                                <span class="text-lg">🙂</span>
                             </div>
                             {% elif activity.rating == 'okay' %}
                             <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                                <span class="text-sm">😐</span>
+                                <span class="text-lg">😐</span>
                             </div>
                             {% elif activity.rating == 'disliked' %}
                             <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                <span class="text-sm">😕</span>
+                                <span class="text-lg">😕</span>
                             </div>
                             {% elif activity.rating == 'hated' %}
                             <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                                <span class="text-sm">😡</span>
+                                <span class="text-lg">😡</span>
                             </div>
                             {% endif %}
                         {% else %}
