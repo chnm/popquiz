@@ -114,6 +114,24 @@
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
         });
+
+        // Scroll position restoration for rating forms
+        document.addEventListener('DOMContentLoaded', function() {
+            // Restore scroll position if it exists
+            const savedScrollPosition = sessionStorage.getItem('ratingScrollPosition');
+            if (savedScrollPosition !== null) {
+                window.scrollTo(0, parseInt(savedScrollPosition));
+                sessionStorage.removeItem('ratingScrollPosition');
+            }
+
+            // Save scroll position before submitting any rating form
+            const ratingForms = document.querySelectorAll('form[action*="rate"]');
+            ratingForms.forEach(function(form) {
+                form.addEventListener('submit', function() {
+                    sessionStorage.setItem('ratingScrollPosition', window.scrollY.toString());
+                });
+            });
+        });
     </script>
 
     <main class="max-w-6xl mx-auto px-4 py-8">
