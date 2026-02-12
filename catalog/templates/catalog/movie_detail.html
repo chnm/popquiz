@@ -55,25 +55,11 @@
 
             <!-- Rating Summary -->
             <div class="mt-6 grid grid-cols-3 md:grid-cols-6 gap-3">
-                <div class="bg-purple-50 rounded-lg p-3 text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-purple-600">{{ loved_count }}</div>
-                    <div class="text-xs md:text-sm text-gray-600">🤩 Loved</div>
+                <div class="bg-red-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-red-600">{{ hated_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">😡 Hated</div>
                     {% if total_ratings > 0 %}
-                        <div class="text-xs text-gray-500">{{ loved_percent }}%</div>
-                    {% endif %}
-                </div>
-                <div class="bg-green-50 rounded-lg p-3 text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-green-600">{{ liked_count }}</div>
-                    <div class="text-xs md:text-sm text-gray-600">🙂 Liked</div>
-                    {% if total_ratings > 0 %}
-                        <div class="text-xs text-gray-500">{{ liked_percent }}%</div>
-                    {% endif %}
-                </div>
-                <div class="bg-yellow-50 rounded-lg p-3 text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-yellow-600">{{ okay_count }}</div>
-                    <div class="text-xs md:text-sm text-gray-600">😐 Okay</div>
-                    {% if total_ratings > 0 %}
-                        <div class="text-xs text-gray-500">{{ okay_percent }}%</div>
+                        <div class="text-xs text-gray-500">{{ hated_percent }}%</div>
                     {% endif %}
                 </div>
                 <div class="bg-orange-50 rounded-lg p-3 text-center">
@@ -83,11 +69,25 @@
                         <div class="text-xs text-gray-500">{{ disliked_percent }}%</div>
                     {% endif %}
                 </div>
-                <div class="bg-red-50 rounded-lg p-3 text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-red-600">{{ hated_count }}</div>
-                    <div class="text-xs md:text-sm text-gray-600">😡 Hated</div>
+                <div class="bg-yellow-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-yellow-600">{{ okay_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">😐 Okay</div>
                     {% if total_ratings > 0 %}
-                        <div class="text-xs text-gray-500">{{ hated_percent }}%</div>
+                        <div class="text-xs text-gray-500">{{ okay_percent }}%</div>
+                    {% endif %}
+                </div>
+                <div class="bg-green-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-green-600">{{ liked_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">🙂 Liked</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ liked_percent }}%</div>
+                    {% endif %}
+                </div>
+                <div class="bg-purple-50 rounded-lg p-3 text-center">
+                    <div class="text-2xl md:text-3xl font-bold text-purple-600">{{ loved_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">🤩 Loved</div>
+                    {% if total_ratings > 0 %}
+                        <div class="text-xs text-gray-500">{{ loved_percent }}%</div>
                     {% endif %}
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 text-center">
@@ -101,51 +101,19 @@
 
 <!-- Rating Details -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <!-- Loved Ratings -->
+    <!-- Hated Ratings -->
     <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-purple-600 mb-4">
-            🤩 Loved ({{ loved_count }})
+        <h2 class="text-xl font-bold text-red-600 mb-4">
+            😡 Hated ({{ hated_count }})
         </h2>
-        {% if loved_ratings %}
+        {% if hated_ratings %}
             <ul class="space-y-2">
-                {% for rating in loved_ratings %}
+                {% for rating in hated_ratings %}
                     <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No loved ratings yet</p>
-        {% endif %}
-    </div>
-
-    <!-- Liked Ratings -->
-    <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-green-600 mb-4">
-            🙂 Liked ({{ liked_count }})
-        </h2>
-        {% if liked_ratings %}
-            <ul class="space-y-2">
-                {% for rating in liked_ratings %}
-                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-gray-400 italic">No liked ratings yet</p>
-        {% endif %}
-    </div>
-
-    <!-- Okay Ratings -->
-    <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-yellow-600 mb-4">
-            😐 Okay ({{ okay_count }})
-        </h2>
-        {% if okay_ratings %}
-            <ul class="space-y-2">
-                {% for rating in okay_ratings %}
-                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="text-gray-400 italic">No okay ratings yet</p>
+            <p class="text-gray-400 italic">No hated ratings yet</p>
         {% endif %}
     </div>
 
@@ -165,19 +133,51 @@
         {% endif %}
     </div>
 
-    <!-- Hated Ratings -->
+    <!-- Okay Ratings -->
     <div class="bg-white rounded-xl shadow-md p-6">
-        <h2 class="text-xl font-bold text-red-600 mb-4">
-            😡 Hated ({{ hated_count }})
+        <h2 class="text-xl font-bold text-yellow-600 mb-4">
+            😐 Okay ({{ okay_count }})
         </h2>
-        {% if hated_ratings %}
+        {% if okay_ratings %}
             <ul class="space-y-2">
-                {% for rating in hated_ratings %}
+                {% for rating in okay_ratings %}
                     <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No hated ratings yet</p>
+            <p class="text-gray-400 italic">No okay ratings yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Liked Ratings -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-green-600 mb-4">
+            🙂 Liked ({{ liked_count }})
+        </h2>
+        {% if liked_ratings %}
+            <ul class="space-y-2">
+                {% for rating in liked_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-400 italic">No liked ratings yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Loved Ratings -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-purple-600 mb-4">
+            🤩 Loved ({{ loved_count }})
+        </h2>
+        {% if loved_ratings %}
+            <ul class="space-y-2">
+                {% for rating in loved_ratings %}
+                    <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-400 italic">No loved ratings yet</p>
         {% endif %}
     </div>
 
