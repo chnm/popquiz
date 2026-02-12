@@ -415,8 +415,8 @@ class CompareUsersView(View):
         user1_negative_user2_neutral = []   # user1 negative, user2 neutral
         user1_neutral_user2_positive = []   # user1 neutral, user2 positive
         user1_neutral_user2_negative = []   # user1 neutral, user2 negative
-        only_user1 = []         # Only user1 has rated
-        only_user2 = []         # Only user2 has rated
+        only_user1 = []         # Only user1 rated positive (for Venn diagram)
+        only_user2 = []         # Only user2 rated positive (for Venn diagram)
 
         all_items = set(user1_ratings.keys()) | set(user2_ratings.keys())
 
@@ -453,9 +453,13 @@ class CompareUsersView(View):
                     elif cat1 == 'neutral' and cat2 == 'negative':
                         user1_neutral_user2_negative.append(item)
             elif in_user1:
-                only_user1.append(user1_ratings[item_id]['item'])
+                # Only user1 rated - add to Venn only if positive
+                if self._categorize_rating(user1_ratings[item_id]['rating']) == 'positive':
+                    only_user1.append(user1_ratings[item_id]['item'])
             else:
-                only_user2.append(user2_ratings[item_id]['item'])
+                # Only user2 rated - add to Venn only if positive
+                if self._categorize_rating(user2_ratings[item_id]['rating']) == 'positive':
+                    only_user2.append(user2_ratings[item_id]['item'])
 
         # Sort all lists by title
         for lst in [both_positive, both_negative, both_neutral,
@@ -530,14 +534,70 @@ class CompareThreeUsersView(View):
             ).select_related('item', 'item__category')
         }
 
-        # Seven regions for 3-way Venn diagram
+        # Get sets of items each user rated positively (for Venn diagram)
+        user1_positive_items = {
+            item_id for item_id, data in user1_ratings.items()
+            if self._categorize_rating(data['rating']) == 'positive'
+        }
+        user2_positive_items = {
+            item_id for item_id, data in user2_ratings.items()
+            if self._categorize_rating(data['rating']) == 'positive'
+        }
+        user3_positive_items = {
+            item_id for item_id, data in user3_ratings.items()
+            if self._categorize_rating(data['rating']) == 'positive'
+        }
+
+        # Seven regions for 3-way Venn diagram (based on positive ratings only)
         only_user1 = []
         only_user2 = []
         only_user3 = []
+        user1_and_2_venn = []  # Both rated positive, user3 didn't
+        user1_and_3_venn = []  # Both rated positive, user2 didn't
+        user2_and_3_venn = []  # Both rated positive, user1 didn't
+        all_three_venn = []    # All three rated positive
+
+        # Detailed breakdowns for display (all rating types)
         user1_and_2 = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
         user1_and_3 = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
         user2_and_3 = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
         all_three = {'all_positive': [], 'all_negative': [], 'all_neutral': [], 'mixed': []}
+
+        # Calculate Venn diagram regions (positive ratings only)
+        all_positive_items = user1_positive_items | user2_positive_items | user3_positive_items
+
+        for item_id in all_positive_items:
+            in_user1 = item_id in user1_positive_items
+            in_user2 = item_id in user2_positive_items
+            in_user3 = item_id in user3_positive_items
+
+            # Get the item object from whichever user has it
+            if item_id in user1_ratings:
+                item = user1_ratings[item_id]['item']
+            elif item_id in user2_ratings:
+                item = user2_ratings[item_id]['item']
+            else:
+                item = user3_ratings[item_id]['item']
+
+            if in_user1 and in_user2 and in_user3:
+                all_three_venn.append(item)
+            elif in_user1 and in_user2:
+                user1_and_2_venn.append(item)
+            elif in_user1 and in_user3:
+                user1_and_3_venn.append(item)
+            elif in_user2 and in_user3:
+                user2_and_3_venn.append(item)
+            elif in_user1:
+                only_user1.append(item)
+            elif in_user2:
+                only_user2.append(item)
+            elif in_user3:
+                only_user3.append(item)
+
+        # Sort Venn lists by title
+        for lst in [only_user1, only_user2, only_user3, user1_and_2_venn,
+                    user1_and_3_venn, user2_and_3_venn, all_three_venn]:
+            lst.sort(key=lambda x: x.title.lower())
 
         all_items = set(user1_ratings.keys()) | set(user2_ratings.keys()) | set(user3_ratings.keys())
 
@@ -626,23 +686,22 @@ class CompareThreeUsersView(View):
                     user2_and_3['mixed'].append({'item': item, 'r2': r2, 'r3': r3})
 
             elif in_user1 and not in_user2 and not in_user3:
-                only_user1.append(user1_ratings[item_id]['item'])
+                # Don't add to only_user1 here - already handled in Venn calculation
+                pass
             elif in_user2 and not in_user1 and not in_user3:
-                only_user2.append(user2_ratings[item_id]['item'])
+                # Don't add to only_user2 here - already handled in Venn calculation
+                pass
             elif in_user3 and not in_user1 and not in_user2:
-                only_user3.append(user3_ratings[item_id]['item'])
+                # Don't add to only_user3 here - already handled in Venn calculation
+                pass
 
-        # Sort all lists by title
-        only_user1.sort(key=lambda x: x.title.lower())
-        only_user2.sort(key=lambda x: x.title.lower())
-        only_user3.sort(key=lambda x: x.title.lower())
-
+        # Sort detailed lists by title
         for region in [user1_and_2, user1_and_3, user2_and_3, all_three]:
             for category in ['all_positive', 'all_negative', 'all_neutral']:
                 region[category].sort(key=lambda x: x.title.lower())
             region['mixed'].sort(key=lambda x: x['item'].title.lower())
 
-        # Calculate statistics
+        # Calculate statistics for detailed breakdowns
         total_all_three = (len(all_three['all_positive']) + len(all_three['all_negative']) +
                           len(all_three['all_neutral']) + len(all_three['mixed']))
         total_user1_and_2 = (len(user1_and_2['all_positive']) + len(user1_and_2['all_negative']) +
@@ -656,9 +715,15 @@ class CompareThreeUsersView(View):
             'user1': user1,
             'user2': user2,
             'user3': user3,
+            # Venn diagram counts (positive ratings only)
             'only_user1': only_user1,
             'only_user2': only_user2,
             'only_user3': only_user3,
+            'user1_and_2_venn': user1_and_2_venn,
+            'user1_and_3_venn': user1_and_3_venn,
+            'user2_and_3_venn': user2_and_3_venn,
+            'all_three_venn': all_three_venn,
+            # Detailed breakdowns (all rating types)
             'user1_and_2': user1_and_2,
             'user1_and_3': user1_and_3,
             'user2_and_3': user2_and_3,
