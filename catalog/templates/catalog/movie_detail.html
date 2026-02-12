@@ -91,8 +91,8 @@
                     {% endif %}
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 text-center">
-                    <div class="text-2xl md:text-3xl font-bold text-gray-600">{{ no_rating_count }}</div>
-                    <div class="text-xs md:text-sm text-gray-600">⏭️ Not Rated</div>
+                    <div class="text-2xl md:text-3xl font-bold text-gray-600">{{ not_rated_count }}</div>
+                    <div class="text-xs md:text-sm text-gray-600">⏭️ Haven't Seen</div>
                 </div>
             </div>
         </div>
@@ -181,31 +181,31 @@
         {% endif %}
     </div>
 
-    <!-- Not Yet Rated -->
+    <!-- Haven't Seen -->
     <div class="bg-white rounded-xl shadow-md p-6">
         <h2 class="text-xl font-bold text-gray-600 mb-4">
-            ⏭️ Not Yet Rated ({{ no_rating_count }})
+            ⏭️ Haven't Seen ({{ not_rated_count }})
         </h2>
-        {% if no_rating_ratings %}
+        {% if not_rated_ratings %}
             <ul class="space-y-2">
-                {% for rating in no_rating_ratings %}
+                {% for rating in not_rated_ratings %}
                     <li><a href="{% url 'profile' rating.user.username %}" class="text-gray-700 hover:text-indigo-600 transition">{{ rating.user|display_name:request.user }}</a></li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="text-gray-400 italic">No one marked as not yet rated</p>
+            <p class="text-gray-400 italic">No one marked as haven't seen</p>
         {% endif %}
     </div>
 </div>
 
-<!-- No Rating Yet -->
+<!-- Awaiting Response -->
 {% if no_rating_users %}
 <div class="bg-white rounded-xl shadow-md p-6 mt-6">
     <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center">
         <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 1.745 0 3.227.835 3.776 2M15 13H9m-4-8h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/>
         </svg>
-        No Rating Yet ({{ no_rating_user_count }})
+        Awaiting Response ({{ no_rating_count }})
     </h2>
     <ul class="grid grid-cols-2 md:grid-cols-3 gap-2">
         {% for user in no_rating_users %}
