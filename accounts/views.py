@@ -16,26 +16,38 @@ from catalog.models import Item
 def calculate_compatibility(user1, user2):
     """
     Calculate compatibility between two users based on their ratings.
-    Only compares love (LOVED) and hate (HATED) ratings.
+    Uses positive/negative/neutral categorization for all rating types.
     Returns a dict with compatibility score and rating breakdowns.
     """
-    # Get ratings for both users (only LOVED and HATED)
+    def categorize_rating(rating):
+        """Categorize a rating as positive, negative, or neutral."""
+        if rating in [Rating.Level.LOVED, Rating.Level.LIKED]:
+            return 'positive'
+        elif rating in [Rating.Level.HATED, Rating.Level.DISLIKED]:
+            return 'negative'
+        elif rating == Rating.Level.OKAY:
+            return 'neutral'
+        return None
+
+    # Get all ratings for both users (excluding NO_RATING)
     user1_ratings = {
         r.item_id: r.rating
         for r in Rating.objects.filter(
-            user=user1,
-            rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+            user=user1
+        ).exclude(
+            rating=Rating.Level.NO_RATING
         )
     }
     user2_ratings = {
         r.item_id: r.rating
         for r in Rating.objects.filter(
-            user=user2,
-            rating__in=[Rating.Level.LOVED, Rating.Level.HATED]
+            user=user2
+        ).exclude(
+            rating=Rating.Level.NO_RATING
         )
     }
 
-    # Find common items (both have rated with love or hate)
+    # Find common items (both have rated)
     common_items = set(user1_ratings.keys()) & set(user2_ratings.keys())
 
     if not common_items:
@@ -46,22 +58,21 @@ def calculate_compatibility(user1, user2):
             'disagree_count': 0,
         }
 
-    # Count agreements and disagreements (only love/hate)
-    both_love = 0
-    both_hate = 0
-    disagree = 0
+    # Count agreements and disagreements using categories
+    agree_count = 0
+    disagree_count = 0
 
     for item_id in common_items:
-        r1, r2 = user1_ratings[item_id], user2_ratings[item_id]
-        if r1 == r2:
-            if r1 == Rating.Level.LOVED:
-                both_love += 1
-            else:  # HATED
-                both_hate += 1
-        else:
-            disagree += 1
+        r1 = user1_ratings[item_id]
+        r2 = user2_ratings[item_id]
+        cat1 = categorize_rating(r1)
+        cat2 = categorize_rating(r2)
 
-    agree_count = both_love + both_hate
+        if cat1 == cat2:
+            agree_count += 1
+        else:
+            disagree_count += 1
+
     total = len(common_items)
     score = round((agree_count / total) * 100) if total > 0 else 0
 
@@ -69,9 +80,7 @@ def calculate_compatibility(user1, user2):
         'score': score,
         'common_count': total,
         'agree_count': agree_count,
-        'disagree_count': disagree,
-        'both_love': both_love,
-        'both_hate': both_hate,
+        'disagree_count': disagree_count,
     }
 
 
