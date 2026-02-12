@@ -37,9 +37,9 @@
     </div>
 </div>
 
-{% if items_with_votes %}
+{% if items_with_ratings %}
     <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100">
-        {% for item_data in items_with_votes %}
+        {% for item_data in items_with_ratings %}
             <div class="p-4 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     {% if item_data.item.poster_url %}
