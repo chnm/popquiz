@@ -191,6 +191,7 @@ class CategoryDetailView(DetailView):
         items_with_ratings.sort(key=lambda x: (rating_order.get(x['rating'], 5), x['item'].title.lower()))
 
         context['items_with_ratings'] = items_with_ratings
+        context['item_count'] = items.count()
         return context
 
 
