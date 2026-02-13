@@ -9,9 +9,9 @@
 
 <div class="text-center mb-2 md:mb-4">
     <h1 class="text-xl md:text-2xl font-bold text-gray-800">{{ category.name }}</h1>
-    <p class="text-sm md:text-base text-gray-600"><span id="rated-count">{{ voted_count }}</span> of <span id="total-count">{{ total_count }}</span> rated</p>
+    <p class="text-sm md:text-base text-gray-600"><span id="rated-count">{{ rated_count }}</span> of <span id="total-count">{{ total_count }}</span> rated</p>
     <div class="w-full bg-gray-200 rounded-full h-1.5 md:h-2 mt-1 md:mt-2 max-w-md mx-auto">
-        <div id="progress-bar" class="bg-indigo-600 h-1.5 md:h-2 rounded-full" style="width: {% widthratio voted_count total_count 100 %}%"></div>
+        <div id="progress-bar" class="bg-indigo-600 h-1.5 md:h-2 rounded-full" style="width: {% widthratio rated_count total_count 100 %}%"></div>
     </div>
 </div>
 
@@ -246,9 +246,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 // Update progress
-                document.getElementById('rated-count').textContent = data.voted_count;
+                document.getElementById('rated-count').textContent = data.rated_count;
                 document.getElementById('total-count').textContent = data.total_count;
-                const progressPercent = Math.round((data.voted_count / data.total_count) * 100);
+                const progressPercent = Math.round((data.rated_count / data.total_count) * 100);
                 document.getElementById('progress-bar').style.width = progressPercent + '%';
 
                 if (data.completed) {

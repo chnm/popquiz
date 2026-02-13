@@ -61,14 +61,12 @@ def rate_api(request):
         item__category=category
     ).values_list('item_id', flat=True)
 
-    # Get unrated items, ordered by total rating count (most popular first)
+    # Get unrated items in random order
     unrated_items = Item.objects.filter(
         category=category
     ).exclude(
         id__in=rated_item_ids
-    ).annotate(
-        rating_count=Count('ratings')
-    ).order_by('-rating_count', 'title')
+    ).order_by('?')
 
     current_item = unrated_items.first()
     remaining_count = unrated_items.count()
