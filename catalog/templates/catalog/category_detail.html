@@ -65,32 +65,14 @@
                 </div>
 
                 {% if user.is_authenticated %}
-                    <div class="flex space-x-1">
+                    <div class="flex items-center space-x-1">
                         <form method="post" action="{% url 'rate' %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
-                            <input type="hidden" name="rating" value="loved">
+                            <input type="hidden" name="rating" value="hated">
                             <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
-                                {% if item_data.rating == 'loved' %}bg-purple-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-purple-100{% endif %}">
-                                🤩
-                            </button>
-                        </form>
-                        <form method="post" action="{% url 'rate' %}" class="inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
-                            <input type="hidden" name="rating" value="liked">
-                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
-                                {% if item_data.rating == 'liked' %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-green-100{% endif %}">
-                                🙂
-                            </button>
-                        </form>
-                        <form method="post" action="{% url 'rate' %}" class="inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
-                            <input type="hidden" name="rating" value="okay">
-                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
-                                {% if item_data.rating == 'okay' %}bg-yellow-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-yellow-100{% endif %}">
-                                😐
+                                {% if item_data.rating == 'hated' %}bg-red-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-red-100{% endif %}">
+                                😡
                             </button>
                         </form>
                         <form method="post" action="{% url 'rate' %}" class="inline">
@@ -105,12 +87,32 @@
                         <form method="post" action="{% url 'rate' %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
-                            <input type="hidden" name="rating" value="hated">
+                            <input type="hidden" name="rating" value="okay">
                             <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
-                                {% if item_data.rating == 'hated' %}bg-red-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-red-100{% endif %}">
-                                😡
+                                {% if item_data.rating == 'okay' %}bg-yellow-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-yellow-100{% endif %}">
+                                😐
                             </button>
                         </form>
+                        <form method="post" action="{% url 'rate' %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
+                            <input type="hidden" name="rating" value="liked">
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
+                                {% if item_data.rating == 'liked' %}bg-green-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-green-100{% endif %}">
+                                🙂
+                            </button>
+                        </form>
+                        <form method="post" action="{% url 'rate' %}" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
+                            <input type="hidden" name="rating" value="loved">
+                            <button type="submit" class="px-3 py-2 rounded-full text-xl font-medium transition duration-200
+                                {% if item_data.rating == 'loved' %}bg-purple-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-purple-100{% endif %}">
+                                🤩
+                            </button>
+                        </form>
+                        <!-- Separator for haven't seen -->
+                        <div class="w-px h-8 bg-gray-300 mx-1"></div>
                         <form method="post" action="{% url 'rate' %}" class="inline">
                             {% csrf_token %}
                             <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
