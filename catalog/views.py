@@ -457,7 +457,24 @@ class StatsView(TemplateView):
             hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
         )
 
-        # Calculate scores for all movies using simple average
+        # First pass: calculate simple averages for all movies to get overall mean
+        all_averages = []
+        for item in items:
+            total_ratings = (item.loved_count + item.liked_count + item.okay_count +
+                           item.disliked_count + item.hated_count)
+            if total_ratings > 0:
+                total_value = (item.loved_count * 2 + item.liked_count * 1 +
+                             item.okay_count * 0 + item.disliked_count * -1 +
+                             item.hated_count * -2)
+                all_averages.append(total_value / total_ratings)
+
+        # Calculate overall mean rating (C in Bayesian formula)
+        overall_mean = sum(all_averages) / len(all_averages) if all_averages else 0
+
+        # Minimum votes threshold - movies need this many votes to rely on their own average
+        MIN_VOTES = 3
+
+        # Second pass: calculate Bayesian scores
         ranked_movies = []
 
         for item in items:
@@ -466,14 +483,21 @@ class StatsView(TemplateView):
                            item.disliked_count + item.hated_count)
 
             if total_ratings > 0:
-                # Simple average: sum of (count * value) / total
+                # Calculate simple average for this movie
                 # loved=2, liked=1, okay=0, disliked=-1, hated=-2
                 total_value = (item.loved_count * 2 + item.liked_count * 1 +
                              item.okay_count * 0 + item.disliked_count * -1 +
                              item.hated_count * -2)
                 average = total_value / total_ratings
+
+                # Apply Bayesian averaging to prevent low-sample movies from dominating
+                # bayesian = (v/(v+m)) * R + (m/(v+m)) * C
+                # where v = votes, m = min threshold, R = movie avg, C = overall mean
+                bayesian_average = ((total_ratings / (total_ratings + MIN_VOTES)) * average +
+                                  (MIN_VOTES / (total_ratings + MIN_VOTES)) * overall_mean)
+
                 # Convert to 0-100 scale for display (from -2 to +2 range)
-                score = round(((average + 2) / 4) * 100)
+                score = round(((bayesian_average + 2) / 4) * 100)
 
                 # Calculate percentages
                 loved_percent = round((item.loved_count / total_ratings) * 100)
