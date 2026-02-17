@@ -33,7 +33,8 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,popquiz.rrchnm.org').split(',')
 
 # CSRF trusted origins for POST requests
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://popquiz.rrchnm.org').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
+csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://popquiz.rrchnm.org')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',') if origin.strip()]
 
 # Application definition
 
