@@ -280,9 +280,26 @@ uv remove package-name
 uv sync --upgrade
 ```
 
-## Starting the App Server
+## Deployment & Server Management
 
-**IMPORTANT**: When starting the app server, always follow these steps in order:
+**CRITICAL**: This container environment is the production website hosted at **https://popquiz.rrchnm.org**. SSL/TLS is handled by reverse proxy outside this container.
+
+### Background Deployment
+
+The server MUST run in the background using `nohup` to persist across sessions:
+
+```bash
+# Use the Makefile for all deployment operations
+make deploy    # Full deployment (migrate, collectstatic, start in background)
+make status    # Check if server is running
+make stop      # Stop the server
+make restart   # Restart the server
+make logs      # View recent logs
+```
+
+### Manual Deployment Process
+
+If deploying manually (without Makefile):
 
 ```bash
 # 1. Check for pending migrations
@@ -294,16 +311,41 @@ uv run python manage.py migrate
 # 3. Collect static files (for production-like setup)
 uv run python manage.py collectstatic --noinput
 
-# 4. Start the server on 0.0.0.0:8000 (accessible from all network interfaces)
-uv run python manage.py runserver 0.0.0.0:8000
+# 4. Start the server in background on 0.0.0.0:8000
+nohup uv run python manage.py runserver 0.0.0.0:8000 > /tmp/popquiz.log 2>&1 &
+echo $! > .pid
 ```
 
 **Why these steps matter:**
 - **showmigrations**: Verifies database schema is up-to-date
 - **migrate**: Applies any pending database migrations to avoid runtime errors
-- **collectstatic**: Ensures all static files (CSS, JS, images) are properly collected
-- **0.0.0.0:8000**: Makes the server accessible from other devices on the network (not just localhost)
+- **collectstatic**: Ensures all static files (CSS, JS, images) are properly collected with WhiteNoise
+- **0.0.0.0:8000**: Makes the server accessible from all network interfaces (not just localhost)
+- **nohup**: Runs server in background, not tied to current terminal session
+- **.pid file**: Tracks process ID across sessions for stop/restart operations (gitignored)
+- **/tmp/popquiz.log**: All logs written to /tmp for debugging
 - **uv**: Fast Python package manager that ensures correct dependencies are used
+
+### Health Checks
+
+Always verify the server is running after changes:
+
+```bash
+# Check if process is running
+make status
+
+# View recent logs
+make logs
+
+# If not running, restart
+make restart
+```
+
+### Process Management
+
+- **PID File**: `.pid` stores the server process ID (gitignored)
+- **Logs**: All output written to `/tmp/popquiz.log`
+- **Background Mode**: Server persists across terminal disconnections
 
 ## Common Tasks
 
@@ -426,7 +468,54 @@ The base template includes comprehensive social media meta tags:
 - Default social image: `founder_transparent.png`
 - Individual pages can override meta tags by extending blocks (e.g., `{% block og_title %}Custom Title{% endblock %}`)
 
+## Deployment Workflow
+
+**PRODUCTION ENVIRONMENT**: This codebase runs the live website at https://popquiz.rrchnm.org. All changes should be:
+1. Tested locally/in development
+2. Committed to git with clear messages
+3. Deployed using the Makefile
+4. Verified via health checks
+
+### Pre-Deployment Checklist
+
+Before deploying changes:
+- [ ] Check for remote updates: `git fetch origin`
+- [ ] Prompt user to pull if behind remote
+- [ ] Commit all changes to git
+- [ ] Review changes are correct and tested
+
+### Deployment Steps
+
+```bash
+# 1. Fetch remote changes
+git fetch origin
+
+# 2. If behind remote, prompt user to pull
+git status  # Check if behind
+
+# 3. Deploy application
+make deploy
+
+# 4. Verify deployment
+make status
+make logs
+```
+
 ## Git Workflow
+
+### Remote Synchronization
+
+**IMPORTANT**: Always check for remote updates before making changes:
+
+```bash
+# Fetch from remote
+git fetch origin
+
+# Check if behind remote
+git status
+
+# If behind, prompt user: "Remote changes detected. Pull changes before proceeding?"
+```
 
 ### Committing Changes
 
@@ -554,5 +643,5 @@ PopQuiz is developed for team use. The app uses publicly available IMDB data for
 
 ---
 
-*Last Updated: 2026-02-09*
+*Last Updated: 2026-02-17*
 *This document is maintained for AI agent context and onboarding.*

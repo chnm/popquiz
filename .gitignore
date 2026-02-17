@@ -35,3 +35,6 @@ db.sqlite3-journal
 .env
 .env.local
 .claude/settings.local.json
+
+# Process ID file for background server
+.pid
