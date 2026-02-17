@@ -30,10 +30,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-4et=o#7o4tsnsdlwth0^we9!n1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,popquiz.rrchnm.org').split(',')
 
 # CSRF trusted origins for POST requests
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://popquiz.rrchnm.org').split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else []
 
 # Application definition
 
