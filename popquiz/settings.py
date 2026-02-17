@@ -190,8 +190,8 @@ SOCIALACCOUNT_ADAPTER = 'accounts.adapter.CustomSocialAccountAdapter'  # Custom 
 SOCIALACCOUNT_PROVIDERS = {
     'slack': {
         'APP': {
-            'client_id': os.getenv('SLACK_CLIENT_ID'),
-            'secret': os.getenv('SLACK_CLIENT_SECRET'),
+            'client_id': os.getenv('ALLAUTH_SLACK_CLIENT_ID'),
+            'secret': os.getenv('ALLAUTH_SLACK_CLIENT_SECRET'),
             'key': ''
         },
         'SCOPE': ['openid', 'profile', 'email'],
