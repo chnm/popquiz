@@ -248,7 +248,24 @@ uv run python manage.py migrate
 
 # Check database integrity
 uv run python manage.py check
+
+# Fix database permissions if getting "readonly database" error
+sudo chown roy:roy /workspace/db.sqlite3
+chmod 664 /workspace/db.sqlite3
 ```
+
+### Database Permissions
+
+SQLite requires write access to both the database file and its directory:
+- Database file should be owned by the user running the server
+- File permissions should be 664 (rw-rw-r--)
+- Directory must be writable for journal files (.sqlite3-journal)
+
+If you see "attempt to write a readonly database" errors:
+1. Check file ownership: `ls -la /workspace/db.sqlite3`
+2. Fix ownership: `sudo chown roy:roy /workspace/db.sqlite3`
+3. Ensure writable: `chmod 664 /workspace/db.sqlite3`
+4. Restart server: `make restart`
 
 ---
 
