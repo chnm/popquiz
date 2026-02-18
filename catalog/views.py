@@ -91,7 +91,7 @@ class HomeView(ListView):
             total_ratings=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING))
         ).filter(
             total_ratings__gt=0  # Only show movies with at least one rating
-        ).order_by('?')[:5]
+        ).order_by('?')[:10]
 
         featured_movies = []
         for movie in featured_movies_qs:

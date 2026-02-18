@@ -128,21 +128,10 @@
         </div>
         {% endfor %}
 
-        <!-- Carousel Dots -->
-        {% if featured_movies|length > 1 %}
-        <div class="flex justify-center gap-2 mt-3">
-            {% for movie in featured_movies %}
-            <button class="carousel-dot w-2.5 h-2.5 rounded-full transition-all duration-300 {% if forloop.first %}bg-indigo-600 scale-125{% else %}bg-gray-300{% endif %}"
-                    data-target="{{ forloop.counter0 }}"
-                    aria-label="Show movie {{ forloop.counter }}"></button>
-            {% endfor %}
-        </div>
-        {% endif %}
     </div>
     <script>
     (function() {
         var slides = document.querySelectorAll('.featured-slide');
-        var dots = document.querySelectorAll('.carousel-dot');
         if (slides.length <= 1) return;
 
         var current = 0;
@@ -152,8 +141,6 @@
             var currentSlide = slides[current];
             currentSlide.style.transition = 'opacity 0.5s ease';
             currentSlide.style.opacity = '0';
-            dots[current].classList.remove('bg-indigo-600', 'scale-125');
-            dots[current].classList.add('bg-gray-300');
 
             var next = (index + slides.length) % slides.length;
             setTimeout(function() {
@@ -175,28 +162,16 @@
                         }, 500);
                     });
                 });
-
-                dots[current].classList.remove('bg-gray-300');
-                dots[current].classList.add('bg-indigo-600', 'scale-125');
             }, 500);
         }
 
         function advance() { goTo(current + 1); }
 
-        timer = setInterval(advance, 5000);
-
-        dots.forEach(function(dot, i) {
-            dot.addEventListener('click', function() {
-                if (i === current) return;
-                clearInterval(timer);
-                goTo(i);
-                timer = setInterval(advance, 5000);
-            });
-        });
+        timer = setInterval(advance, 10000);
 
         var carousel = document.getElementById('featured-carousel');
         carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
-        carousel.addEventListener('mouseleave', function() { timer = setInterval(advance, 5000); });
+        carousel.addEventListener('mouseleave', function() { timer = setInterval(advance, 10000); });
     })();
     </script>
     {% endif %}
