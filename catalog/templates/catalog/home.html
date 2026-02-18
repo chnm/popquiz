@@ -15,9 +15,10 @@
 
     <!-- Featured Movie Carousel -->
     {% if featured_movies %}
-    <div class="flex-grow lg:max-w-3xl" id="featured-carousel">
+    <div class="flex-grow lg:max-w-3xl overflow-hidden" id="featured-carousel">
+        <div class="carousel-track flex" style="transition: transform 0.5s ease;">
         {% for movie in featured_movies %}
-        <div class="featured-slide {% if not forloop.first %}hidden{% endif %}">
+        <div class="featured-slide flex-shrink-0 w-full">
             <a href="{% url 'movie_detail' movie.category.slug movie.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <!-- Background Poster -->
                 <div class="absolute inset-0">
@@ -127,10 +128,11 @@
             </a>
         </div>
         {% endfor %}
-
+        </div>
     </div>
     <script>
     (function() {
+        var track = document.querySelector('.carousel-track');
         var slides = document.querySelectorAll('.featured-slide');
         if (slides.length <= 1) return;
 
@@ -138,31 +140,8 @@
         var timer;
 
         function goTo(index) {
-            var currentSlide = slides[current];
-            currentSlide.style.transition = 'opacity 0.5s ease';
-            currentSlide.style.opacity = '0';
-
-            var next = (index + slides.length) % slides.length;
-            setTimeout(function() {
-                currentSlide.classList.add('hidden');
-                currentSlide.style.transition = '';
-                currentSlide.style.opacity = '';
-
-                current = next;
-                var nextSlide = slides[current];
-                nextSlide.classList.remove('hidden');
-                nextSlide.style.opacity = '0';
-                nextSlide.style.transition = 'opacity 0.5s ease';
-                requestAnimationFrame(function() {
-                    requestAnimationFrame(function() {
-                        nextSlide.style.opacity = '1';
-                        setTimeout(function() {
-                            nextSlide.style.transition = '';
-                            nextSlide.style.opacity = '';
-                        }, 500);
-                    });
-                });
-            }, 500);
+            current = (index + slides.length) % slides.length;
+            track.style.transform = 'translateX(-' + (current * 100) + '%)';
         }
 
         function advance() { goTo(current + 1); }
