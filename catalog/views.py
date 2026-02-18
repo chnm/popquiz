@@ -543,6 +543,8 @@ class StatsView(TemplateView):
         ))
 
         context['ranked_movies'] = ranked_movies
+        context['all_categories'] = Category.objects.all()
+        context['url_name'] = 'stats'
 
         return context
 
@@ -634,6 +636,8 @@ class DecadeStatsView(TemplateView):
 
         context['decades'] = sorted_decades
         context['no_year'] = no_year
+        context['all_categories'] = Category.objects.all()
+        context['url_name'] = 'decades'
 
         return context
 
@@ -729,6 +733,8 @@ class EclecticView(TemplateView):
 
         context['user_stats'] = user_stats
         context['has_data'] = len(user_stats) > 0
+        context['all_categories'] = Category.objects.all()
+        context['url_name'] = 'eclectic'
 
         return context
 
@@ -802,6 +808,8 @@ class DivisiveView(TemplateView):
 
         context['divisive_movies'] = divisive_movies
         context['has_data'] = len(divisive_movies) > 0
+        context['all_categories'] = Category.objects.all()
+        context['url_name'] = 'divisive'
 
         return context
 

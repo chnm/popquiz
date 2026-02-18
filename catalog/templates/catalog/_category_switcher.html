@@ -1,0 +1,11 @@
+{% if all_categories|length > 1 %}
+<div class="flex flex-wrap gap-2 mb-6">
+    {% for cat in all_categories %}
+    <a href="{% url url_name cat.slug %}"
+       class="px-4 py-2 rounded-lg text-sm font-semibold transition duration-200
+              {% if cat.slug == category.slug %}bg-indigo-600 text-white shadow{% else %}bg-white text-gray-700 hover:bg-indigo-50 shadow-sm{% endif %}">
+        {{ cat.name }}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}

@@ -7,6 +7,8 @@
     <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
 </div>
 
+{% include 'catalog/_category_switcher.html' %}
+
 <div class="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
     <h1 class="text-3xl font-bold mb-2">Most Divisive: {{ category.name }}</h1>
     <p class="text-white/80">{{ category.item_label|capfirst }}s that split the team's opinion - high agreement AND disagreement!</p>

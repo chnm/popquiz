@@ -7,6 +7,8 @@
     <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
 </div>
 
+{% include 'catalog/_category_switcher.html' %}
+
 <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
     <h1 class="text-3xl font-bold mb-2">Rankings by Decade: {{ category.name }}</h1>
     <p class="text-white/80">{{ category.item_label|capfirst }}s grouped and ranked by release decade</p>
