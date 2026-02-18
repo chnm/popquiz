@@ -11,7 +11,7 @@
     <div class="flex justify-between items-start">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">{{ category.name }}</h1>
-            <p class="text-gray-600 mt-1">{{ item_count }} movie{{ item_count|pluralize }}</p>
+            <p class="text-gray-600 mt-1">{{ item_count }} {{ category.item_label }}{{ item_count|pluralize }}</p>
         </div>
         <div class="flex space-x-2">
             {% if user.is_authenticated %}
@@ -19,7 +19,7 @@
                 Start Rating
             </a>
             <a href="{% url 'add_item' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200">
-                Add Movie
+                Add {{ category.item_label|capfirst }}
             </a>
             {% endif %}
         </div>
@@ -30,7 +30,7 @@
     <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100">
         {% for item_data in items_with_ratings %}
             <div class="p-4 flex items-center justify-between">
-                <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="flex items-center space-x-4 hover:opacity-75 transition duration-200">
+                <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="flex items-center space-x-4 hover:opacity-75 transition duration-200">
                     {% if item_data.item.poster_url %}
                         <img src="{{ item_data.item.poster_url }}" alt="{{ item_data.item.title }}" class="w-12 h-16 object-cover rounded shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="w-12 h-16 bg-gray-200 rounded items-center justify-center" style="display: none;">

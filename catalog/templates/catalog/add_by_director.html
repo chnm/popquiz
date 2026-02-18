@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Movies by Director - {{ category.name }} - PopQuiz{% endblock %}
+{% block title %}Add {{ category.item_label|capfirst }}s by Director - {{ category.name }} - PopQuiz{% endblock %}
 
 {% block content %}
 <div class="mb-6">
@@ -8,8 +8,8 @@
 </div>
 
 <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add Movies by Director</h1>
-    <p class="text-gray-600 mb-6">Enter a director's name and all their movies will be automatically added to {{ category.name }}.</p>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add {{ category.item_label|capfirst }}s by Director</h1>
+    <p class="text-gray-600 mb-6">Enter a director's name and all their {{ category.item_label }}s will be automatically added to {{ category.name }}.</p>
 
     {% if not search_results %}
     <!-- Step 1: Enter Director Name -->
@@ -39,9 +39,8 @@
         <ol class="text-sm text-gray-700 space-y-1 list-decimal list-inside">
             <li>Enter the director's name</li>
             <li>If multiple directors match, you'll be able to select the right one</li>
-            <li>All movies directed by this person will be automatically added</li>
-            <li>Movies already in the database will be skipped</li>
-            <li>TV shows, shorts, video games, and documentaries will be excluded</li>
+            <li>All {{ category.item_label }}s directed by this person will be automatically added</li>
+            <li>{{ category.item_label|capfirst }}s already in the database will be skipped</li>
         </ol>
     </div>
 
@@ -49,7 +48,7 @@
     <!-- Step 2: Select from Multiple Directors -->
     <div class="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
         <h2 class="text-lg font-bold text-gray-800 mb-2">Multiple directors found for "{{ director_name }}"</h2>
-        <p class="text-gray-600">Please select the director you want to add movies from:</p>
+        <p class="text-gray-600">Please select the director you want to add {{ category.item_label }}s from:</p>
     </div>
 
     <form method="post" class="space-y-3" id="director-form">
@@ -97,7 +96,7 @@
                 Start Over
             </a>
             <button type="submit" id="submit-btn" class="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200">
-                Add Movies by Selected Director
+                Add {{ category.item_label|capfirst }}s by Selected Director
             </button>
         </div>
     </form>
@@ -129,9 +128,9 @@
                 if (progress < 30) {
                     progressText.textContent = 'Searching IMDB for director filmography...';
                 } else if (progress < 60) {
-                    progressText.textContent = 'Fetching movie details from IMDB...';
+                    progressText.textContent = 'Fetching details from IMDB...';
                 } else {
-                    progressText.textContent = 'Adding movies to your collection...';
+                    progressText.textContent = 'Adding {{ category.item_label }}s to your collection...';
                 }
             }, 500);
         });

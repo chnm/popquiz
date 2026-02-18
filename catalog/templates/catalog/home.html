@@ -19,7 +19,7 @@
         <div class="carousel-track flex" style="transition: transform 0.5s ease;">
         {% for movie in featured_movies %}
         <div class="featured-slide flex-shrink-0 w-full">
-            <a href="{% url 'movie_detail' movie.category.slug movie.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
+            <a href="{% url 'item_detail' movie.category.slug movie.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <!-- Background Poster -->
                 <div class="absolute inset-0">
                     <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover"
@@ -172,7 +172,7 @@
                 </div>
                 <h3 class="font-bold text-gray-800">Team Rankings</h3>
             </div>
-            <p class="text-gray-600 text-sm">See which movies the team loves and hates most</p>
+            <p class="text-gray-600 text-sm">See which {{ category.item_label }}s the team loves and hates most</p>
         </a>
 
         <!-- By Decade -->
@@ -185,7 +185,7 @@
                 </div>
                 <h3 class="font-bold text-gray-800">By Decade</h3>
             </div>
-            <p class="text-gray-600 text-sm">Movies ranked within each decade from the 1920s to today</p>
+            <p class="text-gray-600 text-sm">{{ category.item_label|capfirst }}s ranked within each decade from the 1920s to today</p>
         </a>
 
         <!-- Eclectic Tastes -->
@@ -211,7 +211,7 @@
                 </div>
                 <h3 class="font-bold text-gray-800">Most Divisive</h3>
             </div>
-            <p class="text-gray-600 text-sm">Movies that split the team - loved AND hated!</p>
+            <p class="text-gray-600 text-sm">{{ category.item_label|capfirst }}s that split the team - loved AND hated!</p>
         </a>
         {% endfor %}
     </div>
@@ -249,11 +249,11 @@
                     <h2 class="text-2xl font-bold mb-2">{{ cat_data.category.name }}</h2>
                     {% if cat_data.remaining > 0 %}
                     <p class="text-white/90 text-lg mb-4">
-                        You have <span class="font-bold text-yellow-300">{{ cat_data.remaining }} movie{{ cat_data.remaining|pluralize }}</span> left to rate!
+                        You have <span class="font-bold text-yellow-300">{{ cat_data.remaining }} {{ cat_data.category.item_label }}{{ cat_data.remaining|pluralize }}</span> left to rate!
                     </p>
                     {% else %}
                     <p class="text-white/90 text-lg mb-4">
-                        You've rated all {{ cat_data.total }} movies!
+                        You've rated all {{ cat_data.total }} {{ cat_data.category.item_label }}s!
                     </p>
                     {% endif %}
 
@@ -328,7 +328,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                 <div>
                     <h2 class="text-2xl font-bold mb-2">{{ cat_data.category.name }}</h2>
-                    <p class="text-white/90 text-lg">{{ cat_data.category.item_count }} movie{{ cat_data.category.item_count|pluralize }} to rate</p>
+                    <p class="text-white/90 text-lg">{{ cat_data.category.item_count }} {{ cat_data.category.item_label }}{{ cat_data.category.item_count|pluralize }} to rate</p>
                 </div>
                 <a href="{% url 'login' %}" class="inline-flex items-center justify-center bg-white text-indigo-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-indigo-700 transition duration-200 shadow-lg">
                     Log in to Rate
@@ -344,10 +344,10 @@
 </div>
 {% endif %}
 
-<!-- Add Movies Section (logged in users only) -->
+<!-- Add Items Section (logged in users only) -->
 {% if user.is_authenticated and categories %}
 <div class="mb-8">
-    <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Movies</h2>
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Items</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for category in categories %}
         <a href="{% url 'add_item' category.slug %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-green-500">
@@ -360,7 +360,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800 group-hover:text-green-600 transition duration-200">Add {{ category.name }}</h3>
-                        <p class="text-gray-500 text-sm">Add a new movie via IMDB link</p>
+                        <p class="text-gray-500 text-sm">Add a new {{ category.item_label }} via IMDB link</p>
                     </div>
                 </div>
                 <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,13 +373,15 @@
 </div>
 {% endif %}
 
-<!-- Add Movies by Director Section (logged in users only) -->
+<!-- Add Movies by Director Section (movie categories only) -->
 {% if user.is_authenticated and categories %}
+{% with has_movie_categories=categories|length %}
+{% for category in categories %}{% if category.item_label == 'movie' %}
 <div class="mb-8">
     <h2 class="text-xl font-semibold text-gray-800 mb-4">Add Movies by Director</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for category in categories %}
-        <a href="{% url 'add_by_director' category.slug %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-purple-500">
+        {% for cat in categories %}{% if cat.item_label == 'movie' %}
+        <a href="{% url 'add_by_director' cat.slug %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-purple-500">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition duration-200">
@@ -388,7 +390,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition duration-200">Add {{ category.name }} by Director</h3>
+                        <h3 class="font-bold text-gray-800 group-hover:text-purple-600 transition duration-200">Add {{ cat.name }} by Director</h3>
                         <p class="text-gray-500 text-sm">Bulk add from director's filmography</p>
                     </div>
                 </div>
@@ -397,9 +399,11 @@
                 </svg>
             </div>
         </a>
-        {% endfor %}
+        {% endif %}{% endfor %}
     </div>
 </div>
+{% endif %}{% endfor %}
+{% endwith %}
 {% endif %}
 
 <!-- Two Column Layout for Team Members & Recent Activity (logged in users only) -->
@@ -514,7 +518,7 @@
                             {% else %}
                                 <span class="text-indigo-600 font-semibold">added</span>
                             {% endif %}
-                            <a href="{% url 'movie_detail' activity.item.category.slug activity.item.id %}" class="text-gray-900 font-medium hover:text-indigo-600 transition-colors">
+                            <a href="{% url 'item_detail' activity.item.category.slug activity.item.id %}" class="text-gray-900 font-medium hover:text-indigo-600 transition-colors">
                                 {{ activity.item.title }}
                             </a>
                             {% if activity.item.year %}
@@ -626,7 +630,7 @@
             <h3 class="text-lg font-semibold text-gray-800">Compare Three People</h3>
             <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">3-way Venn</span>
         </div>
-        <p class="text-gray-600 text-sm mb-4">See where three team members overlap in their movie tastes!</p>
+        <p class="text-gray-600 text-sm mb-4">See where three team members overlap in their tastes!</p>
         <form id="compare-three-form" class="space-y-3">
             <div class="grid grid-cols-3 gap-3">
                 <div>

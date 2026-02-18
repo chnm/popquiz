@@ -227,7 +227,7 @@ class AddItemView(LoginRequiredMixin, View):
             # Check if movie already exists
             existing = Item.objects.filter(imdb_id=movie_data['imdb_id']).first()
             if existing:
-                form.add_error('imdb_url', f'This movie already exists: "{existing.title}"')
+                form.add_error('imdb_url', f'This {category.item_label} already exists: "{existing.title}"')
                 return render(request, 'catalog/add_item.html', {
                     'form': form,
                     'category': category,
@@ -322,7 +322,7 @@ class AddByDirectorView(LoginRequiredMixin, View):
         movies = filmography['movies']
 
         if not movies:
-            messages.warning(request, f'No movies found for {director_name}.')
+            messages.warning(request, f'No {category.item_label}s found for {director_name}.')
             return redirect('add_by_director', slug=slug)
 
         # Automatically add all movies that don't already exist
@@ -388,11 +388,14 @@ class AddByDirectorView(LoginRequiredMixin, View):
 
         # Show completion message
         if added_count > 0:
-            messages.success(request, f'Done, I have added {added_count} {director_name} movie{"s" if added_count != 1 else ""} to {category.name}!')
+            label = category.item_label
+            messages.success(request, f'Done, I have added {added_count} {director_name} {label}{"s" if added_count != 1 else ""} to {category.name}!')
         elif skipped_count > 0 and failed_count == 0:
-            messages.info(request, f'All {skipped_count} {director_name} movies are already in your {category.name} collection.')
+            label = category.item_label
+            messages.info(request, f'All {skipped_count} {director_name} {label}s are already in your {category.name} collection.')
         elif failed_count > 0 and added_count == 0:
-            messages.warning(request, f'Could not add {director_name} movies. {failed_count} movie{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
+            label = category.item_label
+            messages.warning(request, f'Could not add {director_name} {label}s. {failed_count} {label}{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
         else:
             message_parts = []
             if added_count > 0:
@@ -803,8 +806,8 @@ class DivisiveView(TemplateView):
         return context
 
 
-class MovieDetailView(TemplateView):
-    """View showing how everyone rated a specific movie."""
+class ItemDetailView(TemplateView):
+    """View showing how everyone rated a specific item."""
     template_name = 'catalog/movie_detail.html'
 
     def get_context_data(self, **kwargs):

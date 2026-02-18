@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, MovieDetailView
+from django.views.generic import RedirectView
+from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
@@ -11,5 +12,6 @@ urlpatterns = [
     path('category/<slug:slug>/decades/', DecadeStatsView.as_view(), name='decades'),
     path('category/<slug:slug>/eclectic/', EclecticView.as_view(), name='eclectic'),
     path('category/<slug:slug>/divisive/', DivisiveView.as_view(), name='divisive'),
-    path('category/<slug:category_slug>/movie/<int:item_id>/', MovieDetailView.as_view(), name='movie_detail'),
+    path('category/<slug:category_slug>/item/<int:item_id>/', ItemDetailView.as_view(), name='item_detail'),
+    path('category/<slug:category_slug>/movie/<int:item_id>/', RedirectView.as_view(pattern_name='item_detail', permanent=True)),
 ]

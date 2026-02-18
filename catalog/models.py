@@ -6,6 +6,11 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
+    item_label = models.CharField(
+        max_length=50,
+        default='movie',
+        help_text='Singular label for items in this category (e.g. "movie", "show")'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -9,7 +9,7 @@
 
 <div class="bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
     <h1 class="text-3xl font-bold mb-2">Most Divisive: {{ category.name }}</h1>
-    <p class="text-white/80">Movies that split the team's opinion - high agreement AND disagreement!</p>
+    <p class="text-white/80">{{ category.item_label|capfirst }}s that split the team's opinion - high agreement AND disagreement!</p>
 </div>
 
 {% if has_data %}
@@ -48,7 +48,7 @@
 
             <!-- Title and Year -->
             <div class="flex-grow min-w-0 mr-4">
-                <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
+                <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
                     <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
                 </a>
                 {% if item_data.item.year %}
@@ -136,9 +136,9 @@
     </p>
     <ul class="text-gray-500 text-sm list-disc list-inside space-y-1">
         <li>Standard deviation shows how much ratings vary from the average</li>
-        <li>Only movies with 5+ ratings are included</li>
-        <li>Movies with a wide spread of ratings (loved AND hated) score higher</li>
-        <li>These are the movies that spark the most debate!</li>
+        <li>Only {{ category.item_label }}s with 5+ ratings are included</li>
+        <li>{{ category.item_label|capfirst }}s with a wide spread of ratings (loved AND hated) score higher</li>
+        <li>These are the {{ category.item_label }}s that spark the most debate!</li>
     </ul>
 </div>
 
@@ -150,8 +150,8 @@
         </svg>
     </div>
     <h2 class="text-2xl font-bold text-gray-800 mb-2">Not Enough Data Yet</h2>
-    <p class="text-gray-600">We need more ratings from the team to identify divisive movies.</p>
-    <p class="text-gray-500 text-sm mt-2">Each movie needs at least 5 ratings to appear on this list.</p>
+    <p class="text-gray-600">We need more ratings from the team to identify divisive {{ category.item_label }}s.</p>
+    <p class="text-gray-500 text-sm mt-2">Each {{ category.item_label }} needs at least 5 ratings to appear on this list.</p>
 </div>
 {% endif %}
 {% endblock %}

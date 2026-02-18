@@ -9,7 +9,7 @@
 
 <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
     <h1 class="text-3xl font-bold mb-2">Team Rankings: {{ category.name }}</h1>
-    <p class="text-white/80">Movies ranked by team preference ({{ team_count }} team members)</p>
+    <p class="text-white/80">{{ category.item_label|capfirst }}s ranked by team preference ({{ team_count }} team members)</p>
 </div>
 
 {% if ranked_movies %}
@@ -50,7 +50,7 @@
 
             <!-- Title and Year -->
             <div class="flex-grow min-w-0 mr-4">
-                <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
+                <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
                     <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
                 </a>
                 {% if item_data.item.year %}
@@ -138,8 +138,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
     </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">No Movies Yet</h2>
-    <p class="text-gray-600">Add some movies to see team rankings!</p>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">No {{ category.item_label|capfirst }}s Yet</h2>
+    <p class="text-gray-600">Add some {{ category.item_label }}s to see team rankings!</p>
 </div>
 {% endif %}
 
@@ -147,7 +147,7 @@
 <div class="bg-white rounded-xl shadow-md p-6 mt-8">
     <h3 class="font-semibold text-gray-700 mb-3">How Scores Work</h3>
     <p class="text-gray-600 text-sm">
-        Movies are ranked using Bayesian averaging. Each rating has a numeric value:
+        {{ category.item_label|capfirst }}s are ranked using Bayesian averaging. Each rating has a numeric value:
         <span class="inline-flex items-center mx-1 px-2 py-0.5 bg-red-100 text-red-700 rounded"><span class="text-lg leading-none">😡</span> Hated = -2</span>
         <span class="inline-flex items-center mx-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded"><span class="text-lg leading-none">😕</span> Disliked = -1</span>
         <span class="inline-flex items-center mx-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded"><span class="text-lg leading-none">😐</span> Okay = 0</span>
@@ -155,7 +155,7 @@
         <span class="inline-flex items-center mx-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded"><span class="text-lg leading-none">🤩</span> Loved = +2</span>
     </p>
     <p class="text-gray-500 text-sm mt-2">
-        Scores use Bayesian averaging to balance movie ratings with overall team averages. Movies with fewer votes are pulled toward the mean, preventing single ratings from dominating the rankings. "Haven't Seen" ratings are not counted.
+        Scores use Bayesian averaging to balance ratings with overall team averages. Items with fewer votes are pulled toward the mean, preventing single ratings from dominating the rankings. "Haven't Seen" ratings are not counted.
     </p>
 </div>
 {% endblock %}

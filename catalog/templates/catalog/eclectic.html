@@ -35,7 +35,7 @@
                             {{ stat.user|display_name:request.user }}
                         </a>
                         <p class="text-gray-500 text-sm">
-                            Disagreed with consensus on {{ stat.disagreements }} of {{ stat.total }} movies
+                            Disagreed with consensus on {{ stat.disagreements }} of {{ stat.total }} {{ category.item_label }}s
                         </p>
                     </div>
                 </div>
@@ -62,8 +62,8 @@
                     {% endwith %}
                 </div>
                 <div class="flex justify-between text-xs text-gray-400 mt-1">
-                    <span>{{ stat.agreements }} movies</span>
-                    <span>{{ stat.disagreements }} movies</span>
+                    <span>{{ stat.agreements }} {{ category.item_label }}s</span>
+                    <span>{{ stat.disagreements }} {{ category.item_label }}s</span>
                 </div>
             </div>
 
@@ -109,10 +109,10 @@
         A higher score means more unique taste!
     </p>
     <ul class="text-gray-500 text-sm list-disc list-inside space-y-1">
-        <li>For each movie, the consensus is the most common rating (loved/liked/okay/disliked/hated)</li>
-        <li>Movies with tied ratings or only one rating are excluded</li>
+        <li>For each {{ category.item_label }}, the consensus is the most common rating (loved/liked/okay/disliked/hated)</li>
+        <li>{{ category.item_label|capfirst }}s with tied ratings or only one rating are excluded</li>
         <li>Users need at least 3 comparable ratings to appear on this list</li>
-        <li>"Contrarian picks" shows movies where this person rated against the majority</li>
+        <li>"Contrarian picks" shows {{ category.item_label }}s where this person rated against the majority</li>
     </ul>
 </div>
 

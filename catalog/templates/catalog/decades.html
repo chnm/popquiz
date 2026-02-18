@@ -9,7 +9,7 @@
 
 <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl shadow-xl p-8 mb-8 text-white">
     <h1 class="text-3xl font-bold mb-2">Rankings by Decade: {{ category.name }}</h1>
-    <p class="text-white/80">Movies grouped and ranked by release decade</p>
+    <p class="text-white/80">{{ category.item_label|capfirst }}s grouped and ranked by release decade</p>
 </div>
 
 {% if decades %}
@@ -17,7 +17,7 @@
 <div class="mb-10">
     <div class="flex items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">{{ decade }}s</h2>
-        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ movies|length }} movie{{ movies|length|pluralize }}</span>
+        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ movies|length }} {{ category.item_label }}{{ movies|length|pluralize }}</span>
     </div>
 
     <div class="space-y-3">
@@ -57,7 +57,7 @@
 
                 <!-- Title and Year -->
                 <div class="flex-grow min-w-0 mr-4">
-                    <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
+                    <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
                         <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
                     </a>
                     <p class="text-gray-500 text-sm">{{ item_data.item.year }}</p>
@@ -136,7 +136,7 @@
 <div class="mb-10">
     <div class="flex items-center mb-4">
         <h2 class="text-2xl font-bold text-gray-800">Unknown Year</h2>
-        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ no_year|length }} movie{{ no_year|length|pluralize }}</span>
+        <span class="ml-3 px-3 py-1 bg-gray-200 text-gray-600 rounded-full text-sm">{{ no_year|length }} {{ category.item_label }}{{ no_year|length|pluralize }}</span>
     </div>
 
     <div class="space-y-3">
@@ -159,7 +159,7 @@
                     {% endif %}
                 </div>
                 <div class="flex-grow min-w-0 mr-4">
-                    <a href="{% url 'movie_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
+                    <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
                         <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
                     </a>
                 </div>
@@ -186,8 +186,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
     </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">No Movies Yet</h2>
-    <p class="text-gray-600">Add some movies to see decade rankings!</p>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">No {{ category.item_label|capfirst }}s Yet</h2>
+    <p class="text-gray-600">Add some {{ category.item_label }}s to see decade rankings!</p>
 </div>
 {% endif %}
 {% endblock %}
