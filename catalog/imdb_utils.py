@@ -2,14 +2,50 @@
 Utility functions for fetching movie data from IMDB.
 """
 import html
+import logging
 import re
+from pathlib import Path
+
 import requests
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 # User-Agent header to avoid being blocked
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept-Language': 'en-US,en;q=0.9',
 }
+
+
+def download_poster(poster_url, imdb_id):
+    """
+    Download a poster image from an external URL and save it locally.
+
+    Returns the local URL (e.g. '/media/posters/tt1234567.jpg') on success,
+    or None if the download fails (caller should fall back to the original URL).
+    """
+    if not poster_url:
+        return None
+
+    try:
+        media_dir = Path(settings.MEDIA_ROOT) / 'posters'
+        media_dir.mkdir(parents=True, exist_ok=True)
+
+        local_path = media_dir / f'{imdb_id}.jpg'
+
+        resp = requests.get(poster_url, headers=HEADERS, timeout=15, stream=True)
+        resp.raise_for_status()
+
+        with open(local_path, 'wb') as f:
+            for chunk in resp.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        return f'{settings.MEDIA_URL}posters/{imdb_id}.jpg'
+
+    except Exception as e:
+        logger.error(f'Failed to download poster for {imdb_id}: {e}')
+        return None
 
 
 def extract_imdb_id(url):

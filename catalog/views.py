@@ -12,7 +12,7 @@ from django.db.models import Count, Q, Case, When, IntegerField, Value
 from accounts.models import User
 from .models import Category, Item
 from .forms import AddItemForm
-from .imdb_utils import fetch_movie_data, search_directors_by_name, fetch_director_filmography
+from .imdb_utils import fetch_movie_data, search_directors_by_name, fetch_director_filmography, download_poster
 from ratings.models import Rating
 
 
@@ -251,6 +251,12 @@ class AddItemView(LoginRequiredMixin, View):
                     'category': category,
                 })
 
+            # Download poster locally so we serve it ourselves
+            imdb_id = movie_data['imdb_id']
+            raw_poster = movie_data.get('poster_url') or ''
+            local_poster = download_poster(raw_poster, imdb_id) if raw_poster and imdb_id else None
+            poster_url = local_poster or raw_poster
+
             # Create the item
             item = Item.objects.create(
                 category=category,
@@ -258,9 +264,9 @@ class AddItemView(LoginRequiredMixin, View):
                 year=movie_data['year'],
                 director=movie_data.get('director') or '',
                 genre=movie_data.get('genre') or '',
-                imdb_id=movie_data['imdb_id'],
+                imdb_id=imdb_id,
                 imdb_url=movie_data['imdb_url'],
-                poster_url=movie_data['poster_url'] or '',
+                poster_url=poster_url,
                 added_by=request.user,
             )
 
@@ -390,6 +396,12 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 skipped_count += 1
                 continue
 
+            # Download poster locally
+            bulk_imdb_id = movie_data['imdb_id']
+            bulk_raw_poster = movie_data.get('poster_url') or ''
+            bulk_local_poster = download_poster(bulk_raw_poster, bulk_imdb_id) if bulk_raw_poster and bulk_imdb_id else None
+            bulk_poster_url = bulk_local_poster or bulk_raw_poster
+
             # Create the item
             Item.objects.create(
                 category=category,
@@ -397,9 +409,9 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 year=movie_data['year'],
                 director=movie_data.get('director') or '',
                 genre=movie_data.get('genre') or '',
-                imdb_id=movie_data['imdb_id'],
+                imdb_id=bulk_imdb_id,
                 imdb_url=movie_data['imdb_url'],
-                poster_url=movie_data['poster_url'] or '',
+                poster_url=bulk_poster_url,
                 added_by=request.user,
             )
             added_count += 1

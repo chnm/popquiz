@@ -143,6 +143,10 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files (downloaded poster images cached from external sources)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # WhiteNoise configuration for serving static files in production
 STORAGES = {
     "default": {
