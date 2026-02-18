@@ -33,10 +33,10 @@
 
 ## Overview
 
-**PopQuiz** is a collaborative movie voting platform for teams to discover and rank their favorite movies together.
+**PopQuiz** is a collaborative voting platform for teams to discover and rank their favorite pop culture items — currently Movies and TV Shows.
 
 **What is it?**
-A web application that transforms movie discussions into an interactive, data-driven experience. Team members rate movies using a Tinder-style swipe interface, and the app aggregates votes to reveal team rankings, identify taste compatibility between members, and surface movies that spark debate.
+A web application that transforms pop culture discussions into an interactive, data-driven experience. Team members rate items using a Tinder-style swipe interface, and the app aggregates votes to reveal team rankings, identify taste compatibility between members, and surface items that spark debate.
 
 **Problem it Solves:**
 - **Decision Paralysis:** Groups struggle to choose movies everyone will enjoy
@@ -48,10 +48,10 @@ A web application that transforms movie discussions into an interactive, data-dr
 Turn subjective movie opinions into objective data that reveals patterns, compatibility, and consensus within your team.
 
 **Target Audience:**
-- Friend groups planning movie nights
+- Friend groups planning movie nights or TV watch parties
 - Work teams building social connections
 - Film clubs discussing cinema
-- Any group of 3-20 people who enjoy movies together
+- Any group of 3-20 people who enjoy pop culture together
 
 **Primary Goals:**
 1. Make rating movies fast and fun (swipe interface)
@@ -163,21 +163,28 @@ Provides preview of the app while protecting team privacy. Encourages registrati
 ### Movie Data Rules
 
 **IMDB Integration:**
-- Movies must have a valid IMDB ID (ttXXXXXXX format)
+- Items must have a valid IMDB ID (ttXXXXXXX format)
 - Each IMDB ID can only be added once (uniqueness enforced)
-- Movie metadata automatically fetched from IMDB:
+- Item metadata automatically fetched from IMDB:
   - Title (English version prioritized)
   - Year of release
   - Director
   - Genres (up to 3, comma-separated)
-  - Poster image URL
+  - Poster image — downloaded and cached locally on the server
   - IMDB URL for reference
 
-**Movie Addition:**
-- Any authenticated user can add movies
+**Poster Image Caching:**
+- Poster images are downloaded from Amazon CDN at item-creation time
+- Stored locally at `/media/posters/<imdb_id>.jpg` and served from the app's own domain
+- Eliminates repeated external CDN requests on every page load
+- If download fails at creation time, external URL is used as fallback
+- Backfill existing items with: `uv run python manage.py download_posters`
+
+**Item Addition:**
+- Any authenticated user can add items
 - Must provide IMDB URL or IMDB ID
-- System tracks who added each movie (`added_by` field)
-- Movies without an `added_by` user shown as "Added by Claude" (programmatic imports)
+- System tracks who added each item (`added_by` field)
+- Items without an `added_by` user shown as "Added by Claude" (programmatic imports)
 - Duplicate IMDB IDs rejected with error message
 
 **Title Cleaning:**
@@ -187,11 +194,11 @@ Provides preview of the app while protecting team privacy. Encourages registrati
   - Years in parentheses (2023) removed
   - HTML entities decoded (&amp; → &)
 
-**Movie Categorization:**
-- Movies belong to categories (e.g., "Movies")
+**Item Categorization:**
+- Items belong to categories (e.g., "Movies", "TV Shows")
 - Categories have slugs for URL routing
-- Movies can only belong to one category
-- Future: Could support multiple categories per movie
+- Items can only belong to one category
+- New categories are created via the Django admin; no user-facing category creation
 
 ### Ranking Algorithm
 
@@ -405,18 +412,18 @@ See your own rating history, track what you've rated, organize by director/genre
 - Stats bar showing rating distribution (visual segments for each rating type)
 - Rating counts: X Loved, X Liked, X Okay, X Disliked, X Hated, X Haven't Seen
 - Total ratings cast
-- Movie grid with poster, title, rating badge
-- Multiple sort options:
-  - **By Category:** Group by movie category (default)
-  - **By Title:** Alphabetical A-Z
+- **Category filter tabs:** When a user has ratings in more than one category, tabs appear (e.g., All | Movies | TV Shows). Selecting a tab scopes the entire page — rating grid, unseen items, and background poster collage — to that category. Tabs are always visible regardless of whether the selected category has rated items.
+- Item grid with poster, title, rating badge
+- Multiple sort options (preserved when switching category tabs):
+  - **By Title:** Alphabetical A-Z (default)
   - **By Year:** Chronological (newest first)
   - **By Director:** Group by director name
-  - **By Genre:** Group by genre (movies can appear multiple times)
+  - **By Genre:** Group by genre (items can appear multiple times)
   - **By Rating:** Group by user's rating (Loved/Liked/etc.)
   - **By Popularity:** Sort by total team ratings count
 - Badge on each poster shows user's rating (emoji)
-- Clickable movies → movie detail page
-- "Recommended for You" section: Top 20 unrated movies ranked by team
+- Clickable items → item detail page
+- "Recommended for You" section: Top 20 unrated items ranked by team (filtered to selected category)
 
 **User Interactions:**
 - Click sort button to change view
@@ -426,9 +433,10 @@ See your own rating history, track what you've rated, organize by director/genre
 
 **Edge Cases:**
 - User with no ratings: Show message "No ratings yet" + link to start rating
-- Movies without director: Appear in "Unknown Director" group
-- Movies without genre: Appear in "Unknown Genre" group
+- Items without director: Appear in "Unknown Director" group
+- Items without genre: Appear in "Unknown Genre" group
 - User viewing others' profiles: Same layout, but shows "Their" instead of "Your"
+- Switching to a category with no rated items: Category tabs remain visible so user can switch back; ratings grid shows empty state
 
 **Success Criteria:**
 - Profile loads in <2 seconds with 100+ ratings
@@ -492,10 +500,10 @@ Identify shared favorites, discover differences, spark conversations, find movie
 
 ---
 
-### Feature: Movie Addition via IMDB
+### Feature: Item Addition via IMDB
 
 **Description:**
-Add new movies to the database by providing IMDB URL or ID, with automatic metadata fetching.
+Add new items (movies, TV shows, etc.) to the database by providing an IMDB URL or ID, with automatic metadata fetching and poster caching.
 
 **User Value:**
 Expand movie library without manual data entry, ensure accurate information from trusted source, maintain consistent quality.
@@ -511,14 +519,14 @@ Expand movie library without manual data entry, ensure accurate information from
   - Year
   - Director (first listed if multiple)
   - Genres (up to 3)
-  - Poster image URL
+  - Poster image — downloaded immediately to `/media/posters/<imdb_id>.jpg`
 - Validation:
   - IMDB ID must be valid format
-  - Movie cannot already exist (duplicate check)
+  - Item cannot already exist (duplicate check)
   - IMDB page must load successfully
 - Success: Redirect to category page with confirmation message
 - Failure: Show error message inline, keep form populated
-- Tracks who added the movie (`added_by` field)
+- Tracks who added the item (`added_by` field)
 
 **User Interactions:**
 - Click "Add Movie" button on category page
@@ -730,9 +738,9 @@ User rates 20+ movies in 10-15 minutes, feels accomplished, progress is saved, c
 
 ---
 
-### Flow 3: Adding a New Movie
+### Flow 3: Adding a New Item
 
-**Goal:** Add a movie that's not in the database so the team can rate it.
+**Goal:** Add a movie or TV show that's not in the database so the team can rate it.
 
 **Starting Point:** User browsing category page, doesn't see a movie they want
 
@@ -766,22 +774,23 @@ User rates 20+ movies in 10-15 minutes, feels accomplished, progress is saved, c
    - Loading indicator appears ("Fetching movie data...")
    - Submit button disabled to prevent duplicate clicks
    - Server extracts IMDB ID: tt0111161
-   - Server checks if movie already exists (duplicate check)
+   - Server checks if item already exists (duplicate check)
    - If new: Server fetches IMDB page HTML
    - Parser extracts: title, year, director, genre, poster URL
-   - Server creates movie record in database
-   - Takes 1-3 seconds typically
+   - Poster image immediately downloaded and cached at `/media/posters/<imdb_id>.jpg`
+   - Server creates item record in database with local poster URL
+   - Takes 1-5 seconds typically (includes poster download)
 
 6. **Success & Redirect**
-   - Success message: "Movie added successfully!"
+   - Success message: "Item added successfully!"
    - Redirected to category page
-   - New movie appears in grid (at end or based on sort)
-   - Movie has no ratings yet (all users see it as unrated)
-   - User who added sees "Added by You" attribution
+   - New item appears in grid (at end or based on sort)
+   - Item has no ratings yet (all users see it as unrated)
+   - Poster loads from local server, not external CDN
 
-7. **Rate the New Movie (Optional)**
-   - User can immediately rate the movie via inline buttons
-   - Movie now part of team's collection
+7. **Rate the New Item (Optional)**
+   - User can immediately rate the item via inline buttons
+   - Item now part of team's collection
    - Other users will see it when rating
 
 **Success Outcome:**
@@ -886,7 +895,6 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 ### Not in Current Version
 
 **Advanced Features (Future Enhancements):**
-- **TV Shows:** Currently movies only, TV would require episode tracking
 - **Books/Music:** Different metadata structure, out of scope
 - **Custom Categories:** Users can't create own categories, admin-only
 - **Private Ratings:** All ratings are public within team, no privacy controls
@@ -1017,5 +1025,5 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 
 ---
 
-*Last Updated: 2026-02-17*
+*Last Updated: 2026-02-18*
 *This specification is maintained for product planning and feature development.*
