@@ -242,25 +242,26 @@
 </div>
 {% endif %}
 
-{% if ratings_by_category %}
-    <!-- Category Tabs -->
-    {% if user_categories|length > 1 %}
-    <div class="bg-white rounded-xl shadow-md p-4 mb-4">
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="text-gray-600 font-medium mr-2">Category:</span>
-            <a href="?category=all&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
-                {% if current_category_slug == 'all' %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-                All
-            </a>
-            {% for cat in user_categories %}
-            <a href="?category={{ cat.slug }}&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
-                {% if current_category_slug == cat.slug %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-                {{ cat.name }}
-            </a>
-            {% endfor %}
-        </div>
+<!-- Category Tabs (always visible when user has multiple categories) -->
+{% if user_categories|length > 1 %}
+<div class="bg-white rounded-xl shadow-md p-4 mb-4">
+    <div class="flex flex-wrap items-center gap-2">
+        <span class="text-gray-600 font-medium mr-2">Category:</span>
+        <a href="?category=all&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
+            {% if current_category_slug == 'all' %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            All
+        </a>
+        {% for cat in user_categories %}
+        <a href="?category={{ cat.slug }}&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
+            {% if current_category_slug == cat.slug %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            {{ cat.name }}
+        </a>
+        {% endfor %}
     </div>
-    {% endif %}
+</div>
+{% endif %}
+
+{% if ratings_by_category %}
 
     <!-- Sort Buttons -->
     <div class="bg-white rounded-xl shadow-md p-4 mb-8">
