@@ -10,7 +10,7 @@ from django.db.models import Count, Q
 from .forms import RegistrationForm, LoginForm
 from .models import User
 from ratings.models import Rating
-from catalog.models import Item
+from catalog.models import Item, Category
 
 
 def calculate_compatibility(user1, user2):
@@ -130,10 +130,27 @@ class ProfileView(DetailView):
         context = super().get_context_data(**kwargs)
         profile_user = self.object
         sort_by = self.request.GET.get('sort', 'title')
+        category_slug = self.request.GET.get('category', 'all')
         context['current_sort'] = sort_by
+        context['current_category_slug'] = category_slug
 
-        # For director and genre views, include NO_RATING to show movies not yet rated
-        # For other views, exclude NO_RATING to only show rated movies
+        # Get all categories this user has ratings in
+        user_categories = Category.objects.filter(
+            items__ratings__user=profile_user
+        ).distinct().order_by('name')
+        context['user_categories'] = user_categories
+
+        # Resolve selected category object
+        current_category = None
+        if category_slug != 'all':
+            current_category = user_categories.filter(slug=category_slug).first()
+            if not current_category:
+                category_slug = 'all'
+                context['current_category_slug'] = 'all'
+        context['current_category'] = current_category
+
+        # For director and genre views, include NO_RATING to show items not yet rated
+        # For other views, exclude NO_RATING to only show rated items
         if sort_by in ['director', 'genre']:
             ratings = Rating.objects.filter(user=profile_user).select_related(
                 'item__category', 'item'
@@ -146,6 +163,10 @@ class ProfileView(DetailView):
             ).select_related('item__category', 'item').annotate(
                 item_rating_count=Count('item__ratings')
             )
+
+        # Filter by selected category
+        if current_category:
+            ratings = ratings.filter(item__category=current_category)
 
         # Group ratings by director, genre, or category depending on sort
         if sort_by == 'director':
@@ -320,12 +341,15 @@ class ProfileView(DetailView):
             context['least_compatible'] = compatibilities[-1]
             context['all_compatibilities'] = compatibilities
 
-        # Get unseen movies ranked by team ratings (using simple average)
-        # Get all movies the user has rated (including NO_RATING)
+        # Get unseen items ranked by team ratings (using simple average)
+        # Get all items the user has rated (including NO_RATING)
         rated_item_ids = Rating.objects.filter(user=profile_user).values_list('item_id', flat=True)
 
-        # Get all items the user hasn't rated
-        unseen_items = Item.objects.exclude(id__in=rated_item_ids).annotate(
+        # Get all items the user hasn't rated, filtered by selected category
+        unseen_qs = Item.objects.exclude(id__in=rated_item_ids)
+        if current_category:
+            unseen_qs = unseen_qs.filter(category=current_category)
+        unseen_items = unseen_qs.annotate(
             loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
             liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
             okay_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.OKAY)),
@@ -365,16 +389,16 @@ class ProfileView(DetailView):
             x['item'].title.lower()
         ))
 
-        context['unseen_movies'] = unseen_ranked[:20]  # Limit to top 20
+        context['unseen_items'] = unseen_ranked[:20]  # Limit to top 20
 
-        # Get random movie posters from movies the user loved for header background
-        loved_items_with_posters = Item.objects.filter(
+        # Get random posters from items the user loved for header background
+        loved_items_qs = Item.objects.filter(
             ratings__user=profile_user,
             ratings__rating=Rating.Level.LOVED
-        ).exclude(
-            poster_url=''
-        ).distinct().order_by('?')[:5]
-        context['random_posters'] = loved_items_with_posters
+        ).exclude(poster_url='').distinct()
+        if current_category:
+            loved_items_qs = loved_items_qs.filter(category=current_category)
+        context['random_posters'] = loved_items_qs.order_by('?')[:5]
 
         return context
 
