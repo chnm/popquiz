@@ -79,8 +79,8 @@ class HomeView(ListView):
                 })
             context['categories_with_posters'] = categories_with_posters
 
-        # Get a random featured movie with rating statistics
-        featured_movie = Item.objects.exclude(
+        # Get random featured movies with rating statistics for carousel
+        featured_movies_qs = Item.objects.exclude(
             poster_url=''
         ).annotate(
             loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
@@ -91,25 +91,26 @@ class HomeView(ListView):
             total_ratings=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING))
         ).filter(
             total_ratings__gt=0  # Only show movies with at least one rating
-        ).order_by('?').first()
+        ).order_by('?')[:5]
 
-        if featured_movie:
-            # Calculate percentages
-            total = featured_movie.total_ratings
+        featured_movies = []
+        for movie in featured_movies_qs:
+            total = movie.total_ratings
             if total > 0:
-                featured_movie.loved_percent = round((featured_movie.loved_count / total) * 100)
-                featured_movie.liked_percent = round((featured_movie.liked_count / total) * 100)
-                featured_movie.okay_percent = round((featured_movie.okay_count / total) * 100)
-                featured_movie.disliked_percent = round((featured_movie.disliked_count / total) * 100)
-                featured_movie.hated_percent = round((featured_movie.hated_count / total) * 100)
+                movie.loved_percent = round((movie.loved_count / total) * 100)
+                movie.liked_percent = round((movie.liked_count / total) * 100)
+                movie.okay_percent = round((movie.okay_count / total) * 100)
+                movie.disliked_percent = round((movie.disliked_count / total) * 100)
+                movie.hated_percent = round((movie.hated_count / total) * 100)
             else:
-                featured_movie.loved_percent = 0
-                featured_movie.liked_percent = 0
-                featured_movie.okay_percent = 0
-                featured_movie.disliked_percent = 0
-                featured_movie.hated_percent = 0
+                movie.loved_percent = 0
+                movie.liked_percent = 0
+                movie.okay_percent = 0
+                movie.disliked_percent = 0
+                movie.hated_percent = 0
+            featured_movies.append(movie)
 
-        context['featured_movie'] = featured_movie
+        context['featured_movies'] = featured_movies
 
         # Get recent activity (ratings and movie additions) for logged-in users
         if self.request.user.is_authenticated:
