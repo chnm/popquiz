@@ -163,6 +163,25 @@
 </div>
 {% endif %}
 
+<!-- Category Tabs (always visible when user has multiple categories) -->
+{% if user_categories|length > 1 %}
+<div class="bg-white rounded-xl shadow-md p-4 mb-4">
+    <div class="flex flex-wrap items-center gap-2">
+        <span class="text-gray-600 font-medium mr-2">Category:</span>
+        <a href="?category=all&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
+            {% if current_category_slug == 'all' %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            All
+        </a>
+        {% for cat in user_categories %}
+        <a href="?category={{ cat.slug }}&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
+            {% if current_category_slug == cat.slug %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Unseen Items Section -->
 {% if unseen_items %}
 <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
@@ -236,25 +255,6 @@
                     <span class="bg-purple-500/80 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">{{ movie.loved_count }} <span class="text-sm leading-none">🤩</span></span>
                 </div>
             </div>
-        </a>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-<!-- Category Tabs (always visible when user has multiple categories) -->
-{% if user_categories|length > 1 %}
-<div class="bg-white rounded-xl shadow-md p-4 mb-4">
-    <div class="flex flex-wrap items-center gap-2">
-        <span class="text-gray-600 font-medium mr-2">Category:</span>
-        <a href="?category=all&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
-            {% if current_category_slug == 'all' %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-            All
-        </a>
-        {% for cat in user_categories %}
-        <a href="?category={{ cat.slug }}&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
-            {% if current_category_slug == cat.slug %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-            {{ cat.name }}
         </a>
         {% endfor %}
     </div>
