@@ -1,4 +1,5 @@
 import json
+import random
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, TemplateView
@@ -79,8 +80,8 @@ class HomeView(ListView):
                 })
             context['categories_with_posters'] = categories_with_posters
 
-        # Get random featured movies with rating statistics for carousel
-        featured_movies_qs = Item.objects.exclude(
+        # Get featured items for carousel - guarantee at least one per category
+        base_featured_qs = Item.objects.exclude(
             poster_url=''
         ).annotate(
             loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
@@ -90,27 +91,44 @@ class HomeView(ListView):
             hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
             total_ratings=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING))
         ).filter(
-            total_ratings__gt=0  # Only show movies with at least one rating
-        ).order_by('?')[:10]
+            total_ratings__gt=0
+        )
 
-        featured_movies = []
-        for movie in featured_movies_qs:
-            total = movie.total_ratings
+        # Pick one random item per category first
+        seen_ids = set()
+        guaranteed = []
+        for cat in Category.objects.all():
+            cat_item = base_featured_qs.filter(category=cat).order_by('?').first()
+            if cat_item and cat_item.id not in seen_ids:
+                guaranteed.append(cat_item)
+                seen_ids.add(cat_item.id)
+
+        # Fill remaining slots up to 10 with random items from any category
+        remaining = max(0, 10 - len(guaranteed))
+        if remaining > 0:
+            extra = list(base_featured_qs.exclude(id__in=seen_ids).order_by('?')[:remaining])
+            guaranteed.extend(extra)
+
+        random.shuffle(guaranteed)
+
+        featured_items = []
+        for item in guaranteed:
+            total = item.total_ratings
             if total > 0:
-                movie.loved_percent = round((movie.loved_count / total) * 100)
-                movie.liked_percent = round((movie.liked_count / total) * 100)
-                movie.okay_percent = round((movie.okay_count / total) * 100)
-                movie.disliked_percent = round((movie.disliked_count / total) * 100)
-                movie.hated_percent = round((movie.hated_count / total) * 100)
+                item.loved_percent = round((item.loved_count / total) * 100)
+                item.liked_percent = round((item.liked_count / total) * 100)
+                item.okay_percent = round((item.okay_count / total) * 100)
+                item.disliked_percent = round((item.disliked_count / total) * 100)
+                item.hated_percent = round((item.hated_count / total) * 100)
             else:
-                movie.loved_percent = 0
-                movie.liked_percent = 0
-                movie.okay_percent = 0
-                movie.disliked_percent = 0
-                movie.hated_percent = 0
-            featured_movies.append(movie)
+                item.loved_percent = 0
+                item.liked_percent = 0
+                item.okay_percent = 0
+                item.disliked_percent = 0
+                item.hated_percent = 0
+            featured_items.append(item)
 
-        context['featured_movies'] = featured_movies
+        context['featured_items'] = featured_items
 
         # Get recent activity (ratings and movie additions) for logged-in users
         if self.request.user.is_authenticated:

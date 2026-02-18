@@ -5,7 +5,7 @@
 {% block content %}
 {% load static %}
 {% load custom_filters %}
-<!-- Welcome Header and Featured Movie - Side by Side on Desktop -->
+<!-- Welcome Header and Featured Item Carousel - Side by Side on Desktop -->
 <div class="mb-8 flex flex-col lg:flex-row gap-8">
     <!-- Welcome Header -->
     <div class="flex-shrink-0 lg:w-80 flex flex-col justify-start">
@@ -13,16 +13,16 @@
         <p class="text-gray-600">Rate your favorite pop culture and see how your tastes compare with your team!</p>
     </div>
 
-    <!-- Featured Movie Carousel -->
-    {% if featured_movies %}
+    <!-- Featured Item Carousel -->
+    {% if featured_items %}
     <div class="flex-grow lg:max-w-3xl overflow-hidden" id="featured-carousel">
         <div class="carousel-track flex" style="transition: transform 0.5s ease;">
-        {% for movie in featured_movies %}
+        {% for item in featured_items %}
         <div class="featured-slide flex-shrink-0 w-full">
-            <a href="{% url 'item_detail' movie.category.slug movie.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
+            <a href="{% url 'item_detail' item.category.slug item.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <!-- Background Poster -->
                 <div class="absolute inset-0">
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover"
+                    <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                          onerror="this.style.display='none';">
                 </div>
                 <!-- Gradient Overlay -->
@@ -30,27 +30,27 @@
 
                 <!-- Content Layer -->
                 <div class="relative z-10 p-8 flex flex-col md:flex-row md:items-center gap-6">
-                    <!-- Movie Poster (Small) -->
+                    <!-- Item Poster (Small) -->
                     <div class="flex-shrink-0 w-32 md:w-40 aspect-[2/3] rounded-lg overflow-hidden shadow-2xl ring-4 ring-white/20">
-                        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="w-full h-full object-cover"
+                        <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                              onerror="this.style.display='none';">
                     </div>
 
-                    <!-- Movie Info & Stats -->
+                    <!-- Item Info & Stats -->
                     <div class="flex-grow text-white">
                         <div class="mb-4">
-                            <h2 class="text-3xl font-bold mb-2">{{ movie.title }}</h2>
+                            <h2 class="text-3xl font-bold mb-2">{{ item.title }}</h2>
                             <div class="flex flex-wrap gap-2 text-sm text-white/80">
-                                {% if movie.year %}
-                                <span>{{ movie.year }}</span>
+                                {% if item.year %}
+                                <span>{{ item.year }}</span>
                                 {% endif %}
-                                {% if movie.director %}
+                                {% if item.director %}
                                 <span>•</span>
-                                <span>{{ movie.director }}</span>
+                                <span>{{ item.director }}</span>
                                 {% endif %}
-                                {% if movie.genre %}
+                                {% if item.genre %}
                                 <span>•</span>
-                                <span>{{ movie.genre }}</span>
+                                <span>{{ item.genre }}</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -59,34 +59,34 @@
                         <div class="space-y-3">
                             <div class="flex items-center justify-between text-sm mb-1">
                                 <span class="font-semibold">Team Ratings</span>
-                                <span class="text-white/80">{{ movie.total_ratings }} rating{{ movie.total_ratings|pluralize }}</span>
+                                <span class="text-white/80">{{ item.total_ratings }} rating{{ item.total_ratings|pluralize }}</span>
                             </div>
 
                             <!-- Rating Bars -->
                             <div class="flex h-8 rounded-lg overflow-hidden bg-white/20">
-                                {% if movie.hated_percent > 0 %}
-                                <div class="bg-red-500 flex items-center justify-center" style="width: {{ movie.hated_percent }}%">
-                                    <span class="text-xs font-bold text-white">{{ movie.hated_count }}</span>
+                                {% if item.hated_percent > 0 %}
+                                <div class="bg-red-500 flex items-center justify-center" style="width: {{ item.hated_percent }}%">
+                                    <span class="text-xs font-bold text-white">{{ item.hated_count }}</span>
                                 </div>
                                 {% endif %}
-                                {% if movie.disliked_percent > 0 %}
-                                <div class="bg-orange-500 flex items-center justify-center" style="width: {{ movie.disliked_percent }}%">
-                                    <span class="text-xs font-bold text-white">{{ movie.disliked_count }}</span>
+                                {% if item.disliked_percent > 0 %}
+                                <div class="bg-orange-500 flex items-center justify-center" style="width: {{ item.disliked_percent }}%">
+                                    <span class="text-xs font-bold text-white">{{ item.disliked_count }}</span>
                                 </div>
                                 {% endif %}
-                                {% if movie.okay_percent > 0 %}
-                                <div class="bg-yellow-500 flex items-center justify-center" style="width: {{ movie.okay_percent }}%">
-                                    <span class="text-xs font-bold text-white">{{ movie.okay_count }}</span>
+                                {% if item.okay_percent > 0 %}
+                                <div class="bg-yellow-500 flex items-center justify-center" style="width: {{ item.okay_percent }}%">
+                                    <span class="text-xs font-bold text-white">{{ item.okay_count }}</span>
                                 </div>
                                 {% endif %}
-                                {% if movie.liked_percent > 0 %}
-                                <div class="bg-green-500 flex items-center justify-center" style="width: {{ movie.liked_percent }}%">
-                                    <span class="text-xs font-bold text-white">{{ movie.liked_count }}</span>
+                                {% if item.liked_percent > 0 %}
+                                <div class="bg-green-500 flex items-center justify-center" style="width: {{ item.liked_percent }}%">
+                                    <span class="text-xs font-bold text-white">{{ item.liked_count }}</span>
                                 </div>
                                 {% endif %}
-                                {% if movie.loved_percent > 0 %}
-                                <div class="bg-purple-500 flex items-center justify-center" style="width: {{ movie.loved_percent }}%">
-                                    <span class="text-xs font-bold text-white">{{ movie.loved_count }}</span>
+                                {% if item.loved_percent > 0 %}
+                                <div class="bg-purple-500 flex items-center justify-center" style="width: {{ item.loved_percent }}%">
+                                    <span class="text-xs font-bold text-white">{{ item.loved_count }}</span>
                                 </div>
                                 {% endif %}
                             </div>
@@ -95,23 +95,23 @@
                             <div class="flex flex-wrap gap-3 text-xs">
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-3 h-3 bg-red-500 rounded-full"></span>
-                                    <span class="inline-flex items-center gap-1">{{ movie.hated_count }} <span class="text-lg leading-none">😡</span> ({{ movie.hated_percent }}%)</span>
+                                    <span class="inline-flex items-center gap-1">{{ item.hated_count }} <span class="text-lg leading-none">😡</span> ({{ item.hated_percent }}%)</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-3 h-3 bg-orange-500 rounded-full"></span>
-                                    <span class="inline-flex items-center gap-1">{{ movie.disliked_count }} <span class="text-lg leading-none">😕</span> ({{ movie.disliked_percent }}%)</span>
+                                    <span class="inline-flex items-center gap-1">{{ item.disliked_count }} <span class="text-lg leading-none">😕</span> ({{ item.disliked_percent }}%)</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                                    <span class="inline-flex items-center gap-1">{{ movie.okay_count }} <span class="text-lg leading-none">😐</span> ({{ movie.okay_percent }}%)</span>
+                                    <span class="inline-flex items-center gap-1">{{ item.okay_count }} <span class="text-lg leading-none">😐</span> ({{ item.okay_percent }}%)</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                                    <span class="inline-flex items-center gap-1">{{ movie.liked_count }} <span class="text-lg leading-none">🙂</span> ({{ movie.liked_percent }}%)</span>
+                                    <span class="inline-flex items-center gap-1">{{ item.liked_count }} <span class="text-lg leading-none">🙂</span> ({{ item.liked_percent }}%)</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-3 h-3 bg-purple-500 rounded-full"></span>
-                                    <span class="inline-flex items-center gap-1">{{ movie.loved_count }} <span class="text-lg leading-none">🤩</span> ({{ movie.loved_percent }}%)</span>
+                                    <span class="inline-flex items-center gap-1">{{ item.loved_count }} <span class="text-lg leading-none">🤩</span> ({{ item.loved_percent }}%)</span>
                                 </div>
                             </div>
                         </div>
