@@ -332,7 +332,7 @@
         <!-- Poster Grid -->
         <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
             {% for rating in category_data.ratings %}
-            <a href="{% url 'item_detail'rating.item.category.slug rating.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer
+            <a href="{% url 'item_detail' rating.item.category.slug rating.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer
                 {% if rating.rating == 'loved' %}ring-4 ring-purple-500
                 {% elif rating.rating == 'liked' %}ring-4 ring-green-500
                 {% elif rating.rating == 'okay' %}ring-4 ring-yellow-500
