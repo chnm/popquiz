@@ -111,8 +111,8 @@ def fetch_movie_data(imdb_url):
             title = og_title.group(1)
             title = re.sub(r'\s*\|.*$', '', title)  # Remove pipe separator and everything after (genres, etc.)
             title = re.sub(r'\s*⭐\s*[\d.]+', '', title)  # Remove star emoji and rating
-            title = re.sub(r'\s*\(TV Series[^)]*\)', '', title)  # Remove e.g. "(TV Series 2008–2013)"
-            title = re.sub(r'\s*\(TV Mini[- ]Series[^)]*\)', '', title)  # Remove e.g. "(TV Mini-Series 2020)"
+            title = re.sub(r'\(TV (?:Mini )?Series\s+', '(', title)  # "(TV Series 2006–2013)" -> "(2006–2013)"
+            title = re.sub(r'\s*\(TV (?:Mini )?Series\)', '', title)    # "(TV Series)" -> "" (no years)
             title = re.sub(r'\s*\(\d{4}\)', '', title)  # Remove standalone year in parentheses
             title = re.sub(r'\s*-\s*IMDb\s*$', '', title)  # Remove - IMDb suffix
             title = html.unescape(title)  # Decode HTML entities like &amp;
