@@ -113,11 +113,16 @@ def fetch_movie_data(imdb_url):
             title = re.sub(r'\s*⭐\s*[\d.]+', '', title)  # Remove star emoji and rating
             title = re.sub(r'\(TV (?:Mini )?Series\s+', '(', title)  # "(TV Series 2006–2013)" -> "(2006–2013)"
             title = re.sub(r'\s*\(TV (?:Mini )?Series\)', '', title)    # "(TV Series)" -> "" (no years)
+            # Extract year from og:title before stripping it — og:title reliably shows
+            # the original release year (e.g. "Ip Man (2008)"), whereas datePublished
+            # can reflect re-releases or streaming availability dates.
+            year_from_og = re.search(r'\((\d{4})\)\s*(?:-\s*IMDb\s*)?$', title)
             title = re.sub(r'\s*\(\d{4}\)', '', title)  # Remove standalone year in parentheses
             title = re.sub(r'\s*-\s*IMDb\s*$', '', title)  # Remove - IMDb suffix
             title = html.unescape(title)  # Decode HTML entities like &amp;
             title = title.strip()
         else:
+            year_from_og = None
             # Fallback to JSON-LD if og:title not available
             json_title = re.search(r'"name":\s*"([^"]+)"', page_html)
             if json_title:
@@ -126,16 +131,19 @@ def fetch_movie_data(imdb_url):
         if not title:
             return None
 
-        # Extract year
+        # Extract year — prefer og:title year (original release) over datePublished
+        # (which can reflect re-releases, streaming dates, or regional releases).
         year = None
-        year_match = re.search(r'"datePublished":\s*"(\d{4})', page_html)
-        if year_match:
-            year = int(year_match.group(1))
+        if year_from_og:
+            year = int(year_from_og.group(1))
         else:
-            # Try release year from title or other sources
-            year_alt = re.search(r'<title>[^<]+\((\d{4})\)', page_html)
-            if year_alt:
-                year = int(year_alt.group(1))
+            year_match = re.search(r'"datePublished":\s*"(\d{4})', page_html)
+            if year_match:
+                year = int(year_match.group(1))
+            else:
+                year_alt = re.search(r'<title>[^<]+\((\d{4})\)', page_html)
+                if year_alt:
+                    year = int(year_alt.group(1))
 
         # Extract poster URL
         poster_url = None
