@@ -4,6 +4,14 @@ register = template.Library()
 
 
 @register.filter
+def split_commas(value):
+    """Split a comma-separated string into a list of stripped strings."""
+    if not value:
+        return []
+    return [g.strip() for g in value.split(',') if g.strip()]
+
+
+@register.filter
 def display_name(user, viewer):
     """
     Display user name based on viewer's authentication status.
