@@ -379,7 +379,7 @@
                 </svg>
             </div>
         </a>
-        {% endwith %}{% elif category.item_label == 'show' %}{% with emoji="📺" %}
+        {% endwith %}{% elif category.item_label == 'series' %}{% with emoji="📺" %}
         <a href="{% url 'add_item' category.slug %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-green-500">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
