@@ -180,11 +180,12 @@ Provides preview of the app while protecting team privacy. Encourages registrati
 - TV Series category only accepts: `TVSeries`, `TVMiniSeries`
 - If the IMDB link points to the wrong type, a clear error message is shown (e.g. "That IMDB link is for a TV series, not a movie")
 
-**Poster Image Caching:**
-- Poster images are downloaded from Amazon CDN at item-creation time
+**Image Caching:**
+- Poster/cover images are downloaded from Amazon CDN at item-creation time
+- Two fields track image state: `image_source_url` (original external URL) and `image_local_url` (local path once downloaded)
 - Stored locally at `/media/posters/<imdb_id>.jpg` and served from the app's own domain
 - Eliminates repeated external CDN requests on every page load
-- If download fails at creation time, external URL is used as fallback
+- If download fails at creation time, the external source URL is used as fallback automatically
 - Backfill existing items with: `uv run python manage.py download_posters`
 
 **Item Addition:**

@@ -284,13 +284,17 @@ slug = SlugField(unique=True)
 category = ForeignKey(Category)
 title = CharField(max_length=255)
 year = PositiveIntegerField(null=True, blank=True)
+years_running = CharField(max_length=20, blank=True)  # TV series only, e.g. "2008–2013"
 director = CharField(max_length=255, blank=True)
 genre = CharField(max_length=255, blank=True)  # Comma-separated
-imdb_id = CharField(max_length=20, unique=True)
+imdb_id = CharField(max_length=20, unique=True, null=True, blank=True)
 imdb_url = URLField(blank=True)
-poster_url = URLField(blank=True)
+image_source_url = URLField(blank=True)  # Original external URL (IMDB/Amazon CDN)
+image_local_url = URLField(blank=True)   # Local path once downloaded, e.g. /media/posters/<id>.jpg
 added_by = ForeignKey(User, null=True)
 created_at = DateTimeField(auto_now_add=True)
+
+# Property: image_url — returns image_local_url if set, otherwise image_source_url
 ```
 
 **ratings.Rating**
@@ -418,7 +422,8 @@ ALLAUTH_SLACK_CLIENT_SECRET=<slack-client-secret>
 
 **Permission Patterns:**
 - Most views require authentication (team-based app)
-- No role-based permissions (all authenticated users have equal access)
+- No role-based permissions for end users (all authenticated users have equal access)
+- **Catalog Managers** — Django admin group created via data migration; members can manage catalog items without full superuser access
 - User can only rate once per item (enforced by database constraint)
 - Privacy protection: Full names shown to logged-in users, abbreviated to logged-out users
 
@@ -711,9 +716,9 @@ make logs
 - Handles HTML entity decoding (e.g., &amp; → &)
 - 0.5s delay between requests to avoid rate limiting
 - May break if IMDB changes HTML structure
-- After fetching metadata, `download_poster()` is called to cache the poster locally
-- Poster saved to `media/posters/<imdb_id>.jpg`; falls back to external URL on failure
-- `fetch_movie_data()` returns `title_type` from JSON-LD `@type` (e.g. `Movie`, `TVSeries`, `TVMiniSeries`, `TVMovie`, `TVEpisode`)
+- After fetching metadata, `download_poster()` is called to cache the image locally
+- Image saved to `media/posters/<imdb_id>.jpg`; item's `image_local_url` set on success, `image_source_url` always set to the external URL regardless
+- `fetch_movie_data()` returns `image_source_url` (renamed from `poster_url`) and `title_type` from JSON-LD `@type` (e.g. `Movie`, `TVSeries`, `TVMiniSeries`, `TVMovie`, `TVEpisode`)
 - TV series label stripped from titles but year range preserved: `"Breaking Bad (TV Series 2008–2013)"` → `"Breaking Bad (2008–2013)"`
 - Year extracted from og:title (original release year) rather than `datePublished`, which can reflect re-releases or streaming availability
 
@@ -798,6 +803,7 @@ make logs
 - Variable name conflict: use `page_html` not `html` (avoids module conflict)
 - Title metadata: strip ratings (⭐), genres (|), years in parens
 - TV series label: strip "TV Series"/"TV Mini Series" from title but **keep the year range** — regex `r'\(TV (?:Mini )?Series\s+'` → `'('`; then separate pass removes bare `(TV Series)` with no years
+- TV series year range also stored in `years_running` field (e.g. `"2008–2013"`); `Item.display_year` returns this for TV series, plain `year` for everything else
 - Year: extract from og:title **before** stripping the year parens — og:title reliably shows original release year; `datePublished` can be a re-release/streaming date
 - Use `html.unescape()` for HTML entities
 - Prioritize `og:title` for English titles
@@ -820,14 +826,16 @@ make logs
 - WhiteNoise serves from staticfiles/ with cache-busting
 - Warning about missing `/workspace/static/` is expected and harmless
 
-**Media Files (Poster Images):**
+**Media Files (Item Images):**
 - Location: `/workspace/media/posters/<imdb_id>.jpg` (gitignored)
 - Served at `/media/posters/...` via Django/Gunicorn
 - `MEDIA_ROOT` and `MEDIA_URL` configured in `settings.py`
-- `download_poster(poster_url, imdb_id)` in `imdb_utils.py` handles download
-- Called automatically in `AddItemView` and bulk-add view after IMDB fetch
-- To backfill all existing items: `uv run python manage.py download_posters`
-- Items with failed downloads fall back to external Amazon URL gracefully
+- Two model fields: `image_source_url` (original external URL) and `image_local_url` (local path once downloaded)
+- `image_url` property on Item returns `image_local_url` if set, otherwise falls back to `image_source_url`
+- `download_poster(poster_url, imdb_id)` in `imdb_utils.py` handles download (first arg is the external source URL)
+- Called automatically in `AddItemView` and bulk-add view after IMDB fetch; sets both fields
+- To backfill all existing items (those with `image_source_url` but no `image_local_url`): `uv run python manage.py download_posters`
+- Items with failed downloads fall back to external Amazon URL gracefully via the `image_url` property
 
 **Database Permissions:**
 If you see "attempt to write a readonly database":
@@ -873,4 +881,5 @@ make restart
 
 *Last Updated: 2026-02-19*
 *This document is maintained for AI agent context and developer onboarding.*
+
 
