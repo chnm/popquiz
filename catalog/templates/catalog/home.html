@@ -541,6 +541,9 @@
                         <p class="text-xs text-gray-500 mt-0.5">
                             {{ activity.timestamp|timesince }} ago
                         </p>
+                        {% if activity.review %}
+                        <p class="text-xs text-gray-500 mt-1 italic">"{{ activity.review|truncatewords:20 }}"</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

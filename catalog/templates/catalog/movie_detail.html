@@ -176,7 +176,99 @@
                         </button>
                     </form>
                 </div>
+
+                <!-- Review Textarea -->
+                <div class="mt-4 border-t border-indigo-100 pt-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="review-text" class="text-sm font-semibold text-gray-700">Write a Review <span class="text-gray-400 font-normal italic">&mdash; completely optional, max 150 words</span></label>
+                        <span id="review-word-count" class="text-xs text-gray-500">0 / 150 words</span>
+                    </div>
+                    <textarea id="review-text" rows="3"
+                        class="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                        placeholder="Share your thoughts... (totally optional!)">{{ user_review }}</textarea>
+                    <div class="flex items-center gap-3 mt-2">
+                        <button id="save-review-btn" type="button"
+                            class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Save Review
+                        </button>
+                        <span id="review-status" class="text-sm text-gray-500 hidden"></span>
+                    </div>
+                </div>
             </div>
+            <script>
+            (function() {
+                var textarea = document.getElementById('review-text');
+                var wordCountEl = document.getElementById('review-word-count');
+                var saveBtn = document.getElementById('save-review-btn');
+                var statusEl = document.getElementById('review-status');
+                var itemId = {{ item.id }};
+
+                function countWords(text) {
+                    var trimmed = text.trim();
+                    return trimmed === '' ? 0 : trimmed.split(/\s+/).length;
+                }
+
+                function updateWordCount() {
+                    var count = countWords(textarea.value);
+                    wordCountEl.textContent = count + ' / 150 words';
+                    wordCountEl.classList.remove('text-gray-500', 'text-orange-500', 'text-red-600', 'font-semibold');
+                    textarea.classList.remove('border-orange-400', 'border-red-400', 'border-indigo-200');
+                    if (count > 150) {
+                        wordCountEl.classList.add('text-red-600', 'font-semibold');
+                        textarea.classList.add('border-red-400');
+                        saveBtn.disabled = true;
+                    } else if (count >= 130) {
+                        wordCountEl.classList.add('text-orange-500', 'font-semibold');
+                        textarea.classList.add('border-orange-400');
+                        saveBtn.disabled = false;
+                    } else {
+                        wordCountEl.classList.add('text-gray-500');
+                        textarea.classList.add('border-indigo-200');
+                        saveBtn.disabled = false;
+                    }
+                }
+
+                textarea.addEventListener('input', updateWordCount);
+                updateWordCount();
+
+                saveBtn.addEventListener('click', function() {
+                    saveBtn.disabled = true;
+                    statusEl.classList.remove('hidden', 'text-green-600', 'text-red-600');
+                    statusEl.classList.add('text-gray-500');
+                    statusEl.textContent = 'Saving...';
+
+                    fetch('{% url "save_review" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''
+                        },
+                        body: JSON.stringify({item_id: itemId, review: textarea.value})
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            statusEl.textContent = 'Review saved.';
+                            statusEl.classList.remove('text-gray-500', 'text-red-600');
+                            statusEl.classList.add('text-green-600');
+                        } else {
+                            statusEl.textContent = data.error || 'Could not save review.';
+                            statusEl.classList.remove('text-gray-500', 'text-green-600');
+                            statusEl.classList.add('text-red-600');
+                        }
+                        statusEl.classList.remove('hidden');
+                        saveBtn.disabled = countWords(textarea.value) > 150;
+                    })
+                    .catch(function() {
+                        statusEl.textContent = 'Error saving review.';
+                        statusEl.classList.remove('text-gray-500', 'text-green-600');
+                        statusEl.classList.add('text-red-600');
+                        statusEl.classList.remove('hidden');
+                        saveBtn.disabled = false;
+                    });
+                });
+            })();
+            </script>
             {% endif %}
         </div>
     </div>
@@ -295,6 +387,37 @@
             <li><a href="{% url 'profile' user.username %}" class="text-gray-500 hover:text-indigo-600 transition">{{ user|display_name:request.user }}</a></li>
         {% endfor %}
     </ul>
+</div>
+{% endif %}
+
+<!-- Team Reviews -->
+{% if reviews_with_text %}
+<div class="bg-white rounded-xl shadow-md p-6 mt-6">
+    <h2 class="text-xl font-bold text-gray-700 mb-5">Team Reviews</h2>
+    <div class="space-y-4">
+        {% for review in reviews_with_text %}
+        <div class="pl-4 border-l-4
+            {% if review.rating == 'loved' %}border-purple-400
+            {% elif review.rating == 'liked' %}border-green-400
+            {% elif review.rating == 'okay' %}border-yellow-400
+            {% elif review.rating == 'disliked' %}border-orange-400
+            {% elif review.rating == 'hated' %}border-red-400
+            {% else %}border-gray-300{% endif %}">
+            <div class="flex items-center gap-2 mb-1">
+                <a href="{% url 'profile' review.user.username %}" class="font-semibold text-gray-800 hover:text-indigo-600 transition text-sm">{{ review.user|display_name:request.user }}</a>
+                <span class="text-base leading-none">
+                    {% if review.rating == 'loved' %}🤩
+                    {% elif review.rating == 'liked' %}🙂
+                    {% elif review.rating == 'okay' %}😐
+                    {% elif review.rating == 'disliked' %}😕
+                    {% elif review.rating == 'hated' %}😡
+                    {% endif %}
+                </span>
+            </div>
+            <p class="text-sm text-gray-700 leading-relaxed">{{ review.review }}</p>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endif %}
 {% endblock %}

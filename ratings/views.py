@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -94,3 +96,38 @@ def rate_api(request):
             'rated_count': rated_count,
             'total_count': total_count,
         })
+
+
+@login_required
+@require_POST
+def save_review(request):
+    """API endpoint to save or clear a text review for an item."""
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    item_id = data.get('item_id')
+    review_text = data.get('review', '')
+
+    if not item_id:
+        return JsonResponse({'error': 'item_id is required'}, status=400)
+
+    # Enforce 150-word limit server-side
+    if review_text and len(review_text.split()) > 150:
+        return JsonResponse({'error': 'Review exceeds 150-word limit'}, status=400)
+
+    item = get_object_or_404(Item, id=item_id)
+
+    # Get or create the rating row, but never overwrite the rating value
+    rating, created = Rating.objects.get_or_create(
+        user=request.user,
+        item=item,
+        defaults={'rating': Rating.Level.NO_RATING, 'review': review_text}
+    )
+
+    if not created:
+        rating.review = review_text
+        rating.save(update_fields=['review', 'updated_at'])
+
+    return JsonResponse({'success': True})

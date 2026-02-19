@@ -29,6 +29,7 @@ class Rating(models.Model):
         default=Level.NO_RATING,
         db_column='choice'  # Keep old column name for SQLite compatibility
     )
+    review = models.TextField(blank=True, default='')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

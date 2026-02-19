@@ -400,6 +400,14 @@ class ProfileView(DetailView):
             loved_items_qs = loved_items_qs.filter(category=current_category)
         context['random_posters'] = loved_items_qs.order_by('?')[:5]
 
+        # Get all reviews written by this user (non-empty), most recent first
+        user_reviews = Rating.objects.filter(
+            user=profile_user
+        ).exclude(
+            review=''
+        ).select_related('item', 'item__category').order_by('-updated_at')
+        context['user_reviews'] = user_reviews
+
         return context
 
 

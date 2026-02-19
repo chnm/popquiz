@@ -147,6 +147,7 @@ class HomeView(ListView):
                     'user': rating.user,
                     'item': rating.item,
                     'rating': rating.rating,
+                    'review': rating.review,
                     'timestamp': rating.updated_at,
                 })
 
@@ -895,8 +896,10 @@ class ItemDetailView(TemplateView):
             try:
                 user_rating = Rating.objects.get(item=item, user=self.request.user)
                 context['user_rating'] = user_rating.rating
+                context['user_review'] = user_rating.review
             except Rating.DoesNotExist:
                 context['user_rating'] = Rating.Level.NO_RATING
+                context['user_review'] = ''
 
         # Get all ratings for this item, grouped by rating level
         all_ratings = Rating.objects.filter(item=item).select_related('user').order_by('user__last_name', 'user__first_name')
@@ -936,6 +939,11 @@ class ItemDetailView(TemplateView):
         context['hated_ratings'] = hated_ratings
         context['not_rated_ratings'] = not_rated_ratings
         context['no_rating_users'] = no_rating_users
+
+        # Reviews with text, sorted by reviewer last name
+        reviews_with_text = [r for r in all_ratings if r.review]
+        reviews_with_text.sort(key=lambda r: (r.user.last_name.lower(), r.user.first_name.lower()))
+        context['reviews_with_text'] = reviews_with_text
 
         # Calculate statistics
         total_ratings = (len(loved_ratings) + len(liked_ratings) + len(okay_ratings) +

@@ -163,6 +163,49 @@
 </div>
 {% endif %}
 
+<!-- Reviews Section -->
+{% if user_reviews %}
+<div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-5">Reviews</h2>
+    <div class="space-y-0 divide-y divide-gray-100">
+        {% for review in user_reviews %}
+        <div class="py-4 flex gap-4">
+            <!-- Small poster thumbnail -->
+            <a href="{% url 'item_detail' review.item.category.slug review.item.id %}" class="flex-shrink-0">
+                {% if review.item.poster_url %}
+                <img src="{{ review.item.poster_url }}" alt="{{ review.item.title }}"
+                     class="w-12 h-18 object-cover rounded shadow-sm"
+                     style="width:48px;height:72px;"
+                     onerror="this.style.display='none';">
+                {% else %}
+                <div class="bg-gray-200 rounded shadow-sm flex items-center justify-center" style="width:48px;height:72px;">
+                    <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                    </svg>
+                </div>
+                {% endif %}
+            </a>
+            <!-- Review content -->
+            <div class="flex-grow min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <a href="{% url 'item_detail' review.item.category.slug review.item.id %}" class="font-semibold text-gray-800 hover:text-indigo-600 transition text-sm">{{ review.item.title }}{% if review.item.year %} <span class="text-gray-500 font-normal">({{ review.item.year }})</span>{% endif %}</a>
+                    <span class="text-base leading-none">
+                        {% if review.rating == 'loved' %}🤩
+                        {% elif review.rating == 'liked' %}🙂
+                        {% elif review.rating == 'okay' %}😐
+                        {% elif review.rating == 'disliked' %}😕
+                        {% elif review.rating == 'hated' %}😡
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-700 leading-relaxed">{{ review.review }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Category Tabs (always visible when user has multiple categories) -->
 {% if user_categories|length > 1 %}
 <div class="bg-white rounded-xl shadow-md p-4 mb-4">
