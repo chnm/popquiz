@@ -82,7 +82,7 @@ def rate_api(request):
                 'id': current_item.id,
                 'title': current_item.title,
                 'year': current_item.display_year,
-                'poster_url': current_item.poster_url,
+                'poster_url': current_item.image_url,
                 'imdb_url': current_item.imdb_url,
             },
             'remaining_count': remaining_count,

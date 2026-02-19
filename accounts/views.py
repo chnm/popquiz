@@ -395,7 +395,7 @@ class ProfileView(DetailView):
         loved_items_qs = Item.objects.filter(
             ratings__user=profile_user,
             ratings__rating=Rating.Level.LOVED
-        ).exclude(poster_url='').distinct()
+        ).exclude(image_local_url='', image_source_url='').distinct()
         if current_category:
             loved_items_qs = loved_items_qs.filter(category=current_category)
         context['random_posters'] = loved_items_qs.order_by('?')[:5]

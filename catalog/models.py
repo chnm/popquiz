@@ -38,7 +38,8 @@ class Item(models.Model):
     genre = models.CharField(max_length=255, blank=True)
     imdb_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     imdb_url = models.URLField(blank=True)
-    poster_url = models.URLField(blank=True)
+    image_source_url = models.URLField(blank=True)
+    image_local_url = models.URLField(blank=True)
     added_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -49,6 +50,11 @@ class Item(models.Model):
 
     class Meta:
         ordering = ['title']
+
+    @property
+    def image_url(self):
+        """Returns the local cached image if available, otherwise the external source URL."""
+        return self.image_local_url or self.image_source_url
 
     @property
     def display_year(self):

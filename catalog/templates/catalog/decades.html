@@ -39,8 +39,8 @@
 
                 <!-- Poster -->
                 <div class="flex-shrink-0 w-12 h-18 mr-4">
-                    {% if item_data.item.poster_url %}
-                    <img src="{{ item_data.item.poster_url }}" alt="{{ item_data.item.title }}"
+                    {% if item_data.item.image_url %}
+                    <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
                          class="w-12 h-18 object-cover rounded-lg"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="w-12 h-18 bg-gray-200 rounded-lg items-center justify-center" style="display: none;">
@@ -149,8 +149,8 @@
                     #{{ forloop.counter }}
                 </div>
                 <div class="flex-shrink-0 w-12 h-18 mr-4">
-                    {% if item_data.item.poster_url %}
-                    <img src="{{ item_data.item.poster_url }}" alt="{{ item_data.item.title }}"
+                    {% if item_data.item.image_url %}
+                    <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
                          class="w-12 h-18 object-cover rounded-lg">
                     {% else %}
                     <div class="w-12 h-18 bg-gray-200 rounded-lg flex items-center justify-center">

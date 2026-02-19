@@ -89,8 +89,8 @@
             <!-- Poster Column (Left on desktop, middle on mobile) -->
             <div class="order-2 md:order-1 relative bg-gray-200 md:flex-shrink-0 md:w-1/2 md:flex md:items-center md:justify-center md:p-8">
                 <div id="poster-container" class="h-[280px] md:h-[600px] flex items-center justify-center relative touch-none select-none">
-                    {% if current_item.poster_url %}
-                        <img id="movie-poster" src="{{ current_item.poster_url }}" alt="{{ current_item.title }}"
+                    {% if current_item.image_url %}
+                        <img id="movie-poster" src="{{ current_item.image_url }}" alt="{{ current_item.title }}"
                              class="w-full h-full object-contain transition-transform duration-200"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div id="poster-fallback" class="absolute inset-0 items-center justify-center bg-gray-200" style="display: none;">

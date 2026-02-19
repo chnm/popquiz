@@ -10,8 +10,8 @@
     <div class="absolute inset-0 grid grid-cols-5 gap-0">
         {% for item in random_posters %}
         <div class="relative w-full h-full">
-            {% if item.poster_url %}
-            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                  onerror="this.style.display='none';">
             {% endif %}
         </div>
@@ -172,8 +172,8 @@
         <div class="py-4 flex gap-4">
             <!-- Small poster thumbnail -->
             <a href="{% url 'item_detail' review.item.category.slug review.item.id %}" class="flex-shrink-0">
-                {% if review.item.poster_url %}
-                <img src="{{ review.item.poster_url }}" alt="{{ review.item.title }}"
+                {% if review.item.image_url %}
+                <img src="{{ review.item.image_url }}" alt="{{ review.item.title }}"
                      class="w-12 h-18 object-cover rounded shadow-sm"
                      style="width:48px;height:72px;"
                      onerror="this.style.display='none';">
@@ -272,8 +272,8 @@
         {% for movie in unseen_items %}
         <a href="{% url 'item_detail' movie.item.category.slug movie.item.id %}" class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105">
             <!-- Poster Image -->
-            {% if movie.item.poster_url %}
-            <img src="{{ movie.item.poster_url }}" alt="{{ movie.item.title }}"
+            {% if movie.item.image_url %}
+            <img src="{{ movie.item.image_url }}" alt="{{ movie.item.title }}"
                  class="w-full h-full object-cover"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
@@ -433,8 +433,8 @@
                 {% endif %}">
 
                 <!-- Poster Image -->
-                {% if rating.item.poster_url %}
-                <img src="{{ rating.item.poster_url }}" alt="{{ rating.item.title }}"
+                {% if rating.item.image_url %}
+                <img src="{{ rating.item.image_url }}" alt="{{ rating.item.title }}"
                      class="w-full h-full object-cover {% if rating.rating == 'no_rating' %}opacity-60{% endif %}"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">

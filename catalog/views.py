@@ -53,7 +53,7 @@ class HomeView(ListView):
                 random_posters = Item.objects.filter(
                     category=category
                 ).exclude(
-                    poster_url=''
+                    image_local_url='', image_source_url=''
                 ).order_by('?')[:5]
 
                 categories_with_progress.append({
@@ -72,7 +72,7 @@ class HomeView(ListView):
                 random_posters = Item.objects.filter(
                     category=category
                 ).exclude(
-                    poster_url=''
+                    image_local_url='', image_source_url=''
                 ).order_by('?')[:5]
                 categories_with_posters.append({
                     'category': category,
@@ -82,7 +82,7 @@ class HomeView(ListView):
 
         # Get featured items for carousel - guarantee at least one per category
         base_featured_qs = Item.objects.exclude(
-            poster_url=''
+            image_local_url='', image_source_url=''
         ).annotate(
             loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
             liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
@@ -285,11 +285,10 @@ class AddItemView(LoginRequiredMixin, View):
                     'category': category,
                 })
 
-            # Download poster locally so we serve it ourselves
+            # Download image locally so we serve it ourselves
             imdb_id = movie_data['imdb_id']
-            raw_poster = movie_data.get('poster_url') or ''
-            local_poster = download_poster(raw_poster, imdb_id) if raw_poster and imdb_id else None
-            poster_url = local_poster or raw_poster
+            raw_source = movie_data.get('image_source_url') or ''
+            local_image = download_poster(raw_source, imdb_id) if raw_source and imdb_id else None
 
             # Create the item
             item = Item.objects.create(
@@ -301,7 +300,8 @@ class AddItemView(LoginRequiredMixin, View):
                 genre=movie_data.get('genre') or '',
                 imdb_id=imdb_id,
                 imdb_url=movie_data['imdb_url'],
-                poster_url=poster_url,
+                image_source_url=raw_source,
+                image_local_url=local_image or '',
                 added_by=request.user,
             )
 
@@ -431,11 +431,10 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 skipped_count += 1
                 continue
 
-            # Download poster locally
+            # Download image locally
             bulk_imdb_id = movie_data['imdb_id']
-            bulk_raw_poster = movie_data.get('poster_url') or ''
-            bulk_local_poster = download_poster(bulk_raw_poster, bulk_imdb_id) if bulk_raw_poster and bulk_imdb_id else None
-            bulk_poster_url = bulk_local_poster or bulk_raw_poster
+            bulk_raw_source = movie_data.get('image_source_url') or ''
+            bulk_local_image = download_poster(bulk_raw_source, bulk_imdb_id) if bulk_raw_source and bulk_imdb_id else None
 
             # Create the item
             Item.objects.create(
@@ -446,7 +445,8 @@ class AddByDirectorView(LoginRequiredMixin, View):
                 genre=movie_data.get('genre') or '',
                 imdb_id=bulk_imdb_id,
                 imdb_url=movie_data['imdb_url'],
-                poster_url=bulk_poster_url,
+                image_source_url=bulk_raw_source,
+                image_local_url=bulk_local_image or '',
                 added_by=request.user,
             )
             added_count += 1

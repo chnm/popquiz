@@ -22,7 +22,7 @@
             <a href="{% url 'item_detail' item.category.slug item.id %}" class="block relative rounded-2xl shadow-xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
                 <!-- Background Poster -->
                 <div class="absolute inset-0">
-                    <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                    <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                          onerror="this.style.display='none';">
                 </div>
                 <!-- Gradient Overlay -->
@@ -32,7 +32,7 @@
                 <div class="relative z-10 p-8 flex flex-col md:flex-row md:items-center gap-6">
                     <!-- Item Poster (Small) -->
                     <div class="flex-shrink-0 w-32 md:w-40 aspect-[2/3] rounded-lg overflow-hidden shadow-2xl ring-4 ring-white/20">
-                        <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                        <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                              onerror="this.style.display='none';">
                     </div>
 
@@ -228,8 +228,8 @@
         <div class="absolute inset-0 grid grid-cols-5 gap-0">
             {% for item in cat_data.random_posters %}
             <div class="relative w-full h-full">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none';">
                 {% endif %}
             </div>
@@ -309,8 +309,8 @@
         <div class="absolute inset-0 grid grid-cols-5 gap-0">
             {% for item in cat_data.random_posters %}
             <div class="relative w-full h-full">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none';">
                 {% endif %}
             </div>

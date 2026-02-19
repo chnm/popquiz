@@ -220,7 +220,7 @@ def fetch_movie_data(imdb_url):
             'genre': genre,
             'imdb_id': imdb_id,
             'imdb_url': canonical_url,
-            'poster_url': poster_url,
+            'image_source_url': poster_url,
             'title_type': title_type,
         }
 

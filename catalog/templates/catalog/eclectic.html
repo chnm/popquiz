@@ -76,8 +76,8 @@
                 <div class="flex flex-wrap gap-3">
                     {% for movie in stat.contrarian_movies %}
                     <div class="flex items-center bg-gray-50 rounded-lg px-3 py-2 text-sm">
-                        {% if movie.item.poster_url %}
-                        <img src="{{ movie.item.poster_url }}" alt="{{ movie.item.title }}" class="w-8 h-12 object-cover rounded mr-2"
+                        {% if movie.item.image_url %}
+                        <img src="{{ movie.item.image_url }}" alt="{{ movie.item.title }}" class="w-8 h-12 object-cover rounded mr-2"
                              onerror="this.style.display='none'">
                         {% endif %}
                         <div>

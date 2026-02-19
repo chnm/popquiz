@@ -131,8 +131,8 @@
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
         {% for item in all_three.all_positive %}
         <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
-            {% if item.poster_url %}
-            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                 <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -163,8 +163,8 @@
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
         {% for item in all_three.all_neutral %}
         <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90 hover:opacity-100">
-            {% if item.poster_url %}
-            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                 <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -197,8 +197,8 @@
     <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
         {% for item in all_three.all_negative %}
         <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75 hover:opacity-100">
-            {% if item.poster_url %}
-            <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                 <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -232,8 +232,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_and_2.all_positive %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -258,8 +258,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_and_2.all_neutral %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -284,8 +284,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_and_2.all_negative %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -311,8 +311,8 @@
             {% for rating_data in user1_and_2.mixed %}
             <div class="group relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
                 <div class="aspect-[2/3] relative">
-                    {% if rating_data.item.poster_url %}
-                    <img src="{{ rating_data.item.poster_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
+                    {% if rating_data.item.image_url %}
+                    <img src="{{ rating_data.item.image_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                         <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -359,8 +359,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_and_3.all_positive %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -385,8 +385,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_and_3.all_neutral %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -411,8 +411,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user1_and_3.all_negative %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -438,8 +438,8 @@
             {% for rating_data in user1_and_3.mixed %}
             <div class="group relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
                 <div class="aspect-[2/3] relative">
-                    {% if rating_data.item.poster_url %}
-                    <img src="{{ rating_data.item.poster_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
+                    {% if rating_data.item.image_url %}
+                    <img src="{{ rating_data.item.image_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                         <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -486,8 +486,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user2_and_3.all_positive %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -512,8 +512,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user2_and_3.all_neutral %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-90">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -538,8 +538,8 @@
         <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
             {% for item in user2_and_3.all_negative %}
             <div class="group relative aspect-[2/3] rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 opacity-75">
-                {% if item.poster_url %}
-                <img src="{{ item.poster_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                     <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
@@ -565,8 +565,8 @@
             {% for rating_data in user2_and_3.mixed %}
             <div class="group relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
                 <div class="aspect-[2/3] relative">
-                    {% if rating_data.item.poster_url %}
-                    <img src="{{ rating_data.item.poster_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
+                    {% if rating_data.item.image_url %}
+                    <img src="{{ rating_data.item.image_url }}" alt="{{ rating_data.item.title }}" class="w-full h-full object-cover"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="absolute inset-0 bg-gray-300 items-center justify-center" style="display: none;">
                         <svg class="w-6 h-6" fill="#9ca3af" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg>
