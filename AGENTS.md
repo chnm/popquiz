@@ -55,7 +55,7 @@ Friend groups, work teams, film clubs, or any group that wants to discover their
 - Multi-category support (Movies, TV Series, etc.) with per-category profile filtering
 
 **Production Environment:**
-Hosted at https://popquiz.rrchnm.org with Nginx serving static/media files directly, Gunicorn handling application requests, and reverse proxy handling SSL/TLS.
+Hosted at https://popquiz.rrchnm.org with Gunicorn handling all requests on port 8000, WhiteNoise serving static files, and Caddy as the upstream reverse proxy handling SSL/TLS.
 
 ---
 
@@ -79,7 +79,7 @@ Hosted at https://popquiz.rrchnm.org with Nginx serving static/media files direc
 - **Key Libraries:**
   - **django-allauth** - Social authentication (Slack OAuth)
   - **WhiteNoise** - Static file serving (middleware layer)
-  - **gunicorn** - WSGI server for production (4 workers, runs on 127.0.0.1:8001)
+  - **gunicorn** - WSGI server for production (4 workers, runs on 0.0.0.0:8000)
   - **python-dotenv** - Environment variable management
   - **requests** - HTTP library for IMDB scraping
 - **API Pattern:** Traditional Django views with AJAX endpoints for rating
@@ -612,10 +612,9 @@ make logs-follow # Tail logs in real-time
 1. Check for pending migrations: `showmigrations`
 2. Apply migrations: `migrate`
 3. Collect static files: `collectstatic --noinput`
-4. Start Gunicorn on 127.0.0.1:8001 (app requests)
-5. Start Nginx on 0.0.0.0:8000 (serves static/media directly, proxies app to Gunicorn)
-6. Track process IDs in `.pid` files
-7. Verify server started successfully
+4. Start Gunicorn on 0.0.0.0:8000
+5. Track process ID in `.pid` file
+6. Verify server started successfully
 
 **Background Execution:**
 - Uses `nohup` to detach from terminal session
@@ -636,13 +635,10 @@ make restart
 make logs
 ```
 
-**Static & Media Files (Nginx):**
-- Nginx (port 8000) serves `/static/` and `/media/` files directly from disk — no Python involved
-- This eliminates Gunicorn workers being blocked by large binary file transfers (e.g. poster images)
-- WhiteNoise is still present as middleware but Nginx intercepts static/media requests first
-- Collected static files: `/workspace/staticfiles/`
-- Poster images: `/workspace/media/posters/<imdb_id>.jpg`
-- All other requests proxied by Nginx to Gunicorn on 127.0.0.1:8001
+**Static & Media Files:**
+- WhiteNoise middleware serves `/static/` files efficiently from `/workspace/staticfiles/`
+- `/media/` (poster images) served through Gunicorn/Django from `/workspace/media/`
+- Caddy upstream handles SSL/TLS and reverse proxies all traffic to Gunicorn on port 8000
 
 ### Testing Approach
 
@@ -826,8 +822,8 @@ make logs
 
 **Media Files (Poster Images):**
 - Location: `/workspace/media/posters/<imdb_id>.jpg` (gitignored)
-- Served at `/media/posters/...` directly by Nginx (not Django or WhiteNoise)
-- `MEDIA_ROOT` and `MEDIA_URL` still configured in `settings.py` for Django's reference
+- Served at `/media/posters/...` via Django/Gunicorn
+- `MEDIA_ROOT` and `MEDIA_URL` configured in `settings.py`
 - `download_poster(poster_url, imdb_id)` in `imdb_utils.py` handles download
 - Called automatically in `AddItemView` and bulk-add view after IMDB fetch
 - To backfill all existing items: `uv run python manage.py download_posters`
