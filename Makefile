@@ -56,9 +56,9 @@ start:
 		echo "==> Server is already running (PID: $$(cat .pid))"; \
 		exit 1; \
 	fi
-	@echo "==> Starting Django server in background..."
-	@nohup uv run python manage.py runserver 0.0.0.0:8000 > /tmp/popquiz.log 2>&1 & echo $$! > .pid
-	@sleep 1
+	@echo "==> Starting Gunicorn server in background..."
+	@nohup uv run gunicorn popquiz.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile /tmp/popquiz.log --error-logfile /tmp/popquiz.log > /tmp/popquiz.log 2>&1 & echo $$! > .pid
+	@sleep 2
 	@if [ -f .pid ] && kill -0 $$(cat .pid) 2>/dev/null; then \
 		echo "==> Server started successfully (PID: $$(cat .pid))"; \
 	else \
