@@ -170,12 +170,22 @@
         <span class="text-gray-600 font-medium mr-2">Category:</span>
         <a href="?category=all&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
             {% if current_category_slug == 'all' %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-            All
+            <span class="flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+                </svg>
+                <span>All</span>
+            </span>
         </a>
         {% for cat in user_categories %}
         <a href="?category={{ cat.slug }}&sort={{ current_sort }}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-200
             {% if current_category_slug == cat.slug %}bg-gray-800 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
-            {{ cat.name }}
+            <span class="flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+                </svg>
+                <span>{{ cat.name }}</span>
+            </span>
         </a>
         {% endfor %}
     </div>
