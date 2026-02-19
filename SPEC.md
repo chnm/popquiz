@@ -33,10 +33,10 @@
 
 ## Overview
 
-**PopQuiz** is a collaborative voting platform for teams to discover and rank their favorite pop culture items — currently Movies and TV Series.
+**PopQuiz** is a collaborative rating platform for teams to discover and rank their favorite pop culture items — currently Movies and TV Series.
 
 **What is it?**
-A web application that transforms pop culture discussions into an interactive, data-driven experience. Team members rate items using a Tinder-style swipe interface, and the app aggregates votes to reveal team rankings, identify taste compatibility between members, and surface items that spark debate.
+A web application that transforms pop culture discussions into an interactive, data-driven experience. Team members rate items using a Tinder-style swipe interface, and the app aggregates ratings to reveal team rankings, identify taste compatibility between members, and surface items that spark debate.
 
 **Problem it Solves:**
 - **Decision Paralysis:** Groups struggle to choose movies everyone will enjoy
@@ -62,7 +62,7 @@ Turn subjective movie opinions into objective data that reveals patterns, compat
 **Key Success Metrics:**
 - Average ratings per user (target: 50+)
 - User engagement (daily active users)
-- Completion rate on swipe voting sessions
+- Completion rate on swipe rating sessions
 - Social features usage (profile views, comparisons)
 
 ---
@@ -362,7 +362,7 @@ Reveals team preferences, sparks discussions, helps choose movies for group view
 **Team Rankings Page:**
 - All movies ranked from highest to lowest score
 - Display: poster, title, year, score (0-100)
-- Vote breakdown: Count of each rating type
+- Rating breakdown: Count of each rating type
 - Visual progress bars showing rating distribution
 - Color-coded by rating (red-orange-yellow-green-purple)
 - Clickable movie titles → movie detail page
@@ -371,7 +371,7 @@ Reveals team preferences, sparks discussions, helps choose movies for group view
 - Movies grouped by release decade (2020s, 2010s, etc.)
 - Ranked within each decade
 - Shows how many movies per decade
-- Same vote breakdown and progress bars
+- Same rating breakdown and progress bars
 - Most recent decades appear first
 
 **Eclectic Tastes Page:**
@@ -383,17 +383,17 @@ Reveals team preferences, sparks discussions, helps choose movies for group view
 **Divisive Movies Page:**
 - Movies ranked by polarization (standard deviation of ratings)
 - Shows movies that split the team
-- Vote breakdown highlighting disagreement
+- Rating breakdown highlighting disagreement
 - Identifies movies that spark debate
 
 **User Interactions:**
 - Scroll through rankings
 - Click movie → view full details
 - Click user name → view profile
-- View vote breakdown on hover (or tap on mobile)
+- View rating breakdown on hover (or tap on mobile)
 
 **Edge Cases:**
-- No movies rated yet: Show message "No ratings yet, start voting!"
+- No movies rated yet: Show message "No ratings yet, start rating!"
 - Tied scores: Sort alphabetically
 - User with no ratings: Don't show in Eclectic list
 - Movie with only 1 rating: Shows in rankings but may not be meaningful
@@ -432,6 +432,7 @@ See your own rating history, track what you've rated, organize by director/genre
 - Badge on each poster shows user's rating (emoji)
 - Clickable items → item detail page
 - "Recommended for You" section: Top 20 unrated items ranked by team (filtered to selected category)
+- **Reviews section:** All reviews written by this user, each showing poster thumbnail, title, year, rating emoji, and review text
 
 **User Interactions:**
 - Click sort button to change view
@@ -641,7 +642,7 @@ No need to remember another password, quick signup with work/team Slack account,
 
 3. **Account Created & Logged In**
    - Automatic redirect to homepage
-   - Now see full content: team members, voting section
+   - Now see full content: team members, rating section
    - Navigation shows username and "My Profile" link
    - Welcome message updates: "Welcome, [First Name]!"
 
@@ -734,7 +735,7 @@ User successfully registered, logged in, and rated at least one movie within 5 m
    - Can return anytime to rate new movies or update ratings
 
 **Success Outcome:**
-User rates 20+ movies in 10-15 minutes, feels accomplished, progress is saved, can see team rankings influenced by their votes.
+User rates 20+ movies in 10-15 minutes, feels accomplished, progress is saved, can see team rankings influenced by their ratings.
 
 **Alternative Paths:**
 - User rates via category page instead: Same outcome, different UI (grid with inline buttons)
@@ -901,6 +902,30 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 
 ---
 
+### Feature: Short Reviews
+
+**Description:**
+Users can optionally write a short text review (max 150 words) to accompany their rating.
+
+**User Value:**
+Adds context to ratings, sparks conversation, lets users share why they loved or hated something without requiring a full discussion thread.
+
+**Functionality:**
+- Textarea on the movie detail page with live word counter
+- Counter turns orange at 130 words, red at 151+ (save blocked when over limit)
+- Saved independently from rating via AJAX (changing a review doesn't change the rating)
+- **Movie detail page:** "Team Reviews" section showing all reviews for that item, with color-coded left border matching the reviewer's rating level
+- **User profile page:** "Reviews" section listing all reviews written by that user with poster thumbnail, title, year, and rating emoji
+- **Home activity feed:** Recent reviews shown truncated to 20 words below each activity entry
+
+**Business Rules:**
+- Review is optional — a rating can exist without a review
+- Max 150 words (server-side enforced)
+- One review per user per item (same record as the rating)
+- Empty review = no review displayed
+
+---
+
 ## Out of Scope
 
 ### Not in Current Version
@@ -910,7 +935,7 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 - **Custom Categories:** Users can't create own categories, admin-only
 - **Private Ratings:** All ratings are public within team, no privacy controls
 - **Rating Changes History:** Don't track when ratings changed, only current value
-- **Comments on Movies:** No discussion threads, just ratings
+- **Discussion Threads:** No threaded comments or replies, only short reviews
 - **Recommendation Algorithm:** Basic "team favorites you haven't seen", no ML
 - **Notification System:** No alerts for new movies or ratings
 - **Exporting Data:** No CSV export or API access
@@ -933,7 +958,7 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 ### Explicitly Excluded
 
 **Never Planned:**
-- **Spoilers/Reviews:** PopQuiz is for ratings only, not reviews or plot discussion
+- **Spoilers/Plot Discussion:** Reviews are short opinions only (150-word max), not plot summaries or discussion threads
 - **Monetization:** No paid tiers, ads, or premium features
 - **Third-Party Integrations:** No Slack notifications, Jira, etc. (except Slack OAuth)
 - **Real-Time Collaboration:** No live updates when others rate, refresh required
@@ -948,7 +973,7 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 **Intentional Design Decisions:**
 - **No Decimal Ratings:** 5-point scale only, no 1-10 or star ratings
 - **No Half-Ratings:** Can't rate 3.5 stars, must choose one of 5 levels
-- **No Weighted Votes:** All users' votes count equally, no expert mode
+- **No Weighted Ratings:** All users' ratings count equally, no expert mode
 - **No Time-Based Ranking:** Don't favor recent ratings, all equal weight
 
 ---
@@ -1036,5 +1061,5 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 
 ---
 
-*Last Updated: 2026-02-18*
+*Last Updated: 2026-02-19*
 *This specification is maintained for product planning and feature development.*
