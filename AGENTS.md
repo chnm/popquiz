@@ -34,13 +34,13 @@
 
 ## Project Overview
 
-**PopQuiz** is a Django-based web application for team voting on pop culture items (primarily movies). It features a Tinder-style swipe interface, team rankings, compatibility comparisons, and various statistical views organized by decade, director, and genre.
+**PopQuiz** is a Django-based web application for team rating of pop culture items (primarily movies). It features a Tinder-style swipe interface, team rankings, compatibility comparisons, and various statistical views organized by decade, director, and genre.
 
 **Purpose:**
-- Facilitate team discussions about movies through structured voting
+- Facilitate team discussions about movies through structured rating
 - Reveal team rankings based on aggregated preferences
 - Enable taste compatibility analysis between team members
-- Provide engaging swipe-based voting interface
+- Provide engaging swipe-based rating interface
 
 **Target Users:**
 Friend groups, work teams, film clubs, or any group that wants to discover their collective taste and compare preferences.
@@ -48,14 +48,14 @@ Friend groups, work teams, film clubs, or any group that wants to discover their
 **Key Technical Features:**
 - IMDB integration for automatic movie metadata fetching
 - Poster images downloaded and served locally (no external CDN hotlinking)
-- Real-time AJAX voting without page reloads
+- Real-time AJAX ratings without page reloads
 - Bayesian averaging for fair ranking calculations
 - Social authentication via Slack OAuth
 - Mobile-optimized responsive design
 - Multi-category support (Movies, TV Series, etc.) with per-category profile filtering
 
 **Production Environment:**
-Hosted at https://popquiz.rrchnm.org with WhiteNoise for static file serving and reverse proxy handling SSL/TLS.
+Hosted at https://popquiz.rrchnm.org with Nginx serving static/media files directly, Gunicorn handling application requests, and reverse proxy handling SSL/TLS.
 
 ---
 
@@ -78,10 +78,11 @@ Hosted at https://popquiz.rrchnm.org with WhiteNoise for static file serving and
 - **Framework:** Django 5.2+ (latest stable)
 - **Key Libraries:**
   - **django-allauth** - Social authentication (Slack OAuth)
-  - **WhiteNoise** - Static file serving in production
+  - **WhiteNoise** - Static file serving (middleware layer)
+  - **gunicorn** - WSGI server for production (4 workers, runs on 127.0.0.1:8001)
   - **python-dotenv** - Environment variable management
   - **requests** - HTTP library for IMDB scraping
-- **API Pattern:** Traditional Django views with AJAX endpoints for voting
+- **API Pattern:** Traditional Django views with AJAX endpoints for rating
 - **Static Files:** Tailwind CSS for styling, vanilla JavaScript for interactivity
 
 ### Frontend
@@ -91,8 +92,8 @@ Hosted at https://popquiz.rrchnm.org with WhiteNoise for static file serving and
 - **JavaScript:** Vanilla ES6+ (no framework)
 - **Build Tools:** None required (Tailwind CDN via template)
 - **Key Features:**
-  - AJAX-based voting with fetch API
-  - Swipe gestures for mobile voting
+  - AJAX-based rating with fetch API
+  - Swipe gestures for mobile rating
   - Dynamic progress bars and real-time updates
   - Responsive hamburger menu navigation
 
@@ -219,7 +220,7 @@ popquiz/
 
 - **popquiz/** - Project-level settings, DO NOT add business logic here
 - **catalog/** - Core app for categories and items (movies), main business logic
-- **ratings/** - Handles all rating/voting functionality, separate concern
+- **ratings/** - Handles all rating functionality, separate concern
 - **accounts/** - User authentication, profiles, and comparisons
 - **templates/** - Shared templates used across apps
 - **static/** - Source static files (manually added, not generated)
@@ -258,13 +259,14 @@ PopQuiz follows standard Django MTV (Model-Template-View) architecture with thre
 **2. ratings** - Rating System
 - Manages user ratings with 5-point Likert scale
 - Rating levels: Loved (🤩 +2), Liked (🙂 +1), Okay (😐 0), Disliked (😕 -1), Hated (😡 -2), No Rating (⏭️)
-- AJAX-based rating API for smooth UX without page reloads
+- Users can optionally write a short text review (max 150 words) alongside their rating
+- AJAX-based rating and review APIs for smooth UX without page reloads
 - Enforces unique ratings per user/item combination via database constraint
-- Key Files: `models.py` (Rating model), `views.py` (rate_api endpoint)
+- Key Files: `models.py` (Rating model with `review` field), `views.py` (rate_api, save_review endpoints)
 
 **3. accounts** - User Management & Social Features
 - User registration, login, logout (with Slack OAuth)
-- Profile pages showing rating history with category filter tabs and multiple sort options
+- Profile pages showing rating history with category filter tabs, multiple sort options, and a Reviews section listing all reviews written by that user
 - User comparison feature showing compatibility and disagreements
 - Custom social account adapter for syncing Slack profile data
 - Key Files: `models.py` (User with avatar_url), `views.py` (ProfileView, CompareUsersView), `adapter.py`
@@ -303,6 +305,7 @@ rating = CharField(choices=[
     ('hated', 'Hated'),
     ('no_rating', 'No Rating')
 ])
+review = TextField(blank=True, default='')  # Optional short review, max 150 words
 updated_at = DateTimeField(auto_now=True)
 # Unique constraint: (user, item)
 # Database table: 'ratings_rating'
@@ -349,6 +352,7 @@ avatar_url = URLField(blank=True)  # Synced from Slack
 
 **API Endpoints:**
 - `/api/rate/` - POST endpoint for AJAX rating (rate_api)
+- `/api/review/` - POST endpoint for saving/updating a review (save_review); never overwrites rating value
 - `/rate/` - Traditional form POST for rating (rate_view)
 
 ---
@@ -403,7 +407,7 @@ ALLAUTH_SLACK_CLIENT_SECRET=<slack-client-secret>
 **Protection Mechanism:** `@login_required` decorator or `LoginRequiredMixin`
 
 **Protected Views:**
-- All rating/voting views (SwipeRatingView, rate_api, rate_view)
+- All rating views (SwipeRatingView, rate_api, rate_view)
 - Profile view, comparison views
 - Add item view, category detail actions
 - Statistics pages (partially - some data hidden when logged out)
@@ -608,9 +612,10 @@ make logs-follow # Tail logs in real-time
 1. Check for pending migrations: `showmigrations`
 2. Apply migrations: `migrate`
 3. Collect static files: `collectstatic --noinput`
-4. Start server in background: `nohup runserver 0.0.0.0:8000`
-5. Track process ID in `.pid` file
-6. Verify server started successfully
+4. Start Gunicorn on 127.0.0.1:8001 (app requests)
+5. Start Nginx on 0.0.0.0:8000 (serves static/media directly, proxies app to Gunicorn)
+6. Track process IDs in `.pid` files
+7. Verify server started successfully
 
 **Background Execution:**
 - Uses `nohup` to detach from terminal session
@@ -631,19 +636,13 @@ make restart
 make logs
 ```
 
-**Static Files (WhiteNoise):**
-- Collected to `/staticfiles/` directory
-- Served by WhiteNoise middleware
-- Cache-busting hashes in production
-- Gzip compression enabled
-- No separate web server needed
-
-**Media Files (Poster Images):**
-- Stored in `/workspace/media/posters/<imdb_id>.jpg`
-- Served by Django's built-in `serve` view at `/media/` URL prefix
-- WhiteNoise does NOT serve media files — they use a separate URL pattern
-- New items download poster automatically on add via `download_poster()` in `imdb_utils.py`
-- Run `uv run python manage.py download_posters` to backfill any missing posters
+**Static & Media Files (Nginx):**
+- Nginx (port 8000) serves `/static/` and `/media/` files directly from disk — no Python involved
+- This eliminates Gunicorn workers being blocked by large binary file transfers (e.g. poster images)
+- WhiteNoise is still present as middleware but Nginx intercepts static/media requests first
+- Collected static files: `/workspace/staticfiles/`
+- Poster images: `/workspace/media/posters/<imdb_id>.jpg`
+- All other requests proxied by Nginx to Gunicorn on 127.0.0.1:8001
 
 ### Testing Approach
 
@@ -658,8 +657,8 @@ make logs
 - User comparison accuracy
 
 **Testing Checklist:**
-- [ ] Vote submission via swipe interface
-- [ ] Vote updates persist correctly
+- [ ] Rating submission via swipe interface
+- [ ] Rating updates persist correctly
 - [ ] IMDB URLs parse correctly (ID extraction)
 - [ ] Movie metadata fetched and cleaned
 - [ ] Rankings calculate correctly (simple average)
@@ -672,7 +671,7 @@ make logs
 **Future Testing Considerations:**
 - Unit tests for ranking algorithms
 - IMDB scraping tests (mocked responses)
-- Integration tests for voting flow
+- Integration tests for rating flow
 - E2E tests for critical user journeys
 
 ---
@@ -809,6 +808,16 @@ make logs
 - Genre limit: max 3 genres to keep concise
 - `fetch_movie_data()` now returns `title_type` key from JSON-LD `@type` field; use this for category type validation
 
+**Template Filters (`catalog/templatetags/custom_filters.py`):**
+- `split_commas` — splits a comma-separated string into a list (use for genre fields, avoids splitting on spaces within multi-word genres like "Science Fiction")
+
+**Reviews:**
+- `review` is a TextField on the Rating model (blank, default='')
+- 150-word server-side limit enforced in `save_review` view
+- Live word counter in the textarea (turns orange at 130 words, red/blocks save at 151+)
+- Reviews appear on: movie detail page (Team Reviews section with color-coded left borders), user profile page (Reviews section), home activity feed (truncated to 20 words)
+- `save_review` endpoint never touches the `rating` field — safe to call independently of rating changes
+
 **Static Files:**
 - Source: `/workspace/static/` (manually added files only)
 - Generated: `/workspace/staticfiles/` (collectstatic output)
@@ -817,8 +826,8 @@ make logs
 
 **Media Files (Poster Images):**
 - Location: `/workspace/media/posters/<imdb_id>.jpg` (gitignored)
-- Served at `/media/posters/...` via Django `serve` view (NOT WhiteNoise)
-- `MEDIA_ROOT` and `MEDIA_URL` configured in `settings.py`
+- Served at `/media/posters/...` directly by Nginx (not Django or WhiteNoise)
+- `MEDIA_ROOT` and `MEDIA_URL` still configured in `settings.py` for Django's reference
 - `download_poster(poster_url, imdb_id)` in `imdb_utils.py` handles download
 - Called automatically in `AddItemView` and bulk-add view after IMDB fetch
 - To backfill all existing items: `uv run python manage.py download_posters`
@@ -866,6 +875,6 @@ make restart
 
 ---
 
-*Last Updated: 2026-02-18*
+*Last Updated: 2026-02-19*
 *This document is maintained for AI agent context and developer onboarding.*
 
