@@ -33,7 +33,7 @@
 
 ## Overview
 
-**PopQuiz** is a collaborative voting platform for teams to discover and rank their favorite pop culture items — currently Movies and TV Shows.
+**PopQuiz** is a collaborative voting platform for teams to discover and rank their favorite pop culture items — currently Movies and TV Series.
 
 **What is it?**
 A web application that transforms pop culture discussions into an interactive, data-driven experience. Team members rate items using a Tinder-style swipe interface, and the app aggregates votes to reveal team rankings, identify taste compatibility between members, and surface items that spark debate.
@@ -167,11 +167,18 @@ Provides preview of the app while protecting team privacy. Encourages registrati
 - Each IMDB ID can only be added once (uniqueness enforced)
 - Item metadata automatically fetched from IMDB:
   - Title (English version prioritized)
-  - Year of release
+  - Year of release (extracted from og:title for original release year accuracy)
   - Director
   - Genres (up to 3, comma-separated)
   - Poster image — downloaded and cached locally on the server
   - IMDB URL for reference
+  - Content type (`title_type`) from IMDB's JSON-LD `@type` field
+
+**Content-Type Validation:**
+- Adding an item to the wrong category is prevented using IMDB's `@type` field
+- Movies category only accepts: `Movie`, `TVMovie`
+- TV Series category only accepts: `TVSeries`, `TVMiniSeries`
+- If the IMDB link points to the wrong type, a clear error message is shown (e.g. "That IMDB link is for a TV series, not a movie")
 
 **Poster Image Caching:**
 - Poster images are downloaded from Amazon CDN at item-creation time
@@ -191,7 +198,8 @@ Provides preview of the app while protecting team privacy. Encourages registrati
 - Automatic removal of IMDB metadata from titles:
   - Star ratings (⭐ 7.9) stripped
   - Genre suffixes after pipe (| Animation, Comedy) removed
-  - Years in parentheses (2023) removed
+  - Years in parentheses (2023) removed for movies
+  - TV series/mini-series type label removed but **year range is preserved**: `"Breaking Bad (TV Series 2008–2013)"` → `"Breaking Bad (2008–2013)"`
   - HTML entities decoded (&amp; → &)
 
 **Item Categorization:**
@@ -412,7 +420,7 @@ See your own rating history, track what you've rated, organize by director/genre
 - Stats bar showing rating distribution (visual segments for each rating type)
 - Rating counts: X Loved, X Liked, X Okay, X Disliked, X Hated, X Haven't Seen
 - Total ratings cast
-- **Category filter tabs:** When a user has ratings in more than one category, tabs appear (e.g., All | Movies | TV Shows). Selecting a tab scopes the entire page — rating grid, unseen items, and background poster collage — to that category. Tabs are always visible regardless of whether the selected category has rated items.
+- **Category filter tabs:** When a user has ratings in more than one category, tabs appear (e.g., All | Movies | TV Series). Selecting a tab scopes the entire page — rating grid, unseen items, and background poster collage — to that category. Tabs are always visible regardless of whether the selected category has rated items.
 - Item grid with poster, title, rating badge
 - Multiple sort options (preserved when switching category tabs):
   - **By Title:** Alphabetical A-Z (default)
@@ -437,6 +445,7 @@ See your own rating history, track what you've rated, organize by director/genre
 - Items without genre: Appear in "Unknown Genre" group
 - User viewing others' profiles: Same layout, but shows "Their" instead of "Your"
 - Switching to a category with no rated items: Category tabs remain visible so user can switch back; ratings grid shows empty state
+- Tabs only shown when user has ratings in 2+ categories — single-category users see no tabs
 
 **Success Criteria:**
 - Profile loads in <2 seconds with 100+ ratings
@@ -503,7 +512,7 @@ Identify shared favorites, discover differences, spark conversations, find movie
 ### Feature: Item Addition via IMDB
 
 **Description:**
-Add new items (movies, TV shows, etc.) to the database by providing an IMDB URL or ID, with automatic metadata fetching and poster caching.
+Add new items (movies, TV series, etc.) to the database by providing an IMDB URL or ID, with automatic metadata fetching, content-type validation, and poster caching.
 
 **User Value:**
 Expand movie library without manual data entry, ensure accurate information from trusted source, maintain consistent quality.
@@ -524,6 +533,7 @@ Expand movie library without manual data entry, ensure accurate information from
   - IMDB ID must be valid format
   - Item cannot already exist (duplicate check)
   - IMDB page must load successfully
+  - Content type must match the category (e.g., can't add a TV series to Movies)
 - Success: Redirect to category page with confirmation message
 - Failure: Show error message inline, keep form populated
 - Tracks who added the item (`added_by` field)
@@ -803,6 +813,7 @@ Movie successfully added to database with correct metadata, visible to all team 
 **Error Paths:**
 - **Invalid URL format:** Error message "Invalid IMDB URL or ID", form stays populated, user can correct
 - **Duplicate movie:** Error message "This movie already exists in [Category]", link to existing movie page
+- **Wrong content type:** Error message "That IMDB link is for a TV series, not a movie" (or vice versa)
 - **IMDB page not found:** Error message "Movie not found on IMDB, check the URL", form stays populated
 - **Network timeout:** Error message "Failed to fetch movie data, try again", retry button
 - **IMDB scraping fails:** Error message "Couldn't read movie data, try again or contact admin"

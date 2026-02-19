@@ -52,7 +52,7 @@ Friend groups, work teams, film clubs, or any group that wants to discover their
 - Bayesian averaging for fair ranking calculations
 - Social authentication via Slack OAuth
 - Mobile-optimized responsive design
-- Multi-category support (Movies, TV Shows, etc.) with per-category profile filtering
+- Multi-category support (Movies, TV Series, etc.) with per-category profile filtering
 
 **Production Environment:**
 Hosted at https://popquiz.rrchnm.org with WhiteNoise for static file serving and reverse proxy handling SSL/TLS.
@@ -247,10 +247,11 @@ PopQuiz follows standard Django MTV (Model-Template-View) architecture with thre
 ### Django Apps
 
 **1. catalog** - Core Content Management
-- Manages categories (e.g., "Movies", "TV Shows") and items within each category
+- Manages categories (e.g., "Movies", "TV Series") and items within each category
 - Handles IMDB data fetching, metadata, and local poster image caching
 - Provides category browsing, item adding, and item detail views
 - Statistics views: team rankings, decade rankings, eclectic tastes, divisive items
+- Content-type validation on item add: prevents adding a Movie to TV Series and vice versa using IMDB's JSON-LD `@type` field; governed by `CATEGORY_ALLOWED_IMDB_TYPES` dict in `views.py`
 - Key Files: `models.py` (Category, Item), `imdb_utils.py` (scraping + poster download), `views.py` (all catalog views)
 - Management command: `download_posters` — backfills local poster cache for existing items
 
@@ -717,6 +718,9 @@ make logs
 - May break if IMDB changes HTML structure
 - After fetching metadata, `download_poster()` is called to cache the poster locally
 - Poster saved to `media/posters/<imdb_id>.jpg`; falls back to external URL on failure
+- `fetch_movie_data()` returns `title_type` from JSON-LD `@type` (e.g. `Movie`, `TVSeries`, `TVMiniSeries`, `TVMovie`, `TVEpisode`)
+- TV series label stripped from titles but year range preserved: `"Breaking Bad (TV Series 2008–2013)"` → `"Breaking Bad (2008–2013)"`
+- Year extracted from og:title (original release year) rather than `datePublished`, which can reflect re-releases or streaming availability
 
 **Rating Scale Convention:**
 - Consistent order: Hated (left) → Disliked → Okay → Liked → Loved (right)
@@ -798,9 +802,12 @@ make logs
 **IMDB Scraping Gotchas:**
 - Variable name conflict: use `page_html` not `html` (avoids module conflict)
 - Title metadata: strip ratings (⭐), genres (|), years in parens
+- TV series label: strip "TV Series"/"TV Mini Series" from title but **keep the year range** — regex `r'\(TV (?:Mini )?Series\s+'` → `'('`; then separate pass removes bare `(TV Series)` with no years
+- Year: extract from og:title **before** stripping the year parens — og:title reliably shows original release year; `datePublished` can be a re-release/streaming date
 - Use `html.unescape()` for HTML entities
 - Prioritize `og:title` for English titles
 - Genre limit: max 3 genres to keep concise
+- `fetch_movie_data()` now returns `title_type` key from JSON-LD `@type` field; use this for category type validation
 
 **Static Files:**
 - Source: `/workspace/static/` (manually added files only)
@@ -832,6 +839,18 @@ make restart
 - Ensure no database permission issues
 - Verify static files load correctly
 
+**Content-Type Validation:**
+- `CATEGORY_ALLOWED_IMDB_TYPES` dict in `views.py` maps category slug → set of allowed IMDB `@type` values:
+  ```python
+  CATEGORY_ALLOWED_IMDB_TYPES = {
+      'movies':    {'Movie', 'TVMovie'},
+      'tv-series': {'TVSeries', 'TVMiniSeries'},
+  }
+  ```
+- `IMDB_TYPE_LABELS` dict provides human-readable label for each type in error messages
+- Validation runs in `AddItemView.post()` after the duplicate check; if the IMDB title type is not in the allowed set, a form error is shown
+- Categories not in `CATEGORY_ALLOWED_IMDB_TYPES` (e.g. future categories) skip type validation
+
 **Common Pitfalls:**
 - Forgetting to restart server after model changes
 - Not running migrations after model modifications
@@ -842,9 +861,11 @@ make restart
 - Emoji alignment issues (use inline-flex and leading-none)
 - Forgetting to call `download_poster()` when adding items programmatically outside the normal views
 - Putting category filter tabs inside `{% if ratings_by_category %}` — they must be outside that block so they remain visible when a category has no rated items
-- Amazon CDN blocks image hotlinking — `<meta name="referrer" content="no-referrer">` in `base.html` prevents this for external fallback URLs
+- Amazon CDN blocks image hotlinking — `<meta name="referrer" content="same-origin">` in `base.html` prevents this for external fallback URLs (do NOT use `no-referrer` — it causes `Origin: null` on form POSTs which Django's CSRF middleware rejects)
+- `datePublished` in IMDB JSON-LD can reflect a re-release or streaming date rather than original release year — always prefer the year extracted from og:title
 
 ---
 
 *Last Updated: 2026-02-18*
 *This document is maintained for AI agent context and developer onboarding.*
+
