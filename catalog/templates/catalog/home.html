@@ -249,11 +249,11 @@
                     <h2 class="text-2xl font-bold mb-2">{{ cat_data.category.name }}</h2>
                     {% if cat_data.remaining > 0 %}
                     <p class="text-white/90 text-lg mb-4">
-                        You have <span class="font-bold text-yellow-300">{{ cat_data.remaining }} {{ cat_data.category.item_label }}{{ cat_data.remaining|pluralize }}</span> left to rate!
+                        You have <span class="font-bold text-yellow-300">{{ cat_data.remaining }} {% if cat_data.remaining == 1 %}{{ cat_data.category.item_label }}{% else %}{{ cat_data.category.item_label_plural }}{% endif %}</span> left to rate!
                     </p>
                     {% else %}
                     <p class="text-white/90 text-lg mb-4">
-                        You've rated all {{ cat_data.total }} {{ cat_data.category.item_label }}s!
+                        You've rated all {{ cat_data.total }} {{ cat_data.category.item_label_plural }}!
                     </p>
                     {% endif %}
 

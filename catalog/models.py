@@ -17,6 +17,14 @@ class Category(models.Model):
         verbose_name_plural = 'categories'
         ordering = ['name']
 
+    @property
+    def item_label_plural(self):
+        """Plural form of item_label, handling irregular plurals like 'series'."""
+        label = self.item_label
+        if label.endswith(('s', 'x', 'z')) or label.endswith(('ch', 'sh')):
+            return label
+        return label + 's'
+
     def __str__(self):
         return self.name
 
