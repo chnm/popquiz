@@ -214,8 +214,25 @@ class CategoryDetailView(DetailView):
         return context
 
 
+# Maps each category slug to the IMDB title types that belong in it.
+# Used to prevent adding a TV series to Movies (and vice versa).
+CATEGORY_ALLOWED_IMDB_TYPES = {
+    'movies': {'Movie', 'TVMovie'},
+    'tv-series': {'TVSeries', 'TVMiniSeries'},
+}
+
+# Human-readable labels for IMDB title types used in error messages.
+IMDB_TYPE_LABELS = {
+    'Movie': 'movie',
+    'TVMovie': 'TV movie',
+    'TVSeries': 'TV series',
+    'TVMiniSeries': 'TV mini-series',
+    'TVEpisode': 'TV episode',
+}
+
+
 class AddItemView(LoginRequiredMixin, View):
-    """View to add a movie using just an IMDB URL."""
+    """View to add an item (movie or TV series) using an IMDB URL."""
 
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
@@ -242,10 +259,26 @@ class AddItemView(LoginRequiredMixin, View):
                     'category': category,
                 })
 
-            # Check if movie already exists
+            # Check if item already exists
             existing = Item.objects.filter(imdb_id=movie_data['imdb_id']).first()
             if existing:
                 form.add_error('imdb_url', f'This {category.item_label} already exists: "{existing.title}"')
+                return render(request, 'catalog/add_item.html', {
+                    'form': form,
+                    'category': category,
+                })
+
+            # Validate that the IMDB title type matches this category.
+            # e.g. prevent adding a TV series to the Movies category.
+            title_type = movie_data.get('title_type')
+            allowed_types = CATEGORY_ALLOWED_IMDB_TYPES.get(category.slug)
+            if allowed_types and title_type and title_type not in allowed_types:
+                friendly_type = IMDB_TYPE_LABELS.get(title_type, title_type)
+                form.add_error(
+                    'imdb_url',
+                    f'That IMDB link is for a {friendly_type}, not a {category.item_label}. '
+                    f'Please add it to the correct category.'
+                )
                 return render(request, 'catalog/add_item.html', {
                     'form': form,
                     'category': category,

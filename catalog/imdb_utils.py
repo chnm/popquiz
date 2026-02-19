@@ -84,6 +84,8 @@ def fetch_movie_data(imdb_url):
     - imdb_id: str
     - imdb_url: str (cleaned canonical URL)
     - poster_url: str or None
+    - title_type: str or None — IMDB's content type, e.g.:
+        'Movie', 'TVMovie', 'TVSeries', 'TVMiniSeries', 'TVEpisode'
 
     Returns None if fetch fails.
     """
@@ -109,7 +111,9 @@ def fetch_movie_data(imdb_url):
             title = og_title.group(1)
             title = re.sub(r'\s*\|.*$', '', title)  # Remove pipe separator and everything after (genres, etc.)
             title = re.sub(r'\s*⭐\s*[\d.]+', '', title)  # Remove star emoji and rating
-            title = re.sub(r'\s*\(\d{4}\)', '', title)  # Remove year in parentheses
+            title = re.sub(r'\s*\(TV Series[^)]*\)', '', title)  # Remove e.g. "(TV Series 2008–2013)"
+            title = re.sub(r'\s*\(TV Mini[- ]Series[^)]*\)', '', title)  # Remove e.g. "(TV Mini-Series 2020)"
+            title = re.sub(r'\s*\(\d{4}\)', '', title)  # Remove standalone year in parentheses
             title = re.sub(r'\s*-\s*IMDb\s*$', '', title)  # Remove - IMDb suffix
             title = html.unescape(title)  # Decode HTML entities like &amp;
             title = title.strip()
@@ -172,6 +176,21 @@ def fetch_movie_data(imdb_url):
                 # It's a single string
                 genre = genre_data.strip('"')
 
+        # Extract title type from JSON-LD @type field.
+        # IMDB uses schema.org types to distinguish content:
+        #   'Movie'        — theatrical/streaming film
+        #   'TVMovie'      — made-for-TV film
+        #   'TVSeries'     — ongoing or completed TV series
+        #   'TVMiniSeries' — limited/mini series
+        #   'TVEpisode'    — individual episode
+        title_type = None
+        type_match = re.search(
+            r'"@type":\s*"(Movie|TVMovie|TVSeries|TVMiniSeries|TVEpisode)"',
+            page_html
+        )
+        if type_match:
+            title_type = type_match.group(1)
+
         return {
             'title': title,
             'year': year,
@@ -180,6 +199,7 @@ def fetch_movie_data(imdb_url):
             'imdb_id': imdb_id,
             'imdb_url': canonical_url,
             'poster_url': poster_url,
+            'title_type': title_type,
         }
 
     except requests.RequestException:
