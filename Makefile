@@ -7,9 +7,9 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make deploy       - Full deployment (migrate, collectstatic, start server)"
-	@echo "  make start        - Start Nginx + Gunicorn in background"
-	@echo "  make stop         - Stop Nginx + Gunicorn"
-	@echo "  make restart      - Restart Nginx + Gunicorn"
+	@echo "  make start        - Start Gunicorn in background"
+	@echo "  make stop         - Stop Gunicorn"
+	@echo "  make restart      - Restart Gunicorn"
 	@echo "  make status       - Check if server is running"
 	@echo "  make logs         - View recent server logs"
 	@echo "  make logs-follow  - Tail server logs in real-time"
@@ -19,8 +19,7 @@ help:
 	@echo "  make clean        - Clean up log files"
 	@echo ""
 	@echo "Production URL: https://popquiz.rrchnm.org"
-	@echo "Nginx: port 8000 (static/media direct, app proxied to 8001)"
-	@echo "Gunicorn: 127.0.0.1:8001"
+	@echo "Gunicorn: 0.0.0.0:8000"
 	@echo "Logs: /tmp/popquiz.log"
 	@echo "PID file: .pid"
 
@@ -51,15 +50,15 @@ check:
 	@echo "==> Running Django system checks..."
 	@uv run python manage.py check
 
-# Start Gunicorn + Nginx
+# Start Gunicorn
 start:
 	@if [ -f .pid ] && kill -0 $$(cat .pid) 2>/dev/null; then \
 		echo "==> Server is already running (PID: $$(cat .pid))"; \
 		exit 1; \
 	fi
-	@echo "==> Starting Gunicorn on 127.0.0.1:8001..."
+	@echo "==> Starting Gunicorn on 0.0.0.0:8000..."
 	@nohup uv run gunicorn popquiz.wsgi:application \
-		--bind 127.0.0.1:8001 \
+		--bind 0.0.0.0:8000 \
 		--workers 4 \
 		--timeout 120 \
 		--access-logfile /tmp/popquiz.log \
@@ -72,16 +71,9 @@ start:
 		echo "==> ERROR: Gunicorn failed to start. Check logs with: make logs"; \
 		exit 1; \
 	fi
-	@echo "==> Starting Nginx on port 8000..."
-	@sudo nginx -s quit 2>/dev/null || true
-	@sleep 1
-	@sudo nginx
-	@echo "==> Nginx started"
 
-# Stop Gunicorn + Nginx
+# Stop Gunicorn
 stop:
-	@echo "==> Stopping Nginx..."
-	@sudo nginx -s quit 2>/dev/null || true
 	@if [ ! -f .pid ]; then \
 		echo "==> No PID file found. Gunicorn may not be running."; \
 	elif kill -0 $$(cat .pid) 2>/dev/null; then \
@@ -106,11 +98,6 @@ status:
 		echo "==> Public URL: https://popquiz.rrchnm.org"; \
 	else \
 		echo "==> Gunicorn is NOT RUNNING"; \
-	fi
-	@if sudo nginx -t 2>/dev/null && pgrep -x nginx > /dev/null 2>&1; then \
-		echo "==> Nginx is RUNNING"; \
-	else \
-		echo "==> Nginx is NOT RUNNING"; \
 	fi
 
 # View recent logs
