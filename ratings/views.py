@@ -81,7 +81,7 @@ def rate_api(request):
             'current_item': {
                 'id': current_item.id,
                 'title': current_item.title,
-                'year': current_item.year,
+                'year': current_item.display_year,
                 'poster_url': current_item.poster_url,
                 'imdb_url': current_item.imdb_url,
             },

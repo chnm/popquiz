@@ -33,6 +33,7 @@ class Item(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='items')
     title = models.CharField(max_length=255)
     year = models.PositiveIntegerField(null=True, blank=True)
+    years_running = models.CharField(max_length=20, blank=True)
     director = models.CharField(max_length=255, blank=True)
     genre = models.CharField(max_length=255, blank=True)
     imdb_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
@@ -49,7 +50,17 @@ class Item(models.Model):
     class Meta:
         ordering = ['title']
 
-    def __str__(self):
+    @property
+    def display_year(self):
+        """Returns years_running range for TV series, or debut year for everything else."""
+        if self.years_running:
+            return self.years_running
         if self.year:
-            return f"{self.title} ({self.year})"
+            return str(self.year)
+        return ''
+
+    def __str__(self):
+        display = self.display_year
+        if display:
+            return f"{self.title} ({display})"
         return self.title

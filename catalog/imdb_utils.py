@@ -104,6 +104,7 @@ def fetch_movie_data(imdb_url):
 
         # Extract title
         title = None
+        years_running = None
         # Try og:title first (English title on US IMDB site)
         og_title = re.search(r'<meta property="og:title" content="([^"]+)"', page_html)
         if og_title:
@@ -113,6 +114,13 @@ def fetch_movie_data(imdb_url):
             title = re.sub(r'\s*⭐\s*[\d.]+', '', title)  # Remove star emoji and rating
             title = re.sub(r'\(TV (?:Mini )?Series\s+', '(', title)  # "(TV Series 2006–2013)" -> "(2006–2013)"
             title = re.sub(r'\s*\(TV (?:Mini )?Series\)', '', title)    # "(TV Series)" -> "" (no years)
+            # For TV series, detect a year range like "(2008–2013)" or "(2006– )" before stripping.
+            # en-dash (–) is standard on IMDB but handle regular hyphen (-) as fallback.
+            tv_year_range = re.search(r'\((\d{4}[–\-]\d*\s*)\)', title)
+            if tv_year_range:
+                years_running = tv_year_range.group(1).strip()
+                # Strip the year range from title; we store it in years_running
+                title = re.sub(r'\s*\(\d{4}[–\-]\d*\s*\)', '', title)
             # Extract year from og:title before stripping it — og:title reliably shows
             # the original release year (e.g. "Ip Man (2008)"), whereas datePublished
             # can reflect re-releases or streaming availability dates.
@@ -133,9 +141,14 @@ def fetch_movie_data(imdb_url):
 
         # Extract year — prefer og:title year (original release) over datePublished
         # (which can reflect re-releases, streaming dates, or regional releases).
+        # For TV series with a year range, use the debut year from that range.
         year = None
         if year_from_og:
             year = int(year_from_og.group(1))
+        elif years_running:
+            debut_match = re.match(r'(\d{4})', years_running)
+            if debut_match:
+                year = int(debut_match.group(1))
         else:
             year_match = re.search(r'"datePublished":\s*"(\d{4})', page_html)
             if year_match:
@@ -202,6 +215,7 @@ def fetch_movie_data(imdb_url):
         return {
             'title': title,
             'year': year,
+            'years_running': years_running or '',
             'director': director,
             'genre': genre,
             'imdb_id': imdb_id,

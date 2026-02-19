@@ -41,8 +41,8 @@
                         <div class="mb-4">
                             <h2 class="text-3xl font-bold mb-2">{{ item.title }}</h2>
                             <div class="flex flex-wrap gap-2 text-sm text-white/80">
-                                {% if item.year %}
-                                <span>{{ item.year }}</span>
+                                {% if item.display_year %}
+                                <span>{{ item.display_year }}</span>
                                 {% endif %}
                                 {% if item.director %}
                                 <span>•</span>
@@ -534,8 +534,8 @@
                             <a href="{% url 'item_detail' activity.item.category.slug activity.item.id %}" class="text-gray-900 font-medium hover:text-indigo-600 transition-colors">
                                 {{ activity.item.title }}
                             </a>
-                            {% if activity.item.year %}
-                                <span class="text-gray-500">({{ activity.item.year }})</span>
+                            {% if activity.item.display_year %}
+                                <span class="text-gray-500">({{ activity.item.display_year }})</span>
                             {% endif %}
                         </p>
                         <p class="text-xs text-gray-500 mt-0.5">

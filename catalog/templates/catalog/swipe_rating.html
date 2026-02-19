@@ -26,7 +26,7 @@
                 <!-- Desktop: Title and buttons in right column -->
                 <div class="hidden md:block md:mb-6 text-left">
                     <h2 id="movie-title-desktop" class="text-2xl font-bold text-gray-800 min-h-[64px]">{{ current_item.title }}</h2>
-                    <p id="movie-year-desktop" class="text-gray-500 text-lg h-7">{% if current_item.year %}{{ current_item.year }}{% endif %}</p>
+                    <p id="movie-year-desktop" class="text-gray-500 text-lg h-7">{{ current_item.display_year }}</p>
                     <a id="imdb-link-desktop" href="{% if current_item.imdb_url %}{{ current_item.imdb_url }}{% else %}#{% endif %}" target="_blank" class="text-indigo-600 hover:underline text-sm block h-5" {% if not current_item.imdb_url %}style="visibility: hidden;"{% endif %}>View on IMDB</a>
                 </div>
 
@@ -116,7 +116,7 @@
             <!-- Mobile: Title below poster -->
             <div class="order-3 md:hidden p-3 pb-4 text-center">
                 <h2 id="movie-title-mobile" class="text-lg font-bold text-gray-800">{{ current_item.title }}</h2>
-                <p id="movie-year-mobile" class="text-gray-500 text-sm">{% if current_item.year %}{{ current_item.year }}{% endif %}</p>
+                <p id="movie-year-mobile" class="text-gray-500 text-sm">{{ current_item.display_year }}</p>
                 <a id="imdb-link-mobile" href="{% if current_item.imdb_url %}{{ current_item.imdb_url }}{% else %}#{% endif %}" target="_blank" class="text-indigo-600 hover:underline text-xs" {% if not current_item.imdb_url %}style="visibility: hidden;"{% endif %}>View on IMDB</a>
             </div>
         </div>

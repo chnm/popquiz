@@ -62,7 +62,7 @@
                     <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="hover:text-indigo-600 transition">
                         <h3 class="font-bold text-gray-800 truncate hover:text-indigo-600">{{ item_data.item.title }}</h3>
                     </a>
-                    <p class="text-gray-500 text-sm">{{ item_data.item.year }}</p>
+                    <p class="text-gray-500 text-sm">{{ item_data.item.display_year }}</p>
                 </div>
 
                 {% if item_data.score is not None %}
