@@ -171,6 +171,13 @@ class HomeView(ListView):
             # Limit to 15 most recent activities
             context['recent_activities'] = activities[:15]
 
+            # Get featured reviews (ratings with non-empty reviews, most recent)
+            context['featured_reviews'] = list(
+                Rating.objects.exclude(review='').select_related(
+                    'user', 'item', 'item__category'
+                ).order_by('-updated_at')[:12]
+            )
+
         return context
 
 

@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib import messages
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, DetailView, ListView
 from django.views import View
 from django.urls import reverse_lazy, reverse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Case, When, IntegerField, Value
 
 from .forms import RegistrationForm, LoginForm
 from .models import User
@@ -774,3 +774,18 @@ class CompareThreeUsersView(View):
             'total_user1_and_3': total_user1_and_3,
             'total_user2_and_3': total_user2_and_3,
         })
+
+
+class TeamView(ListView):
+    template_name = 'accounts/team.html'
+    context_object_name = 'members'
+
+    def get_queryset(self):
+        return User.objects.filter(is_staff=False).annotate(
+            rating_count=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING)),
+            has_last_name=Case(
+                When(last_name='', then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField()
+            )
+        ).order_by('-has_last_name', 'last_name', 'first_name', 'username')

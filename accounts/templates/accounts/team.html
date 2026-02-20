@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}The Team - PopQuiz{% endblock %}
+
+{% block content %}
+{% load custom_filters %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">The Team</h1>
+    <p class="text-gray-600">Everyone who's been rating and ranking pop culture together.</p>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {% for member in members %}
+    <a href="{% url 'profile' member.username %}" class="bg-white rounded-xl shadow-md p-5 flex flex-col items-center text-center hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+        <!-- Avatar -->
+        <div class="mb-3">
+            {% if member.avatar_url %}
+            <img src="{{ member.avatar_url }}" alt="{% if member.first_name %}{{ member.first_name }}{% else %}{{ member.username }}{% endif %}"
+                 class="w-16 h-16 rounded-full object-cover ring-2 ring-indigo-100">
+            {% else %}
+            <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span class="text-2xl font-bold text-indigo-500">
+                    {% if member.first_name %}{{ member.first_name|slice:":1" }}{% else %}{{ member.username|slice:":1"|upper }}{% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Name -->
+        <p class="font-semibold text-gray-800 text-sm leading-tight mb-1">
+            {% if member.first_name %}{{ member.first_name }} {{ member.last_name }}{% else %}{{ member.username }}{% endif %}
+        </p>
+
+        <!-- Rating count -->
+        <p class="text-xs text-gray-500">
+            {{ member.rating_count }} rating{{ member.rating_count|pluralize }}
+        </p>
+    </a>
+    {% empty %}
+    <div class="col-span-full bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+        No team members yet.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

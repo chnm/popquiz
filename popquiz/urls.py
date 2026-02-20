@@ -3,12 +3,13 @@ from django.urls import path, include
 from django.views.static import serve
 from django.conf import settings
 
-from accounts.views import ProfileView, CompareUsersView, CompareThreeUsersView
+from accounts.views import ProfileView, CompareUsersView, CompareThreeUsersView, TeamView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),  # django-allauth URLs (must come before accounts.urls)
     path('accounts/', include('accounts.urls')),
+    path('team/', TeamView.as_view(), name='team'),
     path('profile/<str:username>/', ProfileView.as_view(), name='profile'),
     path('compare/<str:username1>/<str:username2>/', CompareUsersView.as_view(), name='compare_users'),
     path('compare/<str:username1>/<str:username2>/<str:username3>/', CompareThreeUsersView.as_view(), name='compare_three_users'),

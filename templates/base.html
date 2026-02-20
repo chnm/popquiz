@@ -57,6 +57,7 @@
                                 <img src="{{ user.avatar_url }}" alt="{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}" class="w-8 h-8 rounded-full">
                             {% endif %}
                             <span class="text-gray-400 text-sm">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</span>
+                            <a href="{% url 'team' %}" class="text-gray-200 hover:text-white">Team</a>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white">My Profile</a>
                             <form method="post" action="{% url 'account_logout' %}" class="inline">
                                 {% csrf_token %}
@@ -94,6 +95,7 @@
                                 {% endif %}
                                 <div class="text-gray-300">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</div>
                             </div>
+                            <a href="{% url 'team' %}" class="text-gray-200 hover:text-white block py-2">Team</a>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white block py-2">My Profile</a>
                             <form method="post" action="{% url 'account_logout' %}">
                                 {% csrf_token %}
