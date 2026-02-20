@@ -554,11 +554,17 @@
     <div>
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Featured Reviews</h2>
         {% if featured_reviews %}
-        <div class="relative" id="review-carousel">
+        <style>
+        @keyframes review-fill {
+            from { width: 0%; }
+            to   { width: 100%; }
+        }
+        </style>
+        <div id="review-carousel">
             <!-- Slides -->
-            <div class="overflow-hidden rounded-lg shadow-md">
+            <div class="rounded-lg shadow-md overflow-hidden">
                 {% for review in featured_reviews %}
-                <div class="review-slide {% if not forloop.first %}hidden{% endif %}">
+                <div class="review-slide {% if not forloop.first %}hidden{% endif %}" style="transition: opacity 0.4s ease; opacity: {% if forloop.first %}1{% else %}0{% endif %};">
                     {% if review.rating == 'loved' %}{% with border_color="border-purple-400" bg_color="bg-purple-50" emoji="🤩" rating_label="loved" label_color="text-purple-600" %}
                     {% include "catalog/includes/review_card.html" %}
                     {% endwith %}
@@ -581,29 +587,72 @@
                 {% endfor %}
             </div>
 
+            <!-- Progress bar -->
+            <div class="mt-2 h-0.5 bg-gray-200 rounded-full overflow-hidden">
+                <div id="review-bar" class="h-full bg-indigo-300 rounded-full" style="width:0%"></div>
+            </div>
         </div>
 
         <script>
         (function() {
+            var INTERVAL = 20000;
             var slides = document.querySelectorAll('.review-slide');
             if (slides.length <= 1) return;
 
+            var bar = document.getElementById('review-bar');
+            var carousel = document.getElementById('review-carousel');
             var current = 0;
             var timer;
+            var busy = false;
+
+            function startBar() {
+                bar.style.animation = 'none';
+                bar.offsetHeight; // reflow to restart
+                bar.style.animation = 'review-fill ' + INTERVAL + 'ms linear forwards';
+            }
+
+            function freezeBar() {
+                var w = getComputedStyle(bar).width;
+                bar.style.animation = 'none';
+                bar.style.width = w;
+            }
 
             function goTo(index) {
-                slides[current].classList.add('hidden');
-                current = (index + slides.length) % slides.length;
-                slides[current].classList.remove('hidden');
+                if (busy) return;
+                busy = true;
+                var next = (index + slides.length) % slides.length;
+                slides[current].style.opacity = '0';
+                setTimeout(function() {
+                    slides[current].classList.add('hidden');
+                    slides[current].style.opacity = '1'; // reset for next appearance
+                    current = next;
+                    slides[current].classList.remove('hidden');
+                    slides[current].offsetHeight; // reflow
+                    slides[current].style.opacity = '1';
+                    busy = false;
+                    startBar();
+                }, 400);
             }
 
             function advance() { goTo(current + 1); }
 
-            timer = setInterval(advance, 20000);
+            function startTimer() {
+                clearInterval(timer);
+                timer = setInterval(advance, INTERVAL);
+            }
 
-            var carousel = document.getElementById('review-carousel');
-            carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
-            carousel.addEventListener('mouseleave', function() { timer = setInterval(advance, 20000); });
+            carousel.addEventListener('mouseenter', function() {
+                clearInterval(timer);
+                freezeBar();
+            });
+
+            carousel.addEventListener('mouseleave', function() {
+                startTimer();
+                startBar();
+            });
+
+            startTimer();
+            startBar();
         })();
         </script>
         {% else %}
