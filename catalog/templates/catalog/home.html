@@ -223,7 +223,7 @@
             <div class="relative w-full h-full">
                 {% if item.image_url %}
                 <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
-                     onerror="this.style.display='none';">
+                     loading="lazy" onerror="this.style.display='none';">
                 {% endif %}
             </div>
             {% endfor %}
@@ -304,7 +304,7 @@
             <div class="relative w-full h-full">
                 {% if item.image_url %}
                 <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
-                     onerror="this.style.display='none';">
+                     loading="lazy" onerror="this.style.display='none';">
                 {% endif %}
             </div>
             {% endfor %}

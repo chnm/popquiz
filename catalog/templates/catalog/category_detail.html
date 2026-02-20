@@ -37,6 +37,7 @@
                         {% if item_data.item.image_url %}
                             <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
                                  class="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded shadow-sm flex-shrink-0"
+                                 loading="lazy"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                             <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded items-center justify-center flex-shrink-0" style="display: none;">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">

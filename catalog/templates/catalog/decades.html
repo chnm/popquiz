@@ -42,6 +42,7 @@
                     {% if item_data.item.image_url %}
                     <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
                          class="w-12 h-18 object-cover rounded-lg"
+                         loading="lazy"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="w-12 h-18 bg-gray-200 rounded-lg items-center justify-center" style="display: none;">
                         <svg class="w-5 h-5" fill="#9ca3af" viewBox="0 0 24 24">
@@ -151,7 +152,8 @@
                 <div class="flex-shrink-0 w-12 h-18 mr-4">
                     {% if item_data.item.image_url %}
                     <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
-                         class="w-12 h-18 object-cover rounded-lg">
+                         class="w-12 h-18 object-cover rounded-lg"
+                         loading="lazy">
                     {% else %}
                     <div class="w-12 h-18 bg-gray-200 rounded-lg flex items-center justify-center">
                         <svg class="w-5 h-5" fill="#9ca3af" viewBox="0 0 24 24">
