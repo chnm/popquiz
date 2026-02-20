@@ -155,7 +155,7 @@
             {% for compat in all_compatibilities %}
             <a href="{% url 'compare_users' profile_user.username compat.user.username %}"
                class="inline-flex items-center px-3 py-1 bg-gray-100 hover:bg-indigo-100 rounded-full text-sm transition duration-200">
-                <span class="font-medium text-gray-700">{{ compat.user.first_name }}</span>
+                <span class="font-medium text-gray-700">{{ compat.user.first_name|default:compat.user.username }}</span>
                 <span class="ml-2 text-xs {% if compat.score >= 70 %}text-green-600{% elif compat.score >= 40 %}text-yellow-600{% else %}text-red-600{% endif %}">
                     {{ compat.score }}%
                 </span>
