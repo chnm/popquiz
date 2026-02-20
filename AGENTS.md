@@ -204,16 +204,20 @@ popquiz/
 │   ├── management/commands/    # Management commands
 │   │   └── download_posters.py # Backfill poster images for existing items
 │   └── templates/catalog/      # Catalog-specific templates
+│       └── includes/           # Reusable template partials
+│           └── review_card.html # Featured review carousel slide
 ├── ratings/                     # Rating system app
 │   ├── models.py               # Rating model
 │   ├── views.py                # Rating submission logic
 │   └── urls.py                 # Rating API endpoints
 └── accounts/                    # User management app
     ├── models.py               # Custom User model
-    ├── views.py                # Auth & profile views
+    ├── views.py                # Auth & profile views (ProfileView, CompareUsersView, TeamView)
     ├── adapter.py              # Slack OAuth adapter
     ├── urls.py                 # Account URL patterns
     └── templates/accounts/     # Account templates
+        ├── profile.html        # User profile page (shows Slack avatar if available)
+        └── team.html           # Team member directory
 ```
 
 **Key Directory Purposes:**
@@ -269,7 +273,9 @@ PopQuiz follows standard Django MTV (Model-Template-View) architecture with thre
 - Profile pages showing rating history with category filter tabs, multiple sort options, and a Reviews section listing all reviews written by that user
 - User comparison feature showing compatibility and disagreements
 - Custom social account adapter for syncing Slack profile data
-- Key Files: `models.py` (User with avatar_url), `views.py` (ProfileView, CompareUsersView), `adapter.py`
+- `TeamView` — lists all non-staff team members (sorted by last name then first name) with annotation-based rating counts (excludes "Haven't Seen")
+- Profile page header shows Slack avatar photo when `avatar_url` is set; falls back to initials placeholder
+- Key Files: `models.py` (User with avatar_url), `views.py` (ProfileView, CompareUsersView, TeamView), `adapter.py`
 
 ### Database Models
 
@@ -346,6 +352,7 @@ avatar_url = URLField(blank=True)  # Synced from Slack
 - `/category/<slug:slug>/divisive/` - Polarized movies (DivisiveView)
 
 **User Features:**
+- `/team/` - Team member directory with rating counts (TeamView) — logged-in only
 - `/profile/<str:username>/` - User's rating history (ProfileView)
 - `/profile/<str:username>/?category=<slug>&sort=<option>` - Filter by category, sort by: title, year, director, genre, rating, popularity
 - `/compare/<str:username1>/<str:username2>/` - Compare two users (CompareUsersView)
@@ -817,7 +824,7 @@ make logs
 - `review` is a TextField on the Rating model (blank, default='')
 - 150-word server-side limit enforced in `save_review` view
 - Live word counter in the textarea (turns orange at 130 words, red/blocks save at 151+)
-- Reviews appear on: movie detail page (Team Reviews section with color-coded left borders), user profile page (Reviews section), home activity feed (truncated to 20 words)
+- Reviews appear on: movie detail page (Team Reviews section with color-coded left borders), user profile page (Reviews section), home activity feed (truncated to 20 words), featured reviews carousel on home dashboard (rotating every 20s; item title is primary text, reviewer name + small avatar are secondary below)
 - `save_review` endpoint never touches the `rating` field — safe to call independently of rating changes
 
 **Static Files:**
@@ -864,6 +871,18 @@ make restart
 - Validation runs in `AddItemView.post()` after the duplicate check; if the IMDB title type is not in the allowed set, a form error is shown
 - Categories not in `CATEGORY_ALLOWED_IMDB_TYPES` (e.g. future categories) skip type validation
 
+**Navigation Bar:**
+- No user avatar in the nav bar; avatar is shown only on the profile page header
+- "Team" link appears between category links and "My Profile" (logged-in only, links to `/team/`)
+- Username displayed as plain text to the right of the "My Profile" link (shows `first_name last_name` or `username` as fallback)
+
+**Home Dashboard Layout:**
+- Section order: Discover → Main Rating → Add Items → Recent Activity (left col) + Featured Reviews carousel (right col) → Compare Tastes
+- Recent Activity: 6 items per page with Prev/Next pagination; 30 items fetched server-side via `HomeView`
+- Featured Reviews carousel: rotates every 20s with 0.4s opacity fade between slides; thin indigo progress bar fills below the card; hover pauses the bar; mouse-out resumes from exact paused position (not reset)
+- `HomeView.get_context_data()` passes `featured_reviews` — up to 12 `Rating` objects with non-empty `review`, ordered by `-updated_at`, with `select_related('user', 'item', 'item__category')`
+- Carousel slide rendered via `{% include 'catalog/includes/review_card.html' with review=review %}`
+
 **Common Pitfalls:**
 - Forgetting to restart server after model changes
 - Not running migrations after model modifications
@@ -876,10 +895,11 @@ make restart
 - Putting category filter tabs inside `{% if ratings_by_category %}` — they must be outside that block so they remain visible when a category has no rated items
 - Amazon CDN blocks image hotlinking — `<meta name="referrer" content="same-origin">` in `base.html` prevents this for external fallback URLs (do NOT use `no-referrer` — it causes `Origin: null` on form POSTs which Django's CSRF middleware rejects)
 - `datePublished` in IMDB JSON-LD can reflect a re-release or streaming date rather than original release year — always prefer the year extracted from og:title
+- CSS `animation` shorthand resets `animation-delay` to 0 — embed negative delay directly in the shorthand string: `bar.style.animation = 'keyframe-name Xms linear -Yms forwards'` where Y is accumulated elapsed ms; do NOT set `animationDelay` as a separate property and then overwrite it with the `animation` shorthand
 
 ---
 
-*Last Updated: 2026-02-19*
+*Last Updated: 2026-02-20*
 *This document is maintained for AI agent context and developer onboarding.*
 
 

@@ -21,6 +21,8 @@
   - [Taste Comparison](#feature-taste-comparison)
   - [Movie Addition via IMDB](#feature-movie-addition-via-imdb)
   - [Social Authentication](#feature-social-authentication)
+  - [Team Page](#feature-team-page)
+  - [Home Dashboard](#feature-home-dashboard)
 - [User Flows](#user-flows)
   - [Flow 1: New User Onboarding](#flow-1-new-user-onboarding)
   - [Flow 2: Rating Movies via Swipe Interface](#flow-2-rating-movies-via-swipe-interface)
@@ -417,7 +419,7 @@ Personalized profile pages showing rating history, statistics, and sorting/filte
 See your own rating history, track what you've rated, organize by director/genre/year, share taste with teammates, get movie recommendations.
 
 **Functionality:**
-- Header with user info and avatar (if Slack OAuth)
+- Header with user info; if `avatar_url` is set (synced from Slack OAuth), shows the user's Slack profile photo as a circular avatar; otherwise shows an initials placeholder
 - Stats bar showing rating distribution (visual segments for each rating type)
 - Rating counts: X Loved, X Liked, X Okay, X Disliked, X Hated, X Haven't Seen
 - Total ratings cast
@@ -593,7 +595,7 @@ No need to remember another password, quick signup with work/team Slack account,
 - Click "Sign in with Slack" button
 - Approve permissions on Slack page (first time only)
 - Redirected back to app, logged in automatically
-- See own avatar in navigation bar
+- Avatar synced from Slack and displayed on user's own profile page header
 
 **Edge Cases:**
 - User denies permissions: Redirect back to login with message
@@ -604,8 +606,8 @@ No need to remember another password, quick signup with work/team Slack account,
 
 **Success Criteria:**
 - Completes full OAuth flow in <10 seconds
-- Profile data syncs correctly
-- Avatar displays in navigation
+- Profile data syncs correctly (first name, last name, avatar)
+- Avatar displays on user's profile page header
 - Subsequent logins faster (no re-consent)
 - Traditional login still available as fallback
 
@@ -643,8 +645,8 @@ No need to remember another password, quick signup with work/team Slack account,
 
 3. **Account Created & Logged In**
    - Automatic redirect to homepage
-   - Now see full content: team members, rating section
-   - Navigation shows username and "My Profile" link
+   - Now see full content: rating section, recent activity, featured reviews carousel
+   - Navigation shows "Team" link, "My Profile" link, and username displayed to the right of My Profile
    - Welcome message updates: "Welcome, [First Name]!"
 
 4. **Prompted to Start Rating**
@@ -903,6 +905,75 @@ User discovers shared favorites to discuss, finds disagreements to spark convers
 
 ---
 
+### Feature: Team Page
+
+**Description:**
+A dedicated page listing all team members with their rating activity.
+
+**User Value:**
+Gives a quick overview of who's on the team and how actively each member is engaging, making it easy to discover new teammates to compare tastes with.
+
+**Functionality:**
+- Grid of member cards (responsive: 2 columns mobile → 5 columns wide screens)
+- Each card shows: avatar (Slack profile photo or initial placeholder), display name, rating count
+- Rating count excludes "Haven't Seen" entries
+- Cards link to individual profile pages
+- Members sorted: those with last names listed alphabetically first, then by first name, then username
+- Visible to logged-in users only
+- Accessible from "Team" link in navigation bar (appears only when logged in)
+
+**Edge Cases:**
+- New user with no ratings: Shows "0 ratings"
+- User with no name set: Falls back to username
+- No team members yet: Shows "No team members yet" message
+
+**Success Criteria:**
+- All non-admin users appear on the page
+- Rating counts accurate (excludes "Haven't Seen")
+- Navigation "Team" link visible when logged in, hidden when logged out
+- Responsive grid works on mobile and desktop
+
+---
+
+### Feature: Home Dashboard
+
+**Description:**
+The home page shows an at-a-glance view of team activity, rating progress, and recent reviews — the central hub of the app.
+
+**User Value:**
+Orients users to what's happening on the team, motivates continued rating, and surfaces recent reviews to spark discussion.
+
+**Functionality:**
+
+**Section order (top to bottom):**
+1. **Discover** — Browse categories (Movies, TV Series, etc.) with poster collage backgrounds and item/rating counts
+2. **Main Rating** — Personal rating progress per category (X of Y rated, progress bar, "Start Rating" CTA)
+3. **Add Items** — Quick link to add a new item via IMDB URL for each category
+4. **Recent Activity + Featured Reviews** — Two-column layout:
+   - **Recent Activity (left):** Latest ratings across the team; 6 per page with Prev/Next pagination; 30 items fetched server-side
+   - **Featured Reviews carousel (right):** Rotating display of recent reviews; one review visible at a time; advances every 20 seconds
+5. **Compare Tastes** — User dropdowns to launch a 2- or 3-way taste comparison (logged-in only)
+
+**Featured Reviews Carousel:**
+- Shows ratings that have a non-empty review text (up to 12 fetched server-side)
+- Item title is the primary, larger text; reviewer name + small avatar are secondary
+- Rotates automatically every 20 seconds with a 0.4-second opacity fade between slides
+- Thin indigo progress bar below the card fills over 20 seconds to signal next rotation
+- Hovering pauses the progress bar (visual pause signal); mouse-out resumes from the exact paused position — bar does not reset
+- No manual prev/next controls or dot indicators
+
+**Edge Cases:**
+- No reviews yet: Featured Reviews panel not shown (or shows placeholder)
+- Logged-out users: Compare Tastes section hidden; Recent Activity and Discover visible with limited data
+
+**Success Criteria:**
+- All sections load in <2 seconds
+- Recent Activity pagination works correctly
+- Carousel rotates and pauses on hover without resetting
+- Progress bar resumes from paused position on mouse-out
+
+---
+
 ### Feature: Short Reviews
 
 **Description:**
@@ -1062,5 +1133,5 @@ Adds context to ratings, sparks conversation, lets users share why they loved or
 
 ---
 
-*Last Updated: 2026-02-19*
+*Last Updated: 2026-02-20*
 *This specification is maintained for product planning and feature development.*
