@@ -10,6 +10,7 @@ dependencies = [
     "whitenoise>=6.11.0",
     "django-allauth>=65.14.1",
     "gunicorn>=25.1.0",
+    "pillow>=12.1.1",
 ]
 
 [build-system]

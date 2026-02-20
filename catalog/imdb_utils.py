@@ -2,12 +2,14 @@
 Utility functions for fetching movie data from IMDB.
 """
 import html
+import io
 import logging
 import re
 from pathlib import Path
 
 import requests
 from django.conf import settings
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -32,16 +34,22 @@ def download_poster(poster_url, imdb_id):
         media_dir = Path(settings.MEDIA_ROOT) / 'posters'
         media_dir.mkdir(parents=True, exist_ok=True)
 
-        local_path = media_dir / f'{imdb_id}.jpg'
+        local_path = media_dir / f'{imdb_id}.webp'
 
         resp = requests.get(poster_url, headers=HEADERS, timeout=15, stream=True)
         resp.raise_for_status()
 
-        with open(local_path, 'wb') as f:
-            for chunk in resp.iter_content(chunk_size=8192):
-                f.write(chunk)
+        img_data = io.BytesIO()
+        for chunk in resp.iter_content(chunk_size=8192):
+            img_data.write(chunk)
+        img_data.seek(0)
 
-        return f'{settings.MEDIA_URL}posters/{imdb_id}.jpg'
+        with Image.open(img_data) as img:
+            if img.mode not in ('RGB', 'L'):
+                img = img.convert('RGB')
+            img.save(local_path, 'WEBP', quality=85)
+
+        return f'{settings.MEDIA_URL}posters/{imdb_id}.webp'
 
     except Exception as e:
         logger.error(f'Failed to download poster for {imdb_id}: {e}')
