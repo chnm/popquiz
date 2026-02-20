@@ -5,20 +5,20 @@
         <p class="text-gray-700 text-sm leading-relaxed italic">"{{ review.review }}"</p>
     </div>
 
-    <!-- Footer: reviewer + item -->
+    <!-- Footer: item + reviewer -->
     <div class="mt-4 flex items-start justify-between gap-3">
         <div class="min-w-0">
-            <div class="flex items-center gap-2 mb-0.5">
+            <a href="{% url 'item_detail' review.item.category.slug review.item.id %}" class="text-sm font-semibold text-gray-800 hover:text-indigo-600 transition-colors truncate block">
+                {{ review.item.title }}{% if review.item.display_year %} ({{ review.item.display_year }}){% endif %}
+            </a>
+            <div class="flex items-center gap-1.5 mt-0.5">
                 {% if review.user.avatar_url %}
-                <img src="{{ review.user.avatar_url }}" alt="" class="w-6 h-6 rounded-full flex-shrink-0">
+                <img src="{{ review.user.avatar_url }}" alt="" class="w-4 h-4 rounded-full flex-shrink-0">
                 {% endif %}
-                <a href="{% url 'profile' review.user.username %}" class="text-sm font-semibold text-gray-800 hover:text-indigo-600 transition-colors truncate">
+                <a href="{% url 'profile' review.user.username %}" class="text-xs text-gray-500 hover:text-indigo-600 transition-colors truncate">
                     {% if review.user.first_name %}{{ review.user.first_name }} {{ review.user.last_name }}{% else %}{{ review.user.username }}{% endif %}
                 </a>
             </div>
-            <a href="{% url 'item_detail' review.item.category.slug review.item.id %}" class="text-xs text-gray-500 hover:text-indigo-600 transition-colors truncate block">
-                {{ review.item.title }}{% if review.item.display_year %} ({{ review.item.display_year }}){% endif %}
-            </a>
         </div>
         {% if emoji %}
         <span class="text-2xl flex-shrink-0 leading-none" title="{{ rating_label }}">{{ emoji }}</span>

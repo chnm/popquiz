@@ -168,8 +168,8 @@ class HomeView(ListView):
             # Sort all activities by timestamp (most recent first)
             activities.sort(key=lambda x: x['timestamp'], reverse=True)
 
-            # Limit to 15 most recent activities
-            context['recent_activities'] = activities[:15]
+            # Limit to 30 most recent activities (client-side pagination shows 6 per page)
+            context['recent_activities'] = activities[:30]
 
             # Get featured reviews (ratings with non-empty reviews, most recent)
             context['featured_reviews'] = list(
