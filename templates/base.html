@@ -53,9 +53,6 @@
                     <!-- User Authentication Section -->
                     <div class="flex items-center space-x-3 pl-4 border-l border-gray-600">
                         {% if user.is_authenticated %}
-                            {% if user.avatar_url %}
-                                <img src="{{ user.avatar_url }}" alt="{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}" class="w-8 h-8 rounded-full">
-                            {% endif %}
                             <a href="{% url 'team' %}" class="text-gray-200 hover:text-white">Team</a>
                             <a href="{% url 'profile' user.username %}" class="text-gray-200 hover:text-white">My Profile</a>
                             <span class="text-gray-400 text-sm">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.username }}{% endif %}</span>

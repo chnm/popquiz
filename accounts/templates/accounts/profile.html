@@ -28,9 +28,13 @@
     <div class="relative z-10 p-8 text-white">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                {% if profile_user.avatar_url %}
+                <img src="{{ profile_user.avatar_url }}" alt="{% if profile_user.first_name %}{{ profile_user.first_name }} {{ profile_user.last_name }}{% else %}{{ profile_user.username }}{% endif %}" class="w-20 h-20 rounded-full object-cover ring-4 ring-white/30">
+                {% else %}
                 <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-3xl font-bold backdrop-blur-sm">
                     {{ profile_user.first_name.0 }}{{ profile_user.last_name.0 }}
                 </div>
+                {% endif %}
                 <div>
                     <h1 class="text-3xl font-bold">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
                     <p class="text-white/80">@{{ profile_user.username }}</p>
