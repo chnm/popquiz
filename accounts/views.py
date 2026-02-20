@@ -781,7 +781,7 @@ class TeamView(ListView):
     context_object_name = 'members'
 
     def get_queryset(self):
-        return User.objects.filter(is_staff=False).annotate(
+        return User.objects.filter(is_active=True).annotate(
             rating_count=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING)),
             has_last_name=Case(
                 When(last_name='', then=Value(0)),
