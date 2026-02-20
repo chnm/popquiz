@@ -602,57 +602,74 @@
             var bar = document.getElementById('review-bar');
             var carousel = document.getElementById('review-carousel');
             var current = 0;
-            var timer;
+            var timer = null;
             var busy = false;
+            var accumulatedTime = 0;  // active (non-hovered) ms elapsed for current slide
+            var lastResumeTime = null;
 
             function startBar() {
+                accumulatedTime = 0;
+                lastResumeTime = Date.now();
                 bar.style.animation = 'none';
-                bar.offsetHeight; // reflow to restart
+                bar.offsetHeight;
+                bar.style.animationDelay = '0ms';
                 bar.style.animation = 'review-fill ' + INTERVAL + 'ms linear forwards';
             }
 
             function freezeBar() {
-                var w = getComputedStyle(bar).width;
+                if (lastResumeTime !== null) {
+                    accumulatedTime += Date.now() - lastResumeTime;
+                    lastResumeTime = null;
+                }
+                var w = parseFloat(getComputedStyle(bar).width);
+                var tw = parseFloat(getComputedStyle(bar.parentElement).width);
                 bar.style.animation = 'none';
-                bar.style.width = w;
+                bar.style.width = (w / tw * 100) + '%';
+            }
+
+            function resumeBar() {
+                lastResumeTime = Date.now();
+                var remaining = Math.max(0, INTERVAL - accumulatedTime);
+                bar.style.animation = 'none';
+                bar.offsetHeight;
+                bar.style.animationDelay = '-' + accumulatedTime + 'ms';
+                bar.style.animation = 'review-fill ' + INTERVAL + 'ms linear forwards';
+                clearTimeout(timer);
+                timer = setTimeout(advance, remaining);
             }
 
             function goTo(index) {
                 if (busy) return;
                 busy = true;
+                clearTimeout(timer);
                 var next = (index + slides.length) % slides.length;
                 slides[current].style.opacity = '0';
                 setTimeout(function() {
                     slides[current].classList.add('hidden');
-                    slides[current].style.opacity = '1'; // reset for next appearance
+                    slides[current].style.opacity = '1';
                     current = next;
                     slides[current].classList.remove('hidden');
-                    slides[current].offsetHeight; // reflow
+                    slides[current].offsetHeight;
                     slides[current].style.opacity = '1';
                     busy = false;
                     startBar();
+                    timer = setTimeout(advance, INTERVAL);
                 }, 400);
             }
 
             function advance() { goTo(current + 1); }
 
-            function startTimer() {
-                clearInterval(timer);
-                timer = setInterval(advance, INTERVAL);
-            }
-
             carousel.addEventListener('mouseenter', function() {
-                clearInterval(timer);
+                clearTimeout(timer);
                 freezeBar();
             });
 
             carousel.addEventListener('mouseleave', function() {
-                startTimer();
-                startBar();
+                resumeBar();
             });
 
-            startTimer();
             startBar();
+            timer = setTimeout(advance, INTERVAL);
         })();
         </script>
         {% else %}
