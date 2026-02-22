@@ -238,8 +238,8 @@ class CategoryDetailView(DetailView):
             Rating.Level.OKAY: 2,
             Rating.Level.DISLIKED: 3,
             Rating.Level.HATED: 4,
-            None: 5,                   # never rated — needs attention
-            Rating.Level.NO_RATING: 6, # explicitly marked "Haven't Seen"
+            Rating.Level.NO_RATING: 5, # explicitly marked "Haven't Seen"
+            None: 6,                   # never rated — appears last
         }
         items_with_ratings.sort(key=lambda x: (rating_order.get(x['rating'], 5), x['item'].title.lower()))
 
