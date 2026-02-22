@@ -5,7 +5,8 @@
         {% if review.user_has_rated %}
         <p class="text-gray-700 text-sm leading-relaxed italic">"{{ review.review }}"</p>
         {% else %}
-        <p class="text-gray-400 text-sm italic">Rate this to see the review.</p>
+        <p class="text-gray-500 text-sm font-medium mb-1">You haven't seen this {{ review.item.category.item_label }} yet.</p>
+        <a href="{% url 'item_detail' review.item.category.slug review.item.id %}" class="text-xs text-indigo-500 hover:text-indigo-700 transition-colors">View {{ review.item.category.item_label }} details to see all reviews &rarr;</a>
         {% endif %}
     </div>
 
