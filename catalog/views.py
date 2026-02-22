@@ -186,11 +186,11 @@ class HomeView(ListView):
             # Limit to 30 most recent activities (client-side pagination shows 6 per page)
             context['recent_activities'] = activities
 
-            # Get featured reviews (ratings with non-empty reviews, most recent)
+            # Get featured reviews (ratings with non-empty reviews, random selection)
             featured_reviews = list(
                 Rating.objects.exclude(review='').select_related(
                     'user', 'item', 'item__category'
-                ).order_by('-updated_at')[:12]
+                ).order_by('?')[:12]
             )
             review_item_ids = {r.item_id for r in featured_reviews}
             user_rated_review_ids = set(
