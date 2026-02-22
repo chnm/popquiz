@@ -167,16 +167,41 @@ class HomeView(ListView):
 
             # Sort all activities by timestamp (most recent first)
             activities.sort(key=lambda x: x['timestamp'], reverse=True)
+            activities = activities[:30]
+
+            # Mark each rating activity with whether the current user has rated that item
+            rating_item_ids = {a['item'].id for a in activities if a['type'] == 'rating'}
+            user_rated_ids = set(
+                Rating.objects.filter(
+                    user=self.request.user,
+                    item_id__in=rating_item_ids
+                ).exclude(rating=Rating.Level.NO_RATING).values_list('item_id', flat=True)
+            )
+            for activity in activities:
+                if activity['type'] == 'rating':
+                    activity['user_has_rated'] = activity['item'].id in user_rated_ids
+                else:
+                    activity['user_has_rated'] = True  # additions always visible
 
             # Limit to 30 most recent activities (client-side pagination shows 6 per page)
-            context['recent_activities'] = activities[:30]
+            context['recent_activities'] = activities
 
             # Get featured reviews (ratings with non-empty reviews, most recent)
-            context['featured_reviews'] = list(
+            featured_reviews = list(
                 Rating.objects.exclude(review='').select_related(
                     'user', 'item', 'item__category'
                 ).order_by('-updated_at')[:12]
             )
+            review_item_ids = {r.item_id for r in featured_reviews}
+            user_rated_review_ids = set(
+                Rating.objects.filter(
+                    user=self.request.user,
+                    item_id__in=review_item_ids
+                ).exclude(rating=Rating.Level.NO_RATING).values_list('item_id', flat=True)
+            )
+            for review in featured_reviews:
+                review.user_has_rated = review.item_id in user_rated_review_ids
+            context['featured_reviews'] = featured_reviews
 
         return context
 
