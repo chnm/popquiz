@@ -113,7 +113,8 @@
                                 <input type="hidden" name="item_id" value="{{ item_data.item.id }}">
                                 <input type="hidden" name="rating" value="no_rating">
                                 <button type="submit" class="px-2 py-1.5 sm:px-3 sm:py-2 rounded-full text-lg sm:text-xl font-medium transition duration-200
-                                    {% if item_data.rating == 'no_rating' %}bg-gray-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+                                    {% if item_data.rating == 'no_rating' %}bg-gray-500 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}"
+                                    title="Haven't Seen">
                                     ⏭️
                                 </button>
                             </form>

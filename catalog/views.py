@@ -228,17 +228,18 @@ class CategoryDetailView(DetailView):
         for item in items:
             items_with_ratings.append({
                 'item': item,
-                'rating': ratings_dict.get(item.id, Rating.Level.NO_RATING)
+                'rating': ratings_dict.get(item.id, None)  # None = never rated (distinct from no_rating/"Haven't Seen")
             })
 
-        # Sort items by rating preference: Loved, Liked, Okay, Disliked, Hated, Not Rated
+        # Sort: Loved, Liked, Okay, Disliked, Hated, Never Rated, Haven't Seen
         rating_order = {
             Rating.Level.LOVED: 0,
             Rating.Level.LIKED: 1,
             Rating.Level.OKAY: 2,
             Rating.Level.DISLIKED: 3,
             Rating.Level.HATED: 4,
-            Rating.Level.NO_RATING: 5,
+            None: 5,                   # never rated — needs attention
+            Rating.Level.NO_RATING: 6, # explicitly marked "Haven't Seen"
         }
         items_with_ratings.sort(key=lambda x: (rating_order.get(x['rating'], 5), x['item'].title.lower()))
 
