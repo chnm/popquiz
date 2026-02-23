@@ -60,6 +60,10 @@
                             {% for mc in nav_music_categories %}
                             <a href="{% url 'category_detail' mc.slug %}" class="block px-4 py-2 text-gray-200 hover:text-white hover:bg-gray-800">{{ mc.item_label_plural|capfirst }}</a>
                             {% endfor %}
+                            {% if user.is_authenticated %}
+                            <div class="border-t border-gray-700 my-1"></div>
+                            <a href="{% url 'add_music' %}" class="block px-4 py-2 text-gray-200 hover:text-white hover:bg-gray-800">Add Music</a>
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -104,6 +108,9 @@
                         {% for mc in nav_music_categories %}
                             <a href="{% url 'category_detail' mc.slug %}" class="text-gray-200 hover:text-white py-2 pl-4">{{ mc.item_label_plural|capfirst }}</a>
                         {% endfor %}
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'add_music' %}" class="text-gray-200 hover:text-white py-2 pl-4">Add Music</a>
+                        {% endif %}
                     {% endif %}
                     <div class="border-t border-gray-700 pt-2 mt-2">
                         {% if user.is_authenticated %}

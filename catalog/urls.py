@@ -1,9 +1,10 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, AddMusicSearchView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView, AddSongView
+from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, AddMusicSearchView, AddMusicView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView, AddSongView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
+    path('music/add/', AddMusicView.as_view(), name='add_music'),
     path('category/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),
     path('category/<slug:slug>/add/', AddItemView.as_view(), name='add_item'),
     path('category/<slug:slug>/add-by-director/', AddByDirectorView.as_view(), name='add_by_director'),

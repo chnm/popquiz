@@ -1,6 +1,8 @@
 import json
 import random
 
+import logging
+from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views import View
@@ -13,7 +15,7 @@ from accounts.models import User
 from .models import Category, Item, Song, SongUpvote
 from .forms import AddItemForm, AddSongForm
 from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, download_poster
-from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id, search_artists, search_release_groups
+from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id, search_artists, search_release_groups, search_recordings, fetch_release_tracks
 from ratings.models import Rating
 
 
@@ -73,6 +75,24 @@ class HomeView(ListView):
 
             context['categories_with_progress'] = categories_with_progress
             context['music_categories_with_progress'] = music_categories_with_progress
+
+            # Compute combined music progress for the unified dashboard card
+            if music_categories_with_progress:
+                music_total = sum(e['total'] for e in music_categories_with_progress)
+                music_voted = sum(e['voted'] for e in music_categories_with_progress)
+                music_remaining = music_total - music_voted
+                music_progress = round((music_voted / music_total) * 100) if music_total > 0 else 0
+                music_posters = []
+                for e in music_categories_with_progress:
+                    music_posters.extend(list(e['random_posters']))
+                context['music_combined'] = {
+                    'total': music_total,
+                    'voted': music_voted,
+                    'remaining': music_remaining,
+                    'progress_percent': music_progress,
+                    'random_posters': music_posters[:5],
+                    'categories': music_categories_with_progress,
+                }
         else:
             # For logged-out users, add random posters to categories
             categories_with_posters = []
@@ -94,6 +114,18 @@ class HomeView(ListView):
 
             context['categories_with_posters'] = categories_with_posters
             context['music_categories_with_posters'] = music_categories_with_posters
+
+            if music_categories_with_posters:
+                music_posters = []
+                music_item_count = 0
+                for e in music_categories_with_posters:
+                    music_posters.extend(list(e['random_posters']))
+                    music_item_count += e['category'].item_count
+                context['music_combined_logged_out'] = {
+                    'item_count': music_item_count,
+                    'random_posters': music_posters[:5],
+                    'categories': music_categories_with_posters,
+                }
 
         # Get featured items for carousel - guarantee at least one per category
         base_featured_qs = Item.objects.exclude(
@@ -716,6 +748,278 @@ class AddMusicSearchView(LoginRequiredMixin, View):
             messages.success(request, f'"{item.title}" has been added!')
 
         return redirect('category_detail', slug=slug)
+
+
+logger = logging.getLogger(__name__)
+
+
+class AddMusicView(LoginRequiredMixin, View):
+    """Unified music search: find artists, releases, and songs in one interface."""
+
+    def get(self, request):
+        return render(request, 'catalog/add_music.html')
+
+    def post(self, request):
+        # Step 2: user selected a result
+        selected_id = request.POST.get('selected_id', '').strip()
+        if selected_id:
+            return self._handle_selection(request, selected_id)
+
+        # Step 1: search by name
+        query = request.POST.get('query', '').strip()
+        if not query:
+            messages.error(request, 'Please enter a name to search.')
+            return render(request, 'catalog/add_music.html')
+
+        artist_results = search_artists(query, limit=5)
+        release_results = search_release_groups(query, limit=5)
+        recording_results = search_recordings(query, limit=5)
+
+        if not artist_results and not release_results and not recording_results:
+            messages.error(request, f'No results found for "{query}". Try a different spelling.')
+            return render(request, 'catalog/add_music.html', {'query': query})
+
+        return render(request, 'catalog/add_music.html', {
+            'query': query,
+            'artist_results': artist_results,
+            'release_results': release_results,
+            'recording_results': recording_results,
+        })
+
+    def _handle_selection(self, request, selected_id):
+        parts = selected_id.split(':')
+        sel_type = parts[0]
+
+        try:
+            if sel_type == 'artist' and len(parts) >= 2:
+                return self._add_artist(request, parts[1])
+            elif sel_type == 'release' and len(parts) >= 2:
+                return self._add_release(request, parts[1])
+            elif sel_type == 'recording' and len(parts) >= 2:
+                rec_id = parts[1]
+                artist_id = parts[2] if len(parts) > 2 else None
+                rg_id = parts[3] if len(parts) > 3 else None
+                return self._add_recording(request, rec_id, artist_id, rg_id)
+        except Exception:
+            logger.exception('Error adding music item')
+            messages.error(request, 'Something went wrong. Please try again.')
+            return redirect('add_music')
+
+        messages.error(request, 'Invalid selection.')
+        return redirect('add_music')
+
+    def _get_artists_category(self):
+        return Category.objects.get(slug='music-artists')
+
+    def _get_releases_category(self):
+        return Category.objects.get(slug='music-releases')
+
+    def _find_or_create_artist(self, request, artist_mb_id):
+        """Find an existing artist Item or create one from MusicBrainz data."""
+        existing = Item.objects.filter(musicbrainz_id=artist_mb_id).first()
+        if existing:
+            return existing
+
+        data = fetch_artist_data(artist_mb_id, fetch_songs=False)
+        if not data:
+            return None
+
+        item = Item.objects.create(
+            category=self._get_artists_category(),
+            title=data['title'],
+            musicbrainz_id=data['musicbrainz_id'],
+            image_source_url=data.get('poster_url') or '',
+            added_by=request.user,
+        )
+        return item
+
+    def _find_or_create_release(self, request, rg_mb_id):
+        """Find an existing release Item or create one from MusicBrainz data."""
+        existing = Item.objects.filter(musicbrainz_id=rg_mb_id).first()
+        if existing:
+            return existing
+
+        data = fetch_release_data(rg_mb_id)
+        if not data:
+            return None
+
+        raw_source = data.get('poster_url') or ''
+        local_image = download_poster(raw_source, data['musicbrainz_id']) if raw_source else None
+
+        item = Item.objects.create(
+            category=self._get_releases_category(),
+            title=data['title'],
+            year=data['year'],
+            director=data['artist'],
+            genre=data['release_type'],
+            musicbrainz_id=data['musicbrainz_id'],
+            image_source_url=raw_source,
+            image_local_url=local_image or '',
+            added_by=request.user,
+        )
+        return item, data
+
+    @transaction.atomic
+    def _add_artist(self, request, mb_id):
+        """Add an artist only (no releases or songs)."""
+        existing = Item.objects.filter(musicbrainz_id=mb_id).first()
+        if existing:
+            messages.info(request, f'"{existing.title}" is already added.')
+            return redirect('item_detail', category_slug=existing.category.slug, item_id=existing.id)
+
+        data = fetch_artist_data(mb_id, fetch_songs=True, max_songs=50)
+        if not data:
+            messages.error(request, 'Could not fetch artist data from MusicBrainz. Please try again.')
+            return redirect('add_music')
+
+        artists_cat = self._get_artists_category()
+        item = Item.objects.create(
+            category=artists_cat,
+            title=data['title'],
+            musicbrainz_id=data['musicbrainz_id'],
+            image_source_url=data.get('poster_url') or '',
+            added_by=request.user,
+        )
+        songs_count = 0
+        for song_data in data.get('songs', []):
+            Song.objects.create(
+                artist=item,
+                title=song_data['title'],
+                musicbrainz_id=song_data.get('musicbrainz_id'),
+                year=song_data.get('year'),
+                album=song_data.get('album', ''),
+            )
+            songs_count += 1
+        messages.success(request, f'"{item.title}" has been added with {songs_count} songs!')
+        return redirect('item_detail', category_slug=artists_cat.slug, item_id=item.id)
+
+    @transaction.atomic
+    def _add_release(self, request, mb_id):
+        """Add a release, its artist, and all tracks."""
+        existing = Item.objects.filter(musicbrainz_id=mb_id).first()
+        if existing:
+            messages.info(request, f'"{existing.title}" is already added.')
+            return redirect('item_detail', category_slug=existing.category.slug, item_id=existing.id)
+
+        data = fetch_release_data(mb_id)
+        if not data:
+            messages.error(request, 'Could not fetch release data from MusicBrainz. Please try again.')
+            return redirect('add_music')
+
+        # Find or create the artist
+        artist_item = None
+        artist_id = data.get('artist_id')
+        if artist_id:
+            artist_item = self._find_or_create_artist(request, artist_id)
+
+        # Create the release
+        releases_cat = self._get_releases_category()
+        raw_source = data.get('poster_url') or ''
+        local_image = download_poster(raw_source, data['musicbrainz_id']) if raw_source else None
+
+        release_item = Item.objects.create(
+            category=releases_cat,
+            title=data['title'],
+            year=data['year'],
+            director=data['artist'],
+            genre=data['release_type'],
+            musicbrainz_id=data['musicbrainz_id'],
+            image_source_url=raw_source,
+            image_local_url=local_image or '',
+            added_by=request.user,
+        )
+
+        # Fetch and create tracks
+        tracks = fetch_release_tracks(mb_id)
+        songs_count = 0
+        if artist_item and tracks:
+            for track in tracks:
+                rec_id = track.get('musicbrainz_id')
+                if rec_id and Song.objects.filter(musicbrainz_id=rec_id).exists():
+                    # Link existing song to this release if not already linked
+                    existing_song = Song.objects.filter(musicbrainz_id=rec_id).first()
+                    if not existing_song.release:
+                        existing_song.release = release_item
+                        existing_song.save(update_fields=['release'])
+                    continue
+                Song.objects.create(
+                    artist=artist_item,
+                    release=release_item,
+                    title=track['title'],
+                    musicbrainz_id=rec_id,
+                    album=data['title'],
+                )
+                songs_count += 1
+
+        parts = [f'"{release_item.title}" has been added']
+        if artist_item:
+            parts.append(f'with artist "{artist_item.title}"')
+        if songs_count:
+            parts.append(f'and {songs_count} tracks')
+        messages.success(request, ' '.join(parts) + '!')
+        return redirect('item_detail', category_slug=releases_cat.slug, item_id=release_item.id)
+
+    @transaction.atomic
+    def _add_recording(self, request, rec_id, artist_id, rg_id):
+        """Add a single song, plus its artist and release if not yet added."""
+        # Check if this exact recording already exists as a Song
+        existing_song = Song.objects.filter(musicbrainz_id=rec_id).first()
+        if existing_song:
+            messages.info(request, f'"{existing_song.title}" is already added.')
+            return redirect('item_detail', category_slug=existing_song.artist.category.slug, item_id=existing_song.artist.id)
+
+        # We need the recording title from the POST data
+        rec_title = request.POST.get('rec_title', '').strip()
+        rec_album = request.POST.get('rec_album', '').strip()
+
+        # Find or create the artist
+        artist_item = None
+        if artist_id:
+            artist_item = self._find_or_create_artist(request, artist_id)
+
+        if not artist_item:
+            messages.error(request, 'Could not determine the artist for this recording.')
+            return redirect('add_music')
+
+        # Find or create the release
+        release_item = None
+        if rg_id:
+            existing_release = Item.objects.filter(musicbrainz_id=rg_id).first()
+            if existing_release:
+                release_item = existing_release
+            else:
+                release_data = fetch_release_data(rg_id)
+                if release_data:
+                    releases_cat = self._get_releases_category()
+                    raw_source = release_data.get('poster_url') or ''
+                    local_image = download_poster(raw_source, release_data['musicbrainz_id']) if raw_source else None
+                    release_item = Item.objects.create(
+                        category=releases_cat,
+                        title=release_data['title'],
+                        year=release_data['year'],
+                        director=release_data['artist'],
+                        genre=release_data['release_type'],
+                        musicbrainz_id=release_data['musicbrainz_id'],
+                        image_source_url=raw_source,
+                        image_local_url=local_image or '',
+                        added_by=request.user,
+                    )
+
+        # Create the song
+        song = Song.objects.create(
+            artist=artist_item,
+            release=release_item,
+            title=rec_title or 'Unknown',
+            musicbrainz_id=rec_id,
+            album=rec_album,
+        )
+
+        parts = [f'Song "{song.title}" has been added']
+        if release_item:
+            parts.append(f'from "{release_item.title}"')
+        parts.append(f'by {artist_item.title}')
+        messages.success(request, ' '.join(parts) + '!')
+        return redirect('item_detail', category_slug=artist_item.category.slug, item_id=artist_item.id)
 
 
 class SwipeRatingView(LoginRequiredMixin, TemplateView):

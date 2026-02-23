@@ -1,5 +1,5 @@
 """
-Utility functions for fetching artist data from MusicBrainz.
+Utility functions for fetching music data from MusicBrainz.
 """
 import re
 import requests
@@ -149,6 +149,88 @@ def search_release_groups(query, limit=10):
         return []
 
 
+def search_recordings(query, limit=10):
+    """
+    Search MusicBrainz for recordings (songs) by title.
+
+    Returns a list of dicts, each with:
+    - musicbrainz_id: str (recording UUID)
+    - title: str (recording/song title)
+    - artist: str (artist name)
+    - artist_id: str (artist MusicBrainz UUID)
+    - release_group_id: str or None (first release-group UUID)
+    - release_group_title: str (album/release name, or '')
+    - year: int or None
+    """
+    if not query or not query.strip():
+        return []
+
+    try:
+        sleep(RATE_LIMIT_DELAY)
+        resp = requests.get(
+            "https://musicbrainz.org/ws/2/recording/",
+            headers=HEADERS,
+            params={'query': query.strip(), 'fmt': 'json', 'limit': limit},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return []
+
+        results = []
+        for rec in resp.json().get('recordings', []):
+            mb_id = rec.get('id')
+            title = rec.get('title')
+            if not mb_id or not title:
+                continue
+
+            # Extract artist from artist-credit
+            artist_name = ''
+            artist_id = None
+            artist_parts = []
+            for credit in rec.get('artist-credit', []):
+                if isinstance(credit, dict) and 'artist' in credit:
+                    if not artist_id:
+                        artist_id = credit['artist'].get('id')
+                    artist_parts.append(credit['artist'].get('name', ''))
+                    joinphrase = credit.get('joinphrase', '')
+                    if joinphrase:
+                        artist_parts.append(joinphrase)
+            artist_name = ''.join(artist_parts).strip()
+
+            # Extract release-group info from the first release
+            release_group_id = None
+            release_group_title = ''
+            releases = rec.get('releases', [])
+            if releases:
+                first_release = releases[0]
+                rg = first_release.get('release-group', {})
+                release_group_id = rg.get('id')
+                release_group_title = first_release.get('title', '')
+
+            # Extract year
+            year = None
+            first_release_date = rec.get('first-release-date', '')
+            if first_release_date:
+                year_match = re.match(r'(\d{4})', first_release_date)
+                if year_match:
+                    year = int(year_match.group(1))
+
+            results.append({
+                'musicbrainz_id': mb_id,
+                'title': title,
+                'artist': artist_name,
+                'artist_id': artist_id,
+                'release_group_id': release_group_id,
+                'release_group_title': release_group_title,
+                'year': year,
+            })
+
+        return results
+
+    except (requests.RequestException, ValueError, KeyError):
+        return []
+
+
 def extract_musicbrainz_release_id(url):
     """
     Extract MusicBrainz release-group ID (UUID) from a URL.
@@ -203,10 +285,13 @@ def fetch_release_data(musicbrainz_url):
         if not title:
             return None
 
-        # Build artist name from artist-credit list (handles joint artists like "A & B")
+        # Build artist name and extract primary artist ID from artist-credit list
         artist_parts = []
+        artist_id = None
         for credit in data.get('artist-credit', []):
             if isinstance(credit, dict) and 'artist' in credit:
+                if not artist_id:
+                    artist_id = credit['artist'].get('id')
                 artist_parts.append(credit['artist'].get('name', ''))
                 joinphrase = credit.get('joinphrase', '')
                 if joinphrase:
@@ -246,6 +331,7 @@ def fetch_release_data(musicbrainz_url):
         return {
             'title': title,
             'artist': artist,
+            'artist_id': artist_id,
             'year': year,
             'release_type': release_type,
             'musicbrainz_id': mb_id,
@@ -254,6 +340,64 @@ def fetch_release_data(musicbrainz_url):
 
     except (requests.RequestException, ValueError, KeyError):
         return None
+
+
+def fetch_release_tracks(release_group_id):
+    """
+    Fetch the tracklist for a release group from MusicBrainz.
+
+    Gets the first release in the release-group and extracts its tracklist.
+
+    Returns a list of dicts, each with:
+    - musicbrainz_id: str (recording UUID)
+    - title: str (track title)
+    - position: int (track number)
+
+    Returns empty list if fetch fails.
+    """
+    if not release_group_id:
+        return []
+
+    try:
+        sleep(RATE_LIMIT_DELAY)
+        resp = requests.get(
+            "https://musicbrainz.org/ws/2/release",
+            headers=HEADERS,
+            params={
+                'release-group': release_group_id,
+                'inc': 'recordings',
+                'fmt': 'json',
+                'limit': 1,
+            },
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return []
+
+        data = resp.json()
+        releases = data.get('releases', [])
+        if not releases:
+            return []
+
+        tracks = []
+        seen_ids = set()
+        for medium in releases[0].get('media', []):
+            for track in medium.get('tracks', []):
+                recording = track.get('recording', {})
+                rec_id = recording.get('id')
+                if not rec_id or rec_id in seen_ids:
+                    continue
+                seen_ids.add(rec_id)
+                tracks.append({
+                    'musicbrainz_id': rec_id,
+                    'title': recording.get('title', track.get('title', '')),
+                    'position': track.get('position', 0),
+                })
+
+        return tracks
+
+    except (requests.RequestException, ValueError, KeyError):
+        return []
 
 
 def fetch_artist_data(musicbrainz_url, fetch_songs=True, max_songs=100):

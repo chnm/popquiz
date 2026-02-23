@@ -8,10 +8,10 @@
 </div>
 
 {% if category.item_label == 'artist' or category.item_label == 'release' %}
-{# Redirect to search-based flow for music categories #}
-<script>window.location.replace("{% url 'add_music_search' category.slug %}");</script>
+{# Redirect to unified music search #}
+<script>window.location.replace("{% url 'add_music' %}");</script>
 <noscript>
-    <p>Redirecting... <a href="{% url 'add_music_search' category.slug %}">Click here if not redirected.</a></p>
+    <p>Redirecting... <a href="{% url 'add_music' %}">Click here if not redirected.</a></p>
 </noscript>
 {% else %}
 {# IMDB Form (Movies / TV Series) #}

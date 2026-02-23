@@ -12,8 +12,10 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class SongInline(admin.TabularInline):
     model = Song
+    fk_name = 'artist'
     extra = 0
-    fields = ['title', 'album', 'year', 'musicbrainz_id']
+    fields = ['title', 'album', 'year', 'musicbrainz_id', 'release']
+    raw_id_fields = ['release']
 
 
 @admin.register(Item)
@@ -27,10 +29,10 @@ class ItemAdmin(admin.ModelAdmin):
 
 @admin.register(Song)
 class SongAdmin(admin.ModelAdmin):
-    list_display = ['title', 'artist', 'album', 'year', 'upvote_count', 'created_at']
+    list_display = ['title', 'artist', 'release', 'album', 'year', 'upvote_count', 'created_at']
     list_filter = ['year', 'created_at']
     search_fields = ['title', 'artist__title', 'album']
-    raw_id_fields = ['artist']
+    raw_id_fields = ['artist', 'release']
 
 
 @admin.register(SongUpvote)

@@ -283,72 +283,69 @@
     </div>
     {% endfor %}
 
-    {# Music categories: side-by-side 50/50 row #}
-    {% if music_categories_with_progress %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 {% if categories_with_progress %}mt-6{% endif %}">
-        {% for cat_data in music_categories_with_progress %}
-        <div class="relative rounded-2xl shadow-xl overflow-hidden">
-            {% if cat_data.random_posters %}
-            <div class="absolute inset-0 grid grid-cols-5 gap-0">
-                {% for item in cat_data.random_posters %}
-                <div class="relative w-full h-full">
-                    {% if item.image_url %}
-                    <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
-                         loading="lazy" onerror="this.style.display='none';">
-                    {% endif %}
-                </div>
-                {% endfor %}
+    {# Music: unified card #}
+    {% if music_combined %}
+    <div class="relative rounded-2xl shadow-xl overflow-hidden {% if categories_with_progress %}mt-6{% endif %}">
+        {% if music_combined.random_posters %}
+        <div class="absolute inset-0 grid grid-cols-5 gap-0">
+            {% for item in music_combined.random_posters %}
+            <div class="relative w-full h-full">
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     loading="lazy" onerror="this.style.display='none';">
+                {% endif %}
             </div>
-            <div class="absolute inset-0 bg-gradient-to-r from-pink-900/85 via-purple-900/80 to-indigo-900/85"></div>
-            {% else %}
-            <div class="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-500"></div>
-            {% endif %}
-            <div class="relative z-10 p-6 text-white">
-                <div class="flex flex-col gap-4">
-                    <div class="flex-grow">
-                        <h2 class="text-xl font-bold mb-2">{{ cat_data.category.name }}</h2>
-                        {% if cat_data.remaining > 0 %}
-                        <p class="text-white/90 mb-3">
-                            <span class="font-bold text-yellow-300">{{ cat_data.remaining }} {{ cat_data.category.item_label_plural }}</span> left to rate
-                        </p>
-                        {% else %}
-                        <p class="text-white/90 mb-3">All {{ cat_data.total }} {{ cat_data.category.item_label_plural }} rated!</p>
-                        {% endif %}
-                        <div>
-                            <div class="flex justify-between text-xs text-white/80 mb-1">
-                                <span>{{ cat_data.voted }} of {{ cat_data.total }} rated</span>
-                                <span>{{ cat_data.progress_percent }}%</span>
-                            </div>
-                            <div class="h-2 bg-white/20 rounded-full overflow-hidden">
-                                <div class="h-full bg-yellow-400 rounded-full transition-all duration-500" style="width: {{ cat_data.progress_percent }}%"></div>
-                            </div>
+            {% endfor %}
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-r from-pink-900/85 via-purple-900/80 to-indigo-900/85"></div>
+        {% else %}
+        <div class="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-500"></div>
+        {% endif %}
+        <div class="relative z-10 p-8 text-white">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div class="flex-grow">
+                    <h2 class="text-2xl font-bold mb-2">Music</h2>
+                    {% if music_combined.remaining > 0 %}
+                    <p class="text-white/90 text-lg mb-4">
+                        You have <span class="font-bold text-yellow-300">{{ music_combined.remaining }} items</span> left to rate!
+                    </p>
+                    {% else %}
+                    <p class="text-white/90 text-lg mb-4">You've rated all {{ music_combined.total }} music items!</p>
+                    {% endif %}
+                    <div class="mb-2">
+                        <div class="flex justify-between text-sm text-white/80 mb-1">
+                            <span>{{ music_combined.voted }} of {{ music_combined.total }} rated</span>
+                            <span>{{ music_combined.progress_percent }}% complete</span>
+                        </div>
+                        <div class="h-3 bg-white/20 rounded-full overflow-hidden">
+                            <div class="h-full bg-yellow-400 rounded-full transition-all duration-500" style="width: {{ music_combined.progress_percent }}%"></div>
                         </div>
                     </div>
-                    <div class="flex flex-col gap-2">
+                </div>
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        {% for cat_data in music_combined.categories %}
                         {% if cat_data.remaining > 0 %}
                         <a href="{% url 'swipe_rating' cat_data.category.slug %}" class="inline-flex items-center justify-center bg-white text-pink-700 px-5 py-3 rounded-xl font-bold hover:bg-yellow-300 hover:text-pink-800 transition duration-200 shadow-lg">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Start Rating
-                        </a>
-                        {% else %}
-                        <a href="{% url 'category_detail' cat_data.category.slug %}" class="inline-flex items-center justify-center bg-white/20 text-white px-5 py-3 rounded-xl font-bold hover:bg-white/30 transition duration-200">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            All Done!
+                            Rate {{ cat_data.category.item_label_plural|capfirst }}
                         </a>
                         {% endif %}
-                        <a href="{% url 'category_detail' cat_data.category.slug %}" class="text-center text-white/80 hover:text-white text-sm underline">
-                            Browse all {{ cat_data.category.name|lower }}
+                        {% endfor %}
+                    </div>
+                    <div class="flex gap-4 justify-center">
+                        {% for cat_data in music_combined.categories %}
+                        <a href="{% url 'category_detail' cat_data.category.slug %}" class="text-white/80 hover:text-white text-sm underline">
+                            Browse {{ cat_data.category.item_label_plural }}
                         </a>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
-        {% endfor %}
     </div>
     {% endif %}
 </div>
@@ -391,39 +388,35 @@
     </div>
     {% endfor %}
 
-    {# Music categories: side-by-side 50/50 row #}
-    {% if music_categories_with_posters %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 {% if categories_with_posters %}mt-6{% endif %}">
-        {% for cat_data in music_categories_with_posters %}
-        <div class="relative rounded-2xl shadow-xl overflow-hidden">
-            {% if cat_data.random_posters %}
-            <div class="absolute inset-0 grid grid-cols-5 gap-0">
-                {% for item in cat_data.random_posters %}
-                <div class="relative w-full h-full">
-                    {% if item.image_url %}
-                    <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
-                         loading="lazy" onerror="this.style.display='none';">
-                    {% endif %}
-                </div>
-                {% endfor %}
+    {# Music: unified card #}
+    {% if music_combined_logged_out %}
+    <div class="relative rounded-2xl shadow-xl overflow-hidden {% if categories_with_posters %}mt-6{% endif %}">
+        {% if music_combined_logged_out.random_posters %}
+        <div class="absolute inset-0 grid grid-cols-5 gap-0">
+            {% for item in music_combined_logged_out.random_posters %}
+            <div class="relative w-full h-full">
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.title }}" class="w-full h-full object-cover"
+                     loading="lazy" onerror="this.style.display='none';">
+                {% endif %}
             </div>
-            <div class="absolute inset-0 bg-gradient-to-r from-pink-900/85 via-purple-900/80 to-indigo-900/85"></div>
-            {% else %}
-            <div class="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-500"></div>
-            {% endif %}
-            <div class="relative z-10 p-6 text-white">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold mb-1">{{ cat_data.category.name }}</h2>
-                        <p class="text-white/90">{{ cat_data.category.item_count }} {{ cat_data.category.item_label }}{{ cat_data.category.item_count|pluralize }} to rate</p>
-                    </div>
-                    <a href="{% url 'login' %}" class="inline-flex items-center justify-center bg-white text-pink-700 px-5 py-3 rounded-xl font-bold hover:bg-yellow-300 hover:text-pink-800 transition duration-200 shadow-lg">
-                        Log in to Rate
-                    </a>
+            {% endfor %}
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-r from-pink-900/85 via-purple-900/80 to-indigo-900/85"></div>
+        {% else %}
+        <div class="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-500"></div>
+        {% endif %}
+        <div class="relative z-10 p-8 text-white">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Music</h2>
+                    <p class="text-white/90 text-lg">{{ music_combined_logged_out.item_count }} items to rate</p>
                 </div>
+                <a href="{% url 'login' %}" class="inline-flex items-center justify-center bg-white text-pink-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-300 hover:text-pink-800 transition duration-200 shadow-lg">
+                    Log in to Rate
+                </a>
             </div>
         </div>
-        {% endfor %}
     </div>
     {% endif %}
 </div>
@@ -464,22 +457,9 @@
                 </svg>
             </div>
         </a>
-        {% endwith %}{% elif category.item_label == 'artist' or category.item_label == 'release' %}{% with emoji="🎵" %}
-        <a href="{% url 'add_music_search' category.slug %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-pink-500">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-2xl group-hover:bg-pink-200 transition duration-200">{{ emoji }}</div>
-                    <div>
-                        <h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition duration-200">Add {{ category.name }}</h3>
-                        <p class="text-gray-500 text-sm">Search MusicBrainz to add a {{ category.item_label }}</p>
-                    </div>
-                </div>
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-pink-600 group-hover:translate-x-1 transition duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-            </div>
-        </a>
-        {% endwith %}{% elif category.item_label == 'series' %}{% with emoji="📺" %}
+        {% endwith %}{% elif category.item_label == 'artist' or category.item_label == 'release' %}
+        {# Skip music categories — handled by the unified Add Music card below #}
+        {% elif category.item_label == 'series' %}{% with emoji="📺" %}
         <a href="{% url 'add_item' category.slug %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-green-500">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -515,6 +495,22 @@
         </a>
         {% endif %}
         {% endfor %}
+        {% if music_combined %}
+        <a href="{% url 'add_music' %}" class="group bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 border-l-4 border-pink-500">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-2xl group-hover:bg-pink-200 transition duration-200">🎵</div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 group-hover:text-pink-600 transition duration-200">Add Music</h3>
+                        <p class="text-gray-500 text-sm">Search for artists, albums, or songs</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-pink-600 group-hover:translate-x-1 transition duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        </a>
+        {% endif %}
     </div>
 </div>
 {% endif %}

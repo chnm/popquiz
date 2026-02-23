@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Music - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'home' %}" class="text-indigo-600 hover:underline">&larr; Back to Home</a>
+</div>
+
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
+
+{% if not artist_results and not release_results and not recording_results %}
+    {# Step 1: Search form #}
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add Music</h1>
+    <p class="text-gray-600 mb-6">Search for an artist, album, or song and we'll fetch the details from MusicBrainz.</p>
+
+    <form method="post" id="search-form" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="query" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input type="text"
+                   name="query"
+                   id="query"
+                   required
+                   value="{{ query|default:'' }}"
+                   placeholder="e.g., Radiohead, OK Computer, Paranoid Android"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                   autofocus>
+        </div>
+        <button type="submit" class="w-full bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-200">
+            Search MusicBrainz
+        </button>
+    </form>
+
+    <div id="search-progress" class="hidden mt-6 p-4 bg-pink-50 border border-pink-200 rounded-lg">
+        <div class="flex items-center">
+            <svg class="animate-spin h-5 w-5 text-pink-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-pink-800 font-medium">Searching artists, releases, and songs...</span>
+        </div>
+    </div>
+
+    <div class="mt-6 p-4 bg-pink-50 rounded-lg">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">How it works:</h3>
+        <ol class="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+            <li>Enter an artist, album, or song name</li>
+            <li>Choose from matching artists, releases, or songs</li>
+            <li>We'll automatically add related items:
+                <ul class="ml-6 mt-1 space-y-0.5 list-disc list-inside text-gray-500">
+                    <li><strong>Song</strong> &rarr; adds the song, its album, and artist</li>
+                    <li><strong>Release</strong> &rarr; adds the album, all tracks, and artist</li>
+                    <li><strong>Artist</strong> &rarr; adds the artist only</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', function () {
+            document.getElementById('search-progress').classList.remove('hidden');
+        });
+    </script>
+
+{% else %}
+    {# Step 2: Show search results for selection #}
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-1">Results for &ldquo;{{ query }}&rdquo;</h1>
+        <p class="text-gray-600">Select an item to add it. Related artists, releases, and songs will be added automatically.</p>
+    </div>
+
+    <form method="post" id="select-form">
+        {% csrf_token %}
+        <input type="hidden" name="selected_id" id="selected_id" value="">
+        <input type="hidden" name="rec_title" id="rec_title" value="">
+        <input type="hidden" name="rec_album" id="rec_album" value="">
+
+        {% if artist_results %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold text-purple-700">{{ artist_results|length }}</span>
+                Artists
+            </h2>
+            <div class="space-y-2">
+                {% for result in artist_results %}
+                <label class="block p-4 border border-gray-300 rounded-lg hover:bg-pink-50 hover:border-pink-300 cursor-pointer transition result-label">
+                    <div class="flex items-start">
+                        <input type="radio"
+                               name="result_radio"
+                               required
+                               data-type="artist"
+                               data-id="{{ result.musicbrainz_id }}"
+                               class="mt-1 w-5 h-5 text-pink-600 border-gray-300 focus:ring-pink-500">
+                        <div class="ml-3 flex-1">
+                            <div class="font-semibold text-gray-900">{{ result.name }}</div>
+                            <div class="text-sm text-gray-500 mt-0.5 space-x-2">
+                                {% if result.type %}<span>{{ result.type }}</span>{% endif %}
+                                {% if result.type and result.area %}<span>&bull;</span>{% endif %}
+                                {% if result.area %}<span>{{ result.area }}</span>{% endif %}
+                                {% if result.disambiguation %}
+                                    {% if result.type or result.area %}<span>&bull;</span>{% endif %}
+                                    <span class="italic">{{ result.disambiguation }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-purple-600 mt-1">Adds artist only</div>
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if release_results %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">{{ release_results|length }}</span>
+                Releases
+            </h2>
+            <div class="space-y-2">
+                {% for result in release_results %}
+                <label class="block p-4 border border-gray-300 rounded-lg hover:bg-pink-50 hover:border-pink-300 cursor-pointer transition result-label">
+                    <div class="flex items-start">
+                        <input type="radio"
+                               name="result_radio"
+                               required
+                               data-type="release"
+                               data-id="{{ result.musicbrainz_id }}"
+                               class="mt-1 w-5 h-5 text-pink-600 border-gray-300 focus:ring-pink-500">
+                        <div class="ml-3 flex-1">
+                            <div class="font-semibold text-gray-900">{{ result.title }}</div>
+                            <div class="text-sm text-gray-500 mt-0.5 space-x-2">
+                                {% if result.artist %}<span>{{ result.artist }}</span>{% endif %}
+                                {% if result.release_type %}
+                                    {% if result.artist %}<span>&bull;</span>{% endif %}
+                                    <span>{{ result.release_type }}</span>
+                                {% endif %}
+                                {% if result.year %}
+                                    {% if result.artist or result.release_type %}<span>&bull;</span>{% endif %}
+                                    <span>{{ result.year }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-blue-600 mt-1">Adds release + all tracks + artist</div>
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if recording_results %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs font-bold text-green-700">{{ recording_results|length }}</span>
+                Songs
+            </h2>
+            <div class="space-y-2">
+                {% for result in recording_results %}
+                <label class="block p-4 border border-gray-300 rounded-lg hover:bg-pink-50 hover:border-pink-300 cursor-pointer transition result-label">
+                    <div class="flex items-start">
+                        <input type="radio"
+                               name="result_radio"
+                               required
+                               data-type="recording"
+                               data-id="{{ result.musicbrainz_id }}"
+                               data-artist-id="{{ result.artist_id|default:'' }}"
+                               data-rg-id="{{ result.release_group_id|default:'' }}"
+                               data-rec-title="{{ result.title }}"
+                               data-rec-album="{{ result.release_group_title|default:'' }}"
+                               class="mt-1 w-5 h-5 text-pink-600 border-gray-300 focus:ring-pink-500">
+                        <div class="ml-3 flex-1">
+                            <div class="font-semibold text-gray-900">{{ result.title }}</div>
+                            <div class="text-sm text-gray-500 mt-0.5 space-x-2">
+                                {% if result.artist %}<span>{{ result.artist }}</span>{% endif %}
+                                {% if result.release_group_title %}
+                                    {% if result.artist %}<span>&bull;</span>{% endif %}
+                                    <span>{{ result.release_group_title }}</span>
+                                {% endif %}
+                                {% if result.year %}
+                                    {% if result.artist or result.release_group_title %}<span>&bull;</span>{% endif %}
+                                    <span>{{ result.year }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-green-600 mt-1">Adds song + release + artist</div>
+                        </div>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div id="progress-container" class="hidden mt-6 p-4 bg-pink-50 border border-pink-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="animate-spin h-5 w-5 text-pink-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span id="progress-text" class="text-pink-800 font-medium">Adding music...</span>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <a href="{% url 'add_music' %}"
+               class="flex-1 text-center bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
+                Search Again
+            </a>
+            <button type="submit" id="submit-btn"
+                    class="flex-1 bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-200">
+                Add Selected
+            </button>
+        </div>
+    </form>
+
+    <script>
+    (function() {
+        var radios = document.querySelectorAll('input[name="result_radio"]');
+        var selectedIdField = document.getElementById('selected_id');
+        var recTitleField = document.getElementById('rec_title');
+        var recAlbumField = document.getElementById('rec_album');
+
+        radios.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                var type = this.dataset.type;
+                var id = this.dataset.id;
+                if (type === 'recording') {
+                    var artistId = this.dataset.artistId || '';
+                    var rgId = this.dataset.rgId || '';
+                    selectedIdField.value = 'recording:' + id + ':' + artistId + ':' + rgId;
+                    recTitleField.value = this.dataset.recTitle || '';
+                    recAlbumField.value = this.dataset.recAlbum || '';
+                } else {
+                    selectedIdField.value = type + ':' + id;
+                    recTitleField.value = '';
+                    recAlbumField.value = '';
+                }
+            });
+        });
+
+        var progressMessages = {
+            artist: 'Fetching artist details and songs from MusicBrainz...',
+            release: 'Fetching release, tracks, and artist from MusicBrainz...',
+            recording: 'Adding song, release, and artist...'
+        };
+
+        document.getElementById('select-form').addEventListener('submit', function(e) {
+            if (!selectedIdField.value) {
+                e.preventDefault();
+                return;
+            }
+            var type = selectedIdField.value.split(':')[0];
+            document.getElementById('progress-text').textContent = progressMessages[type] || 'Adding music...';
+            document.getElementById('progress-container').classList.remove('hidden');
+            var btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.textContent = 'Working...';
+        });
+    })();
+    </script>
+{% endif %}
+
+</div>
+{% endblock %}
