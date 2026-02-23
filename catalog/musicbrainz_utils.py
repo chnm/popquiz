@@ -39,6 +39,116 @@ def extract_musicbrainz_id(url):
     return None
 
 
+def search_artists(query, limit=10):
+    """
+    Search MusicBrainz for artists by name.
+
+    Returns a list of dicts, each with:
+    - musicbrainz_id: str (UUID)
+    - name: str
+    - disambiguation: str (e.g. "American rock band")
+    - type: str (Person, Group, Orchestra, etc.)
+    - area: str (country/city)
+    """
+    if not query or not query.strip():
+        return []
+
+    try:
+        sleep(RATE_LIMIT_DELAY)
+        resp = requests.get(
+            "https://musicbrainz.org/ws/2/artist/",
+            headers=HEADERS,
+            params={'query': query.strip(), 'fmt': 'json', 'limit': limit},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return []
+
+        results = []
+        for artist in resp.json().get('artists', []):
+            mb_id = artist.get('id')
+            name = artist.get('name')
+            if not mb_id or not name:
+                continue
+            area = ''
+            if artist.get('area'):
+                area = artist['area'].get('name', '')
+            results.append({
+                'musicbrainz_id': mb_id,
+                'name': name,
+                'disambiguation': artist.get('disambiguation', ''),
+                'type': artist.get('type', ''),
+                'area': area,
+            })
+
+        return results
+
+    except (requests.RequestException, ValueError, KeyError):
+        return []
+
+
+def search_release_groups(query, limit=10):
+    """
+    Search MusicBrainz for release groups (albums, singles, EPs) by title.
+
+    Returns a list of dicts, each with:
+    - musicbrainz_id: str (UUID)
+    - title: str
+    - artist: str (artist name)
+    - release_type: str (Album, Single, EP, etc.)
+    - year: int or None
+    """
+    if not query or not query.strip():
+        return []
+
+    try:
+        sleep(RATE_LIMIT_DELAY)
+        resp = requests.get(
+            "https://musicbrainz.org/ws/2/release-group/",
+            headers=HEADERS,
+            params={'query': query.strip(), 'fmt': 'json', 'limit': limit},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return []
+
+        results = []
+        for rg in resp.json().get('release-groups', []):
+            mb_id = rg.get('id')
+            title = rg.get('title')
+            if not mb_id or not title:
+                continue
+
+            artist_parts = []
+            for credit in rg.get('artist-credit', []):
+                if isinstance(credit, dict) and 'artist' in credit:
+                    artist_parts.append(credit['artist'].get('name', ''))
+                    joinphrase = credit.get('joinphrase', '')
+                    if joinphrase:
+                        artist_parts.append(joinphrase)
+            artist = ''.join(artist_parts).strip()
+
+            year = None
+            first_release = rg.get('first-release-date', '')
+            if first_release:
+                year_match = re.match(r'(\d{4})', first_release)
+                if year_match:
+                    year = int(year_match.group(1))
+
+            results.append({
+                'musicbrainz_id': mb_id,
+                'title': title,
+                'artist': artist,
+                'release_type': rg.get('primary-type', ''),
+                'year': year,
+            })
+
+        return results
+
+    except (requests.RequestException, ValueError, KeyError):
+        return []
+
+
 def extract_musicbrainz_release_id(url):
     """
     Extract MusicBrainz release-group ID (UUID) from a URL.

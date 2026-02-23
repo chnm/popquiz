@@ -13,7 +13,7 @@ from accounts.models import User
 from .models import Category, Item, Song, SongUpvote
 from .forms import AddItemForm, AddSongForm
 from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, download_poster
-from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id
+from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id, search_artists, search_release_groups
 from ratings.models import Rating
 
 
@@ -591,6 +591,105 @@ class AddByDirectorView(LoginRequiredMixin, View):
             if failed_count > 0:
                 message_parts.append(f'{failed_count} failed')
             messages.info(request, f'{director_name}: {", ".join(message_parts)}')
+
+        return redirect('category_detail', slug=slug)
+
+
+class AddMusicSearchView(LoginRequiredMixin, View):
+    """Search MusicBrainz by name and let the user pick the right artist or release to add."""
+
+    def get(self, request, slug):
+        category = get_object_or_404(Category, slug=slug)
+        return render(request, 'catalog/add_music_search.html', {'category': category})
+
+    def post(self, request, slug):
+        category = get_object_or_404(Category, slug=slug)
+
+        # Step 2: user selected a result from the list
+        if 'musicbrainz_id' in request.POST:
+            mb_id = request.POST.get('musicbrainz_id', '').strip()
+            return self._add_by_id(request, category, slug, mb_id)
+
+        # Step 1: search by name
+        query = request.POST.get('query', '').strip()
+        if not query:
+            messages.error(request, 'Please enter a name to search.')
+            return render(request, 'catalog/add_music_search.html', {'category': category})
+
+        if category.item_label == 'artist':
+            results = search_artists(query)
+        else:
+            results = search_release_groups(query)
+
+        if not results:
+            messages.error(request, f'No results found for "{query}". Try a different spelling.')
+            return render(request, 'catalog/add_music_search.html', {
+                'category': category,
+                'query': query,
+            })
+
+        # Single result — add immediately without making the user click
+        if len(results) == 1:
+            return self._add_by_id(request, category, slug, results[0]['musicbrainz_id'])
+
+        return render(request, 'catalog/add_music_search.html', {
+            'category': category,
+            'query': query,
+            'search_results': results,
+        })
+
+    def _add_by_id(self, request, category, slug, mb_id):
+        if category.item_label == 'artist':
+            existing = Item.objects.filter(musicbrainz_id=mb_id).first()
+            if existing:
+                messages.info(request, f'"{existing.title}" is already in {category.name}.')
+                return redirect('category_detail', slug=slug)
+
+            data = fetch_artist_data(mb_id, fetch_songs=True, max_songs=50)
+            if not data:
+                messages.error(request, 'Could not fetch artist data from MusicBrainz. Please try again.')
+                return redirect('add_music_search', slug=slug)
+
+            item = Item.objects.create(
+                category=category,
+                title=data['title'],
+                musicbrainz_id=data['musicbrainz_id'],
+                image_source_url=data.get('poster_url') or '',
+                added_by=request.user,
+            )
+            songs_count = 0
+            for song_data in data.get('songs', []):
+                Song.objects.create(
+                    artist=item,
+                    title=song_data['title'],
+                    musicbrainz_id=song_data.get('musicbrainz_id'),
+                    year=song_data.get('year'),
+                    album=song_data.get('album', ''),
+                )
+                songs_count += 1
+            messages.success(request, f'"{item.title}" has been added with {songs_count} songs!')
+
+        else:  # release
+            existing = Item.objects.filter(musicbrainz_id=mb_id).first()
+            if existing:
+                messages.info(request, f'"{existing.title}" is already in {category.name}.')
+                return redirect('category_detail', slug=slug)
+
+            data = fetch_release_data(mb_id)
+            if not data:
+                messages.error(request, 'Could not fetch release data from MusicBrainz. Please try again.')
+                return redirect('add_music_search', slug=slug)
+
+            item = Item.objects.create(
+                category=category,
+                title=data['title'],
+                year=data['year'],
+                director=data['artist'],
+                genre=data['release_type'],
+                musicbrainz_id=data['musicbrainz_id'],
+                added_by=request.user,
+            )
+            messages.success(request, f'"{item.title}" has been added!')
 
         return redirect('category_detail', slug=slug)
 

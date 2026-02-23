@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Add {{ category.item_label|capfirst }} - {{ category.name }} - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{% url 'category_detail' category.slug %}" class="text-indigo-600 hover:underline">&larr; Back to {{ category.name }}</a>
+</div>
+
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
+
+{% if not search_results %}
+    {# Step 1: Search form #}
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add a {{ category.item_label|capfirst }}</h1>
+    {% if category.item_label == 'artist' %}
+        <p class="text-gray-600 mb-6">Search for an artist by name and we'll fetch their details and songs automatically.</p>
+    {% else %}
+        <p class="text-gray-600 mb-6">Search for an album, single, or EP by title and we'll fetch the details automatically.</p>
+    {% endif %}
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            <label for="query" class="block text-sm font-medium text-gray-700 mb-1">
+                {% if category.item_label == 'artist' %}Artist Name{% else %}Release Title{% endif %}
+            </label>
+            <input type="text"
+                   name="query"
+                   id="query"
+                   required
+                   value="{{ query|default:'' }}"
+                   placeholder="{% if category.item_label == 'artist' %}e.g., Radiohead{% else %}e.g., OK Computer{% endif %}"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                   autofocus>
+        </div>
+        <button type="submit" class="w-full bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-200">
+            Search MusicBrainz
+        </button>
+    </form>
+
+    <div class="mt-6 p-4 bg-pink-50 rounded-lg">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">How it works:</h3>
+        <ol class="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+            {% if category.item_label == 'artist' %}
+                <li>Enter the artist or band name</li>
+                <li>If multiple matches appear, select the right one</li>
+                <li>Their top songs will be fetched automatically</li>
+            {% else %}
+                <li>Enter the album, single, or EP title</li>
+                <li>If multiple matches appear, select the right one</li>
+                <li>Artist name and release year will be fetched automatically</li>
+            {% endif %}
+        </ol>
+    </div>
+
+{% else %}
+    {# Step 2: Show search results for selection #}
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-1">
+            {% if category.item_label == 'artist' %}Artists{% else %}Releases{% endif %} matching &ldquo;{{ query }}&rdquo;
+        </h1>
+        <p class="text-gray-600">Select the correct one to add it to {{ category.name }}.</p>
+    </div>
+
+    <form method="post" id="select-form">
+        {% csrf_token %}
+        <div class="space-y-2">
+            {% for result in search_results %}
+            <label class="block p-4 border border-gray-300 rounded-lg hover:bg-pink-50 hover:border-pink-300 cursor-pointer transition">
+                <div class="flex items-start">
+                    <input type="radio"
+                           name="musicbrainz_id"
+                           value="{{ result.musicbrainz_id }}"
+                           required
+                           class="mt-1 w-5 h-5 text-pink-600 border-gray-300 focus:ring-pink-500">
+                    <div class="ml-3 flex-1">
+                        {% if category.item_label == 'artist' %}
+                            <div class="font-semibold text-gray-900">{{ result.name }}</div>
+                            <div class="text-sm text-gray-500 mt-0.5 space-x-2">
+                                {% if result.type %}<span>{{ result.type }}</span>{% endif %}
+                                {% if result.type and result.area %}<span>&bull;</span>{% endif %}
+                                {% if result.area %}<span>{{ result.area }}</span>{% endif %}
+                                {% if result.disambiguation %}
+                                    {% if result.type or result.area %}<span>&bull;</span>{% endif %}
+                                    <span class="italic">{{ result.disambiguation }}</span>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="font-semibold text-gray-900">{{ result.title }}</div>
+                            <div class="text-sm text-gray-500 mt-0.5 space-x-2">
+                                {% if result.artist %}<span>{{ result.artist }}</span>{% endif %}
+                                {% if result.release_type %}
+                                    {% if result.artist %}<span>&bull;</span>{% endif %}
+                                    <span>{{ result.release_type }}</span>
+                                {% endif %}
+                                {% if result.year %}
+                                    {% if result.artist or result.release_type %}<span>&bull;</span>{% endif %}
+                                    <span>{{ result.year }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+
+        <div id="progress-container" class="hidden mt-6 p-4 bg-pink-50 border border-pink-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="animate-spin h-5 w-5 text-pink-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-pink-800 font-medium">
+                    {% if category.item_label == 'artist' %}Fetching artist details and songs from MusicBrainz...{% else %}Fetching release details from MusicBrainz...{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <a href="{% url 'add_music_search' category.slug %}"
+               class="flex-1 text-center bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
+                Search Again
+            </a>
+            <button type="submit" id="submit-btn"
+                    class="flex-1 bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-200">
+                Add Selected {{ category.item_label|capfirst }}
+            </button>
+        </div>
+    </form>
+
+    <script>
+        document.getElementById('select-form').addEventListener('submit', function () {
+            document.getElementById('progress-container').classList.remove('hidden');
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            btn.textContent = 'Working...';
+        });
+    </script>
+{% endif %}
+
+</div>
+{% endblock %}

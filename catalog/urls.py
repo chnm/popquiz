@@ -1,12 +1,13 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView, AddSongView
+from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, AddMusicSearchView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView, AddSongView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('category/<slug:slug>/', CategoryDetailView.as_view(), name='category_detail'),
     path('category/<slug:slug>/add/', AddItemView.as_view(), name='add_item'),
     path('category/<slug:slug>/add-by-director/', AddByDirectorView.as_view(), name='add_by_director'),
+    path('category/<slug:slug>/add-by-search/', AddMusicSearchView.as_view(), name='add_music_search'),
     path('category/<slug:slug>/rate/', SwipeRatingView.as_view(), name='swipe_rating'),
     path('category/<slug:slug>/stats/', StatsView.as_view(), name='stats'),
     path('category/<slug:slug>/decades/', DecadeStatsView.as_view(), name='decades'),
