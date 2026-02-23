@@ -47,6 +47,8 @@ class Item(models.Model):
         related_name='items_added'
     )
     musicbrainz_id = models.CharField(max_length=36, unique=True, null=True, blank=True)
+    spotify_url = models.URLField(blank=True)
+    genre_tags = models.CharField(max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

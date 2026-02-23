@@ -306,6 +306,38 @@ def _fetch_cover_art(release_group_id):
     return None
 
 
+def _fetch_spotify_url(release_group_id):
+    """
+    Fetch Spotify album URL for a release-group by inspecting url-rels on
+    individual releases (Spotify links live at the release level in MusicBrainz).
+
+    Returns the Spotify URL string, or None if not found.
+    """
+    try:
+        sleep(RATE_LIMIT_DELAY)
+        resp = requests.get(
+            "https://musicbrainz.org/ws/2/release",
+            headers=HEADERS,
+            params={
+                'release-group': release_group_id,
+                'inc': 'url-rels',
+                'fmt': 'json',
+                'limit': 5,
+            },
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            return None
+        for release in resp.json().get('releases', []):
+            for rel in release.get('relations', []):
+                resource = rel.get('url', {}).get('resource', '')
+                if 'open.spotify.com/album/' in resource:
+                    return resource
+    except (requests.RequestException, ValueError, KeyError) as e:
+        logger.warning("Spotify URL fetch failed for %s: %s", release_group_id, e)
+    return None
+
+
 def fetch_release_data(musicbrainz_url):
     """
     Fetch release-group data from MusicBrainz given a URL or MusicBrainz ID.
@@ -327,7 +359,7 @@ def fetch_release_data(musicbrainz_url):
         sleep(RATE_LIMIT_DELAY)
 
         rg_url = f"https://musicbrainz.org/ws/2/release-group/{mb_id}"
-        resp = requests.get(rg_url, headers=HEADERS, params={'inc': 'artist-credits', 'fmt': 'json'}, timeout=15)
+        resp = requests.get(rg_url, headers=HEADERS, params={'inc': 'artist-credits+genres', 'fmt': 'json'}, timeout=15)
         if resp.status_code != 200:
             return None
 
@@ -360,8 +392,15 @@ def fetch_release_data(musicbrainz_url):
 
         release_type = data.get('primary-type', '')
 
+        # Extract top genre tags (sorted by community vote count, max 3)
+        genres_raw = sorted(data.get('genres', []), key=lambda x: -x.get('count', 0))[:3]
+        genre_tags = ','.join(g['name'].title() for g in genres_raw if g.get('name'))
+
         # Try to fetch cover art from Cover Art Archive
         poster_url = _fetch_cover_art(mb_id)
+
+        # Fetch Spotify URL from individual releases (url-rels are on releases, not release-groups)
+        spotify_url = _fetch_spotify_url(mb_id)
 
         return {
             'title': title,
@@ -371,6 +410,8 @@ def fetch_release_data(musicbrainz_url):
             'release_type': release_type,
             'musicbrainz_id': mb_id,
             'poster_url': poster_url,
+            'genre_tags': genre_tags,
+            'spotify_url': spotify_url,
         }
 
     except (requests.RequestException, ValueError, KeyError):
