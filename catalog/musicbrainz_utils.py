@@ -84,9 +84,9 @@ def fetch_artist_data(musicbrainz_url, fetch_songs=True, max_songs=100):
 
         # Extract area (country)
         area = None
-        if 'area' in data:
+        if data.get('area'):
             area = data['area'].get('name')
-        elif 'begin-area' in data:
+        elif data.get('begin-area'):
             area = data['begin-area'].get('name')
 
         # Try to get artist image from Cover Art Archive
