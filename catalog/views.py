@@ -40,6 +40,7 @@ class HomeView(ListView):
         # Get voting progress for logged-in user
         if self.request.user.is_authenticated:
             categories_with_progress = []
+            music_categories_with_progress = []
             for category in context['categories']:
                 total_items = category.item_count
                 # Count all ratings (including NO_RATING) - any response counts as "handled"
@@ -57,29 +58,42 @@ class HomeView(ListView):
                     image_local_url='', image_source_url=''
                 ).order_by('?')[:5]
 
-                categories_with_progress.append({
+                entry = {
                     'category': category,
                     'total': total_items,
                     'voted': responded_count,
                     'remaining': remaining,
                     'progress_percent': progress_percent,
                     'random_posters': random_posters,
-                })
+                }
+                if category.item_label in ('artist', 'release'):
+                    music_categories_with_progress.append(entry)
+                else:
+                    categories_with_progress.append(entry)
+
             context['categories_with_progress'] = categories_with_progress
+            context['music_categories_with_progress'] = music_categories_with_progress
         else:
             # For logged-out users, add random posters to categories
             categories_with_posters = []
+            music_categories_with_posters = []
             for category in context['categories']:
                 random_posters = Item.objects.filter(
                     category=category
                 ).exclude(
                     image_local_url='', image_source_url=''
                 ).order_by('?')[:5]
-                categories_with_posters.append({
+                entry = {
                     'category': category,
                     'random_posters': random_posters,
-                })
+                }
+                if category.item_label in ('artist', 'release'):
+                    music_categories_with_posters.append(entry)
+                else:
+                    categories_with_posters.append(entry)
+
             context['categories_with_posters'] = categories_with_posters
+            context['music_categories_with_posters'] = music_categories_with_posters
 
         # Get featured items for carousel - guarantee at least one per category
         base_featured_qs = Item.objects.exclude(
