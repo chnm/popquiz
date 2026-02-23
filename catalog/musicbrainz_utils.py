@@ -223,12 +223,33 @@ def fetch_release_data(musicbrainz_url):
 
         release_type = data.get('primary-type', '')
 
+        # Try to fetch cover art from Cover Art Archive
+        poster_url = None
+        try:
+            sleep(RATE_LIMIT_DELAY)
+            caa_resp = requests.get(
+                f"https://coverartarchive.org/release-group/{mb_id}",
+                headers=HEADERS,
+                timeout=10,
+                allow_redirects=True,
+            )
+            if caa_resp.status_code == 200:
+                caa_data = caa_resp.json()
+                for image in caa_data.get('images', []):
+                    if image.get('front'):
+                        thumbnails = image.get('thumbnails', {})
+                        poster_url = thumbnails.get('500') or thumbnails.get('large') or image.get('image')
+                        break
+        except (requests.RequestException, ValueError, KeyError):
+            pass  # Cover art is optional; continue without it
+
         return {
             'title': title,
             'artist': artist,
             'year': year,
             'release_type': release_type,
             'musicbrainz_id': mb_id,
+            'poster_url': poster_url,
         }
 
     except (requests.RequestException, ValueError, KeyError):

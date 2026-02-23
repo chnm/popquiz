@@ -435,6 +435,9 @@ class AddItemView(LoginRequiredMixin, View):
                 'category': category,
             })
 
+        raw_source = data.get('poster_url') or ''
+        local_image = download_poster(raw_source, data['musicbrainz_id']) if raw_source else None
+
         item = Item.objects.create(
             category=category,
             title=data['title'],
@@ -442,6 +445,8 @@ class AddItemView(LoginRequiredMixin, View):
             director=data['artist'],  # Reuse director field to store artist name
             genre=data['release_type'],  # Reuse genre field to store release type (Album, Single, EP)
             musicbrainz_id=data['musicbrainz_id'],
+            image_source_url=raw_source,
+            image_local_url=local_image or '',
             added_by=request.user,
         )
 
@@ -694,6 +699,9 @@ class AddMusicSearchView(LoginRequiredMixin, View):
                 messages.error(request, 'Could not fetch release data from MusicBrainz. Please try again.')
                 return redirect('add_music_search', slug=slug)
 
+            raw_source = data.get('poster_url') or ''
+            local_image = download_poster(raw_source, data['musicbrainz_id']) if raw_source else None
+
             item = Item.objects.create(
                 category=category,
                 title=data['title'],
@@ -701,6 +709,8 @@ class AddMusicSearchView(LoginRequiredMixin, View):
                 director=data['artist'],
                 genre=data['release_type'],
                 musicbrainz_id=data['musicbrainz_id'],
+                image_source_url=raw_source,
+                image_local_url=local_image or '',
                 added_by=request.user,
             )
             messages.success(request, f'"{item.title}" has been added!')
