@@ -1562,9 +1562,19 @@ class ItemDetailView(TemplateView):
             context['disliked_percent'] = 0
             context['hated_percent'] = 0
 
-        # If this is a release, get its tracklist ordered by insertion order (= track order)
+        # If this is a release, get its tracklist with upvote data, ordered by insertion order (= track order)
         if is_release:
-            context['tracklist'] = Song.objects.filter(release=item).select_related('artist').order_by('id')
+            tracks = Song.objects.filter(release=item).prefetch_related('upvotes__user').order_by('id')
+            tracklist = []
+            for song in tracks:
+                upvotes = list(song.upvotes.all())
+                user_upvoted = any(u.user == self.request.user for u in upvotes) if self.request.user.is_authenticated else False
+                tracklist.append({
+                    'song': song,
+                    'upvote_count': len(upvotes),
+                    'user_upvoted': user_upvoted,
+                })
+            context['tracklist'] = tracklist
 
         # If this is an artist, get songs with upvote data
         if is_artist:
