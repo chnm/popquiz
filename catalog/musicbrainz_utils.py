@@ -1,9 +1,12 @@
 """
 Utility functions for fetching music data from MusicBrainz.
 """
+import logging
 import re
 import requests
 from time import sleep
+
+logger = logging.getLogger(__name__)
 
 # MusicBrainz requires a User-Agent with contact info
 HEADERS = {
@@ -13,6 +16,10 @@ HEADERS = {
 
 # Rate limiting: MusicBrainz allows 1 request per second
 RATE_LIMIT_DELAY = 1.0
+
+# Cover Art Archive retry settings
+CAA_MAX_RETRIES = 3
+CAA_RETRY_DELAYS = [1, 2, 3]  # seconds between retries
 
 
 def extract_musicbrainz_id(url):
@@ -254,6 +261,51 @@ def extract_musicbrainz_release_id(url):
     return None
 
 
+def _fetch_cover_art(release_group_id):
+    """
+    Fetch cover art URL from Cover Art Archive for a release-group.
+
+    Uses multiple retries with increasing delays to handle intermittent
+    SSL/connection issues with coverartarchive.org.
+
+    Returns the cover art URL string, or None if unavailable.
+    """
+    caa_url = f"https://coverartarchive.org/release-group/{release_group_id}"
+
+    for attempt in range(CAA_MAX_RETRIES):
+        try:
+            delay = CAA_RETRY_DELAYS[attempt] if attempt < len(CAA_RETRY_DELAYS) else CAA_RETRY_DELAYS[-1]
+            sleep(delay)
+            logger.info("CAA fetch attempt %d for %s", attempt + 1, release_group_id)
+            caa_resp = requests.get(
+                caa_url,
+                headers=HEADERS,
+                timeout=15,
+                allow_redirects=True,
+            )
+            if caa_resp.status_code == 200:
+                caa_data = caa_resp.json()
+                for image in caa_data.get('images', []):
+                    if image.get('front'):
+                        thumbnails = image.get('thumbnails', {})
+                        url = thumbnails.get('500') or thumbnails.get('large') or image.get('image')
+                        if url:
+                            logger.info("CAA cover art found: %s", url)
+                            return url
+                logger.info("CAA returned 200 but no front cover image found")
+                return None
+            elif caa_resp.status_code == 404:
+                logger.info("CAA returned 404 — no cover art exists for %s", release_group_id)
+                return None
+            else:
+                logger.warning("CAA returned status %d on attempt %d", caa_resp.status_code, attempt + 1)
+        except (requests.RequestException, ValueError, KeyError) as e:
+            logger.warning("CAA fetch error on attempt %d: %s: %s", attempt + 1, type(e).__name__, e)
+
+    logger.warning("CAA fetch failed after %d attempts for %s", CAA_MAX_RETRIES, release_group_id)
+    return None
+
+
 def fetch_release_data(musicbrainz_url):
     """
     Fetch release-group data from MusicBrainz given a URL or MusicBrainz ID.
@@ -309,24 +361,7 @@ def fetch_release_data(musicbrainz_url):
         release_type = data.get('primary-type', '')
 
         # Try to fetch cover art from Cover Art Archive
-        poster_url = None
-        try:
-            sleep(RATE_LIMIT_DELAY)
-            caa_resp = requests.get(
-                f"https://coverartarchive.org/release-group/{mb_id}",
-                headers=HEADERS,
-                timeout=10,
-                allow_redirects=True,
-            )
-            if caa_resp.status_code == 200:
-                caa_data = caa_resp.json()
-                for image in caa_data.get('images', []):
-                    if image.get('front'):
-                        thumbnails = image.get('thumbnails', {})
-                        poster_url = thumbnails.get('500') or thumbnails.get('large') or image.get('image')
-                        break
-        except (requests.RequestException, ValueError, KeyError):
-            pass  # Cover art is optional; continue without it
+        poster_url = _fetch_cover_art(mb_id)
 
         return {
             'title': title,
