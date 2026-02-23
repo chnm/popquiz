@@ -34,30 +34,42 @@
 
                     <!-- Poster + title -->
                     <a href="{% url 'item_detail' category.slug item_data.item.id %}" class="flex items-center space-x-3 min-w-0 hover:opacity-75 transition duration-200">
-                        {% if item_data.item.image_url %}
-                            <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
-                                 class="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded shadow-sm flex-shrink-0"
-                                 loading="lazy"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded items-center justify-center flex-shrink-0" style="display: none;">
-                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
-                                    {% if category.slug == 'music-artists' or category.slug == 'music-releases' %}
-                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                                    {% else %}
-                                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
-                                    {% endif %}
-                                </svg>
-                            </div>
+                        {% if category.slug == 'music-artists' or category.slug == 'music-releases' %}
+                            {% if item_data.item.image_url %}
+                                <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
+                                     class="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded shadow-sm flex-shrink-0"
+                                     loading="lazy"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 rounded items-center justify-center flex-shrink-0" style="display: none;">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
+                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    </svg>
+                                </div>
+                            {% else %}
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
+                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    </svg>
+                                </div>
+                            {% endif %}
                         {% else %}
-                            <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
-                                    {% if category.slug == 'music-artists' or category.slug == 'music-releases' %}
-                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                                    {% else %}
-                                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
-                                    {% endif %}
-                                </svg>
-                            </div>
+                            {% if item_data.item.image_url %}
+                                <img src="{{ item_data.item.image_url }}" alt="{{ item_data.item.title }}"
+                                     class="w-10 h-14 sm:w-12 sm:h-16 object-cover rounded shadow-sm flex-shrink-0"
+                                     loading="lazy"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded items-center justify-center flex-shrink-0" style="display: none;">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
+                                        <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                                    </svg>
+                                </div>
+                            {% else %}
+                                <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
+                                        <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                                    </svg>
+                                </div>
+                            {% endif %}
                         {% endif %}
                         <div class="min-w-0">
                             <span class="font-medium text-gray-800 hover:text-indigo-600 block">{{ item_data.item.title }}</span>
