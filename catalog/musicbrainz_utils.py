@@ -17,7 +17,30 @@ HEADERS = {
 # Rate limiting: MusicBrainz allows 1 request per second
 RATE_LIMIT_DELAY = 1.0
 
-# Cover Art Archive retry settings
+# Retry settings for all external API calls
+MAX_RETRIES = 3
+RETRY_DELAYS = [1, 2, 3]  # seconds between retries
+
+
+def _mb_get(url, params=None):
+    """
+    Wrapper around requests.get for MusicBrainz API calls with retry logic.
+    Returns the Response on success, or None if all retries fail.
+    """
+    for attempt in range(MAX_RETRIES):
+        try:
+            sleep(RATE_LIMIT_DELAY)
+            resp = requests.get(url, headers=HEADERS, params=params or {}, timeout=15)
+            return resp
+        except requests.RequestException as e:
+            delay = RETRY_DELAYS[attempt] if attempt < len(RETRY_DELAYS) else RETRY_DELAYS[-1]
+            logger.warning("MusicBrainz request failed (attempt %d/%d) for %s: %s", attempt + 1, MAX_RETRIES, url, e)
+            if attempt < MAX_RETRIES - 1:
+                sleep(delay)
+    return None
+
+
+# Cover Art Archive retry settings (kept separate — different host/error profile)
 CAA_MAX_RETRIES = 3
 CAA_RETRY_DELAYS = [1, 2, 3]  # seconds between retries
 
@@ -61,14 +84,8 @@ def search_artists(query, limit=10):
         return []
 
     try:
-        sleep(RATE_LIMIT_DELAY)
-        resp = requests.get(
-            "https://musicbrainz.org/ws/2/artist/",
-            headers=HEADERS,
-            params={'query': query.strip(), 'fmt': 'json', 'limit': limit},
-            timeout=15,
-        )
-        if resp.status_code != 200:
+        resp = _mb_get("https://musicbrainz.org/ws/2/artist/", {'query': query.strip(), 'fmt': 'json', 'limit': limit})
+        if resp is None or resp.status_code != 200:
             return []
 
         results = []
@@ -109,14 +126,8 @@ def search_release_groups(query, limit=10):
         return []
 
     try:
-        sleep(RATE_LIMIT_DELAY)
-        resp = requests.get(
-            "https://musicbrainz.org/ws/2/release-group/",
-            headers=HEADERS,
-            params={'query': query.strip(), 'fmt': 'json', 'limit': limit},
-            timeout=15,
-        )
-        if resp.status_code != 200:
+        resp = _mb_get("https://musicbrainz.org/ws/2/release-group/", {'query': query.strip(), 'fmt': 'json', 'limit': limit})
+        if resp is None or resp.status_code != 200:
             return []
 
         results = []
@@ -173,14 +184,8 @@ def search_recordings(query, limit=10):
         return []
 
     try:
-        sleep(RATE_LIMIT_DELAY)
-        resp = requests.get(
-            "https://musicbrainz.org/ws/2/recording/",
-            headers=HEADERS,
-            params={'query': query.strip(), 'fmt': 'json', 'limit': limit},
-            timeout=15,
-        )
-        if resp.status_code != 200:
+        resp = _mb_get("https://musicbrainz.org/ws/2/recording/", {'query': query.strip(), 'fmt': 'json', 'limit': limit})
+        if resp is None or resp.status_code != 200:
             return []
 
         results = []
@@ -314,26 +319,20 @@ def _fetch_spotify_url(release_group_id):
     Returns the Spotify URL string, or None if not found.
     """
     try:
-        sleep(RATE_LIMIT_DELAY)
-        resp = requests.get(
-            "https://musicbrainz.org/ws/2/release",
-            headers=HEADERS,
-            params={
-                'release-group': release_group_id,
-                'inc': 'url-rels',
-                'fmt': 'json',
-                'limit': 5,
-            },
-            timeout=15,
-        )
-        if resp.status_code != 200:
+        resp = _mb_get("https://musicbrainz.org/ws/2/release", {
+            'release-group': release_group_id,
+            'inc': 'url-rels',
+            'fmt': 'json',
+            'limit': 5,
+        })
+        if resp is None or resp.status_code != 200:
             return None
         for release in resp.json().get('releases', []):
             for rel in release.get('relations', []):
                 resource = rel.get('url', {}).get('resource', '')
                 if 'open.spotify.com/album/' in resource:
                     return resource
-    except (requests.RequestException, ValueError, KeyError) as e:
+    except (ValueError, KeyError) as e:
         logger.warning("Spotify URL fetch failed for %s: %s", release_group_id, e)
     return None
 
@@ -356,11 +355,9 @@ def fetch_release_data(musicbrainz_url):
         return None
 
     try:
-        sleep(RATE_LIMIT_DELAY)
-
         rg_url = f"https://musicbrainz.org/ws/2/release-group/{mb_id}"
-        resp = requests.get(rg_url, headers=HEADERS, params={'inc': 'artist-credits+genres', 'fmt': 'json'}, timeout=15)
-        if resp.status_code != 200:
+        resp = _mb_get(rg_url, {'inc': 'artist-credits+genres', 'fmt': 'json'})
+        if resp is None or resp.status_code != 200:
             return None
 
         data = resp.json()
@@ -435,19 +432,13 @@ def fetch_release_tracks(release_group_id):
         return []
 
     try:
-        sleep(RATE_LIMIT_DELAY)
-        resp = requests.get(
-            "https://musicbrainz.org/ws/2/release",
-            headers=HEADERS,
-            params={
-                'release-group': release_group_id,
-                'inc': 'recordings',
-                'fmt': 'json',
-                'limit': 1,
-            },
-            timeout=15,
-        )
-        if resp.status_code != 200:
+        resp = _mb_get("https://musicbrainz.org/ws/2/release", {
+            'release-group': release_group_id,
+            'inc': 'recordings',
+            'fmt': 'json',
+            'limit': 1,
+        })
+        if resp is None or resp.status_code != 200:
             return []
 
         data = resp.json()
@@ -507,96 +498,71 @@ def fetch_artist_data(musicbrainz_url, fetch_songs=True, max_songs=100):
     if not mb_id:
         return None
 
-    try:
-        # First, fetch artist info
-        # Rate limiting
-        sleep(RATE_LIMIT_DELAY)
-
-        artist_url = f"https://musicbrainz.org/ws/2/artist/{mb_id}"
-        resp = requests.get(artist_url, headers=HEADERS, params={'fmt': 'json'}, timeout=15)
-        if resp.status_code != 200:
-            return None
-
-        data = resp.json()
-
-        # Extract artist info
-        artist_name = data.get('name')
-        if not artist_name:
-            return None
-
-        disambiguation = data.get('disambiguation', '')
-
-        # Extract area (country)
-        area = None
-        if data.get('area'):
-            area = data['area'].get('name')
-        elif data.get('begin-area'):
-            area = data['begin-area'].get('name')
-
-        # Try to get artist image from Cover Art Archive
-        # Note: MusicBrainz doesn't directly provide artist images
-        # We could potentially fetch from their first release group
-        poster_url = None
-
-        result = {
-            'title': artist_name,
-            'musicbrainz_id': mb_id,
-            'area': area,
-            'disambiguation': disambiguation,
-            'poster_url': poster_url,
-        }
-
-        # Fetch songs/recordings if requested using browse endpoint
-        # The browse endpoint provides first-release-date which the artist endpoint doesn't
-        if fetch_songs:
-            songs = []
-            seen_titles = set()  # Avoid duplicates
-
-            # Rate limiting before second request
-            sleep(RATE_LIMIT_DELAY)
-
-            # Use browse recordings endpoint to get recordings with first-release-date
-            recordings_url = "https://musicbrainz.org/ws/2/recording"
-            recordings_params = {
-                'fmt': 'json',
-                'artist': mb_id,
-                'limit': max_songs,
-                'offset': 0
-            }
-
-            recordings_resp = requests.get(recordings_url, headers=HEADERS, params=recordings_params, timeout=15)
-            if recordings_resp.status_code == 200:
-                recordings_data = recordings_resp.json()
-
-                for recording in recordings_data.get('recordings', []):
-                    title = recording.get('title')
-                    if not title or title in seen_titles:
-                        continue
-
-                    seen_titles.add(title)
-
-                    # Extract year from first release date
-                    year = None
-                    if 'first-release-date' in recording:
-                        year_match = re.match(r'(\d{4})', recording['first-release-date'])
-                        if year_match:
-                            year = int(year_match.group(1))
-
-                    # Note: The browse recordings endpoint doesn't include release details
-                    # To get album names, we'd need additional API calls per recording
-                    # For now, we'll leave album empty and users can add it manually
-                    album = ''
-
-                    songs.append({
-                        'title': title,
-                        'musicbrainz_id': recording.get('id'),
-                        'year': year,
-                        'album': album,
-                    })
-
-            result['songs'] = songs
-
-        return result
-
-    except (requests.RequestException, ValueError, KeyError):
+    # Fetch artist info
+    resp = _mb_get(f"https://musicbrainz.org/ws/2/artist/{mb_id}", {'fmt': 'json'})
+    if resp is None or resp.status_code != 200:
+        logger.warning("fetch_artist_data: failed to fetch artist %s", mb_id)
         return None
+
+    try:
+        data = resp.json()
+    except ValueError:
+        return None
+
+    artist_name = data.get('name')
+    if not artist_name:
+        return None
+
+    disambiguation = data.get('disambiguation', '')
+
+    area = None
+    if data.get('area'):
+        area = data['area'].get('name')
+    elif data.get('begin-area'):
+        area = data['begin-area'].get('name')
+
+    result = {
+        'title': artist_name,
+        'musicbrainz_id': mb_id,
+        'area': area,
+        'disambiguation': disambiguation,
+        'poster_url': None,
+    }
+
+    # Fetch songs/recordings via browse endpoint
+    if fetch_songs:
+        songs = []
+        seen_titles = set()
+
+        recordings_resp = _mb_get(
+            "https://musicbrainz.org/ws/2/recording",
+            {'fmt': 'json', 'artist': mb_id, 'limit': max_songs, 'offset': 0},
+        )
+        if recordings_resp and recordings_resp.status_code == 200:
+            try:
+                recordings_data = recordings_resp.json()
+            except ValueError:
+                recordings_data = {}
+
+            for recording in recordings_data.get('recordings', []):
+                title = recording.get('title')
+                if not title or title in seen_titles:
+                    continue
+                seen_titles.add(title)
+
+                year = None
+                if 'first-release-date' in recording:
+                    year_match = re.match(r'(\d{4})', recording['first-release-date'])
+                    if year_match:
+                        year = int(year_match.group(1))
+
+                songs.append({
+                    'title': title,
+                    'musicbrainz_id': recording.get('id'),
+                    'year': year,
+                    'album': '',
+                })
+
+        result['songs'] = songs
+
+    return result
