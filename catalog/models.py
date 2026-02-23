@@ -75,7 +75,7 @@ class Item(models.Model):
 
 class Song(models.Model):
     artist = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='songs')
-    release = models.ForeignKey(Item, on_delete=models.SET_NULL, null=True, blank=True, related_name='tracks')
+    release = models.ForeignKey(Item, on_delete=models.CASCADE, null=True, blank=True, related_name='tracks')
     title = models.CharField(max_length=255)
     musicbrainz_id = models.CharField(max_length=36, unique=True, null=True, blank=True)
     year = models.PositiveIntegerField(null=True, blank=True)
