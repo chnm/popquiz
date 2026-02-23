@@ -416,16 +416,23 @@ def fetch_release_tracks(release_group_id):
 
         tracks = []
         seen_ids = set()
+        seen_titles = set()
         for medium in releases[0].get('media', []):
             for track in medium.get('tracks', []):
                 recording = track.get('recording', {})
                 rec_id = recording.get('id')
-                if not rec_id or rec_id in seen_ids:
+                title = recording.get('title', track.get('title', ''))
+                # Deduplicate by recording ID and by normalised title (handles
+                # special editions that include alternate/live versions of the
+                # same songs on a bonus disc)
+                normalised = title.lower().strip()
+                if not rec_id or rec_id in seen_ids or normalised in seen_titles:
                     continue
                 seen_ids.add(rec_id)
+                seen_titles.add(normalised)
                 tracks.append({
                     'musicbrainz_id': rec_id,
-                    'title': recording.get('title', track.get('title', '')),
+                    'title': title,
                     'position': track.get('position', 0),
                 })
 
