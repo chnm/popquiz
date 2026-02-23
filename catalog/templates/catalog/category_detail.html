@@ -41,13 +41,21 @@
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                             <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded items-center justify-center flex-shrink-0" style="display: none;">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
+                                    {% if category.slug == 'music-artists' or category.slug == 'music-releases' %}
+                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    {% else %}
                                     <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                                    {% endif %}
                                 </svg>
                             </div>
                         {% else %}
                             <div class="w-10 h-14 sm:w-12 sm:h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="#9ca3af" viewBox="0 0 24 24">
+                                    {% if category.slug == 'music-artists' or category.slug == 'music-releases' %}
+                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    {% else %}
                                     <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                                    {% endif %}
                                 </svg>
                             </div>
                         {% endif %}
