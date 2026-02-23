@@ -6,5 +6,11 @@ register = template.Library()
 
 @register.simple_tag
 def get_categories():
-    """Return all categories ordered by name."""
-    return Category.objects.all().order_by('name')
+    """Return all non-music categories ordered by name."""
+    return Category.objects.exclude(item_label__in=['artist', 'release']).order_by('name')
+
+
+@register.simple_tag
+def get_music_categories():
+    """Return music categories (artists, releases) ordered by name."""
+    return Category.objects.filter(item_label__in=['artist', 'release']).order_by('name')
