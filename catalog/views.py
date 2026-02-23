@@ -1476,9 +1476,11 @@ class ItemDetailView(TemplateView):
         context['category'] = category
         context['item'] = item
 
-        # Check if this is an artist (has musicbrainz_id)
+        # Check if this is an artist or release (music categories)
         is_artist = category.item_label == 'artist'
+        is_release = category.item_label == 'release'
         context['is_artist'] = is_artist
+        context['is_release'] = is_release
 
         # Get current user's rating if authenticated
         user_rating = None
@@ -1559,6 +1561,10 @@ class ItemDetailView(TemplateView):
             context['okay_percent'] = 0
             context['disliked_percent'] = 0
             context['hated_percent'] = 0
+
+        # If this is a release, get its tracklist ordered by insertion order (= track order)
+        if is_release:
+            context['tracklist'] = Song.objects.filter(release=item).select_related('artist').order_by('id')
 
         # If this is an artist, get songs with upvote data
         if is_artist:

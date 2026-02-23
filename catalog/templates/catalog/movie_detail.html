@@ -274,6 +274,27 @@
     </div>
 </div>
 
+<!-- Tracklist Section (for releases) -->
+{% if is_release %}
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
+    <div class="p-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Tracklist</h2>
+        {% if tracklist %}
+        <ol class="space-y-1">
+            {% for song in tracklist %}
+            <li class="flex items-center gap-4 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                <span class="text-gray-400 text-sm w-6 text-right flex-shrink-0">{{ forloop.counter }}</span>
+                <span class="text-gray-800">{{ song.title }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No tracks found for this release.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <!-- Songs Section (for artists) -->
 {% if is_artist %}
 <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
