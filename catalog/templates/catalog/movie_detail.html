@@ -203,19 +203,46 @@
                     </form>
                 </div>
 
-                <!-- Review Textarea -->
+                <!-- Review Button -->
                 <div class="mt-4 border-t border-indigo-100 pt-4">
-                    <div class="flex items-center justify-between mb-1">
-                        <label for="review-text" class="text-sm font-semibold text-gray-700">Write a Review <span class="text-gray-400 font-normal italic">&mdash; completely optional, max 150 words</span></label>
-                        <span id="review-word-count" class="text-xs text-gray-500">0 / 150 words</span>
+                    <div class="flex items-center gap-3">
+                        <button id="open-review-modal" type="button"
+                            class="px-4 py-2 text-sm font-medium rounded-lg border transition duration-200 {% if user_review %}border-indigo-400 text-indigo-700 bg-indigo-50 hover:bg-indigo-100{% else %}border-gray-300 text-gray-600 bg-white hover:bg-gray-50{% endif %}">
+                            {% if user_review %}Edit Review{% else %}Write a Review{% endif %}
+                        </button>
+                        {% if user_review %}
+                        <p id="review-preview" class="text-sm text-gray-500 italic truncate">&ldquo;{{ user_review|truncatewords:12 }}&rdquo;</p>
+                        {% else %}
+                        <p id="review-preview" class="text-sm text-gray-400 italic hidden"></p>
+                        {% endif %}
                     </div>
-                    <textarea id="review-text" rows="3"
-                        class="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-                        placeholder="Share your thoughts... (totally optional!)">{{ user_review }}</textarea>
-                    <div class="flex items-center gap-3 mt-2">
+                </div>
+            </div>
+
+            <!-- Review Modal -->
+            <div id="review-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-50 p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+                    <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-800">Write a Review</h3>
+                        <button id="close-review-modal" type="button" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-500 italic">Completely optional &mdash; max 150 words</span>
+                            <span id="review-word-count" class="text-xs text-gray-500">0 / 150 words</span>
+                        </div>
+                        <textarea id="review-text" rows="5"
+                            class="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                            placeholder="Share your thoughts...">{{ user_review }}</textarea>
+                    </div>
+                    <div class="flex items-center gap-3 px-6 pb-6">
                         <button id="save-review-btn" type="button"
                             class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Save Review
+                            Save
+                        </button>
+                        <button id="cancel-review-btn" type="button"
+                            class="px-4 py-2 bg-gray-100 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-200 transition duration-200">
+                            Cancel
                         </button>
                         <span id="review-status" class="text-sm text-gray-500 hidden"></span>
                     </div>
@@ -223,11 +250,17 @@
             </div>
             <script>
             (function() {
+                var modal = document.getElementById('review-modal');
+                var openBtn = document.getElementById('open-review-modal');
+                var closeBtn = document.getElementById('close-review-modal');
+                var cancelBtn = document.getElementById('cancel-review-btn');
                 var textarea = document.getElementById('review-text');
                 var wordCountEl = document.getElementById('review-word-count');
                 var saveBtn = document.getElementById('save-review-btn');
                 var statusEl = document.getElementById('review-status');
+                var previewEl = document.getElementById('review-preview');
                 var itemId = {{ item.id }};
+                var savedText = textarea.value;
 
                 function countWords(text) {
                     var trimmed = text.trim();
@@ -254,14 +287,42 @@
                     }
                 }
 
+                function openModal() {
+                    statusEl.classList.add('hidden');
+                    statusEl.textContent = '';
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    textarea.focus();
+                    updateWordCount();
+                }
+
+                function closeModal() {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+
+                function truncatePreview(text, wordLimit) {
+                    var words = text.trim().split(/\s+/);
+                    if (words.length <= wordLimit) return text.trim();
+                    return words.slice(0, wordLimit).join(' ') + '\u2026';
+                }
+
+                openBtn.addEventListener('click', openModal);
+                closeBtn.addEventListener('click', function() { textarea.value = savedText; closeModal(); });
+                cancelBtn.addEventListener('click', function() { textarea.value = savedText; closeModal(); });
+
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) { textarea.value = savedText; closeModal(); }
+                });
+
                 textarea.addEventListener('input', updateWordCount);
-                updateWordCount();
 
                 saveBtn.addEventListener('click', function() {
                     saveBtn.disabled = true;
                     statusEl.classList.remove('hidden', 'text-green-600', 'text-red-600');
                     statusEl.classList.add('text-gray-500');
                     statusEl.textContent = 'Saving...';
+                    statusEl.classList.remove('hidden');
 
                     fetch('{% url "save_review" %}', {
                         method: 'POST',
@@ -274,22 +335,32 @@
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
                         if (data.success) {
-                            statusEl.textContent = 'Review saved.';
-                            statusEl.classList.remove('text-gray-500', 'text-red-600');
-                            statusEl.classList.add('text-green-600');
+                            savedText = textarea.value;
+                            var hasReview = savedText.trim().length > 0;
+                            // Update the open button label
+                            openBtn.textContent = hasReview ? 'Edit Review' : 'Write a Review';
+                            openBtn.className = 'px-4 py-2 text-sm font-medium rounded-lg border transition duration-200 ' +
+                                (hasReview ? 'border-indigo-400 text-indigo-700 bg-indigo-50 hover:bg-indigo-100' : 'border-gray-300 text-gray-600 bg-white hover:bg-gray-50');
+                            // Update preview
+                            if (hasReview) {
+                                previewEl.textContent = '\u201c' + truncatePreview(savedText, 12) + '\u201d';
+                                previewEl.classList.remove('hidden');
+                            } else {
+                                previewEl.textContent = '';
+                                previewEl.classList.add('hidden');
+                            }
+                            closeModal();
                         } else {
                             statusEl.textContent = data.error || 'Could not save review.';
                             statusEl.classList.remove('text-gray-500', 'text-green-600');
                             statusEl.classList.add('text-red-600');
+                            saveBtn.disabled = countWords(textarea.value) > 150;
                         }
-                        statusEl.classList.remove('hidden');
-                        saveBtn.disabled = countWords(textarea.value) > 150;
                     })
                     .catch(function() {
                         statusEl.textContent = 'Error saving review.';
                         statusEl.classList.remove('text-gray-500', 'text-green-600');
                         statusEl.classList.add('text-red-600');
-                        statusEl.classList.remove('hidden');
                         saveBtn.disabled = false;
                     });
                 });
