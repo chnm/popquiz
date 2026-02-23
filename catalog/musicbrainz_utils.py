@@ -39,6 +39,92 @@ def extract_musicbrainz_id(url):
     return None
 
 
+def extract_musicbrainz_release_id(url):
+    """
+    Extract MusicBrainz release-group ID (UUID) from a URL.
+    Accepts URLs like:
+    - https://musicbrainz.org/release-group/5b11f4ce-a62d-471e-81fc-a69a8278c7da
+    - 5b11f4ce-a62d-471e-81fc-a69a8278c7da (just the UUID)
+    """
+    if not url:
+        return None
+
+    # If it's already just a UUID
+    uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    if re.match(uuid_pattern, url.strip(), re.IGNORECASE):
+        return url.strip().lower()
+
+    # Extract from release-group URL
+    match = re.search(r'/release-group/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', url, re.IGNORECASE)
+    if match:
+        return match.group(1).lower()
+
+    return None
+
+
+def fetch_release_data(musicbrainz_url):
+    """
+    Fetch release-group data from MusicBrainz given a URL or MusicBrainz ID.
+
+    Returns a dict with:
+    - title: str (release title)
+    - artist: str (artist name)
+    - year: int or None (first release year)
+    - release_type: str (Album, Single, EP, etc.)
+    - musicbrainz_id: str (UUID)
+
+    Returns None if fetch fails.
+    """
+    mb_id = extract_musicbrainz_release_id(musicbrainz_url)
+    if not mb_id:
+        return None
+
+    try:
+        sleep(RATE_LIMIT_DELAY)
+
+        rg_url = f"https://musicbrainz.org/ws/2/release-group/{mb_id}"
+        resp = requests.get(rg_url, headers=HEADERS, params={'inc': 'artist-credits', 'fmt': 'json'}, timeout=15)
+        if resp.status_code != 200:
+            return None
+
+        data = resp.json()
+
+        title = data.get('title')
+        if not title:
+            return None
+
+        # Build artist name from artist-credit list (handles joint artists like "A & B")
+        artist_parts = []
+        for credit in data.get('artist-credit', []):
+            if isinstance(credit, dict) and 'artist' in credit:
+                artist_parts.append(credit['artist'].get('name', ''))
+                joinphrase = credit.get('joinphrase', '')
+                if joinphrase:
+                    artist_parts.append(joinphrase)
+        artist = ''.join(artist_parts).strip()
+
+        # Extract year from first-release-date
+        year = None
+        first_release = data.get('first-release-date', '')
+        if first_release:
+            year_match = re.match(r'(\d{4})', first_release)
+            if year_match:
+                year = int(year_match.group(1))
+
+        release_type = data.get('primary-type', '')
+
+        return {
+            'title': title,
+            'artist': artist,
+            'year': year,
+            'release_type': release_type,
+            'musicbrainz_id': mb_id,
+        }
+
+    except (requests.RequestException, ValueError, KeyError):
+        return None
+
+
 def fetch_artist_data(musicbrainz_url, fetch_songs=True, max_songs=100):
     """
     Fetch artist data from MusicBrainz given a URL or MusicBrainz ID.

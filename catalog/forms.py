@@ -1,11 +1,11 @@
 from django import forms
 from .models import Item, Song
 from .imdb_utils import extract_imdb_id
-from .musicbrainz_utils import extract_musicbrainz_id
+from .musicbrainz_utils import extract_musicbrainz_id, extract_musicbrainz_release_id
 
 
 class AddItemForm(forms.Form):
-    """Form to add a movie (via IMDB) or artist (via MusicBrainz)."""
+    """Form to add a movie (via IMDB), artist, or release (via MusicBrainz)."""
     url = forms.CharField(
         label='URL',
         max_length=200,
@@ -19,27 +19,37 @@ class AddItemForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.category = category
 
-        # Update placeholder based on category
+        # Update placeholder based on category item_label
         if category:
-            if 'music' in category.slug.lower() or 'artist' in category.slug.lower():
+            if category.item_label == 'artist':
                 self.fields['url'].widget.attrs['placeholder'] = 'https://musicbrainz.org/artist/...'
-                self.fields['url'].label = 'MusicBrainz URL'
+                self.fields['url'].label = 'MusicBrainz Artist URL'
+            elif category.item_label == 'release':
+                self.fields['url'].widget.attrs['placeholder'] = 'https://musicbrainz.org/release-group/...'
+                self.fields['url'].label = 'MusicBrainz Release URL'
             else:
                 self.fields['url'].widget.attrs['placeholder'] = 'https://www.imdb.com/title/tt0111161/'
                 self.fields['url'].label = 'IMDB URL'
 
     def clean_url(self):
         url = self.cleaned_data['url']
+        category = self.category
 
-        # Try both IMDB and MusicBrainz
-        imdb_id = extract_imdb_id(url)
-        mb_id = extract_musicbrainz_id(url)
-
-        if not imdb_id and not mb_id:
-            raise forms.ValidationError(
-                'Please enter a valid IMDB URL (e.g., https://www.imdb.com/title/tt0111161/) '
-                'or MusicBrainz URL (e.g., https://musicbrainz.org/artist/...)'
-            )
+        if category and category.item_label == 'artist':
+            if not extract_musicbrainz_id(url):
+                raise forms.ValidationError(
+                    'Please enter a valid MusicBrainz artist URL (e.g., https://musicbrainz.org/artist/...)'
+                )
+        elif category and category.item_label == 'release':
+            if not extract_musicbrainz_release_id(url):
+                raise forms.ValidationError(
+                    'Please enter a valid MusicBrainz release-group URL (e.g., https://musicbrainz.org/release-group/...)'
+                )
+        else:
+            if not extract_imdb_id(url):
+                raise forms.ValidationError(
+                    'Please enter a valid IMDB URL (e.g., https://www.imdb.com/title/tt0111161/)'
+                )
 
         return url
 

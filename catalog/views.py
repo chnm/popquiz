@@ -13,7 +13,7 @@ from accounts.models import User
 from .models import Category, Item, Song, SongUpvote
 from .forms import AddItemForm, AddSongForm
 from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, download_poster
-from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id
+from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id
 from ratings.models import Rating
 
 
@@ -284,14 +284,12 @@ class AddItemView(LoginRequiredMixin, View):
         if form.is_valid():
             url = form.cleaned_data['url']
 
-            # Detect whether this is IMDB or MusicBrainz
-            imdb_id = extract_imdb_id(url)
-            mb_id = extract_musicbrainz_id(url)
-
-            if imdb_id:
-                return self._handle_imdb(request, form, category, slug, url)
-            elif mb_id:
+            if category.item_label == 'artist':
                 return self._handle_musicbrainz(request, form, category, slug, url)
+            elif category.item_label == 'release':
+                return self._handle_musicbrainz_release(request, form, category, slug, url)
+            else:
+                return self._handle_imdb(request, form, category, slug, url)
 
         return render(request, 'catalog/add_item.html', {
             'form': form,
@@ -401,6 +399,39 @@ class AddItemView(LoginRequiredMixin, View):
                 songs_count += 1
 
         messages.success(request, f'"{item.title}" has been added with {songs_count} songs!')
+        return redirect('category_detail', slug=slug)
+
+    def _handle_musicbrainz_release(self, request, form, category, slug, url):
+        """Handle adding a music release (album, single, EP) via MusicBrainz release-group URL."""
+        data = fetch_release_data(url)
+
+        if not data:
+            form.add_error('url', 'Could not fetch release data from MusicBrainz. Please check the URL and try again.')
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        # Check if release already exists
+        existing = Item.objects.filter(musicbrainz_id=data['musicbrainz_id']).first()
+        if existing:
+            form.add_error('url', f'This release already exists: "{existing.title}"')
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        item = Item.objects.create(
+            category=category,
+            title=data['title'],
+            year=data['year'],
+            director=data['artist'],  # Reuse director field to store artist name
+            genre=data['release_type'],  # Reuse genre field to store release type (Album, Single, EP)
+            musicbrainz_id=data['musicbrainz_id'],
+            added_by=request.user,
+        )
+
+        messages.success(request, f'"{item.title}" has been added!')
         return redirect('category_detail', slug=slug)
 
 
@@ -1019,7 +1050,7 @@ class ItemDetailView(TemplateView):
         context['item'] = item
 
         # Check if this is an artist (has musicbrainz_id)
-        is_artist = bool(item.musicbrainz_id)
+        is_artist = category.item_label == 'artist'
         context['is_artist'] = is_artist
 
         # Get current user's rating if authenticated
