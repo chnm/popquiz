@@ -274,6 +274,96 @@
     </div>
 </div>
 
+<!-- Songs Section (for artists) -->
+{% if is_artist %}
+<div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
+    <div class="p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Songs</h2>
+            {% if user.is_authenticated %}
+            <a href="{% url 'add_song' category.slug item.id %}" class="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition duration-200 text-sm flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Song
+            </a>
+            {% endif %}
+        </div>
+        {% if songs %}
+        <div class="space-y-2">
+            {% for song_data in songs %}
+            <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-800">{{ song_data.song.title }}</div>
+                    {% if song_data.song.album or song_data.song.year %}
+                    <div class="text-xs text-gray-500">
+                        {% if song_data.song.album %}{{ song_data.song.album }}{% endif %}
+                        {% if song_data.song.album and song_data.song.year %} &bull; {% endif %}
+                        {% if song_data.song.year %}{{ song_data.song.year }}{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-500" id="upvote-count-{{ song_data.song.id }}">
+                        {{ song_data.upvote_count }} upvote{{ song_data.upvote_count|pluralize }}
+                    </span>
+                    {% if user.is_authenticated %}
+                    <button
+                        onclick="toggleUpvote({{ song_data.song.id }})"
+                        id="upvote-btn-{{ song_data.song.id }}"
+                        class="px-4 py-2 rounded-lg transition-colors {% if song_data.user_upvoted %}bg-indigo-600 text-white hover:bg-indigo-700{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}"
+                    >
+                        {% if song_data.user_upvoted %}Upvoted{% else %}Upvote{% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No songs yet. {% if user.is_authenticated %}Click "Add Song" to add one!{% endif %}</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleUpvote(songId) {
+    var btn = document.getElementById('upvote-btn-' + songId);
+    var countSpan = document.getElementById('upvote-count-' + songId);
+
+    btn.disabled = true;
+
+    fetch('{% url "song_upvote_api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '',
+        },
+        body: 'song_id=' + songId,
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) {
+            if (data.upvoted) {
+                btn.textContent = 'Upvoted';
+                btn.className = 'px-4 py-2 rounded-lg transition-colors bg-indigo-600 text-white hover:bg-indigo-700';
+            } else {
+                btn.textContent = 'Upvote';
+                btn.className = 'px-4 py-2 rounded-lg transition-colors bg-gray-200 text-gray-700 hover:bg-gray-300';
+            }
+            var plural = data.upvote_count === 1 ? '' : 's';
+            countSpan.textContent = data.upvote_count + ' upvote' + plural;
+        }
+        btn.disabled = false;
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        btn.disabled = false;
+    });
+}
+</script>
+{% endif %}
+
 <!-- Rating Details -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <!-- Hated Ratings -->
@@ -359,7 +449,7 @@
     <!-- Haven't Seen -->
     <div class="bg-white rounded-xl shadow-md p-6">
         <h2 class="text-xl font-bold text-gray-600 mb-4">
-            ⏭️ Haven't Seen ({{ not_rated_count }})
+            ⏭️ {% if is_artist %}Haven't Heard{% else %}Haven't Seen{% endif %} ({{ not_rated_count }})
         </h2>
         {% if not_rated_ratings %}
             <ul class="space-y-2">

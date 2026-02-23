@@ -10,9 +10,10 @@ from django.urls import reverse
 from django.db.models import Count, Q, Case, When, IntegerField, Value
 
 from accounts.models import User
-from .models import Category, Item
-from .forms import AddItemForm
-from .imdb_utils import fetch_movie_data, search_directors_by_name, fetch_director_filmography, download_poster
+from .models import Category, Item, Song, SongUpvote
+from .forms import AddItemForm, AddSongForm
+from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, download_poster
+from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id
 from ratings.models import Rating
 
 
@@ -266,11 +267,11 @@ IMDB_TYPE_LABELS = {
 
 
 class AddItemView(LoginRequiredMixin, View):
-    """View to add an item (movie or TV series) using an IMDB URL."""
+    """View to add an item (movie, TV series, or artist) using an IMDB or MusicBrainz URL."""
 
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        form = AddItemForm()
+        form = AddItemForm(category=category)
         return render(request, 'catalog/add_item.html', {
             'form': form,
             'category': category,
@@ -278,73 +279,129 @@ class AddItemView(LoginRequiredMixin, View):
 
     def post(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        form = AddItemForm(request.POST)
+        form = AddItemForm(request.POST, category=category)
 
         if form.is_valid():
-            imdb_url = form.cleaned_data['imdb_url']
+            url = form.cleaned_data['url']
 
-            # Fetch movie data from IMDB
-            movie_data = fetch_movie_data(imdb_url)
+            # Detect whether this is IMDB or MusicBrainz
+            imdb_id = extract_imdb_id(url)
+            mb_id = extract_musicbrainz_id(url)
 
-            if not movie_data:
-                form.add_error('imdb_url', 'Could not fetch movie data from IMDB. Please check the URL and try again.')
-                return render(request, 'catalog/add_item.html', {
-                    'form': form,
-                    'category': category,
-                })
-
-            # Check if item already exists
-            existing = Item.objects.filter(imdb_id=movie_data['imdb_id']).first()
-            if existing:
-                form.add_error('imdb_url', f'This {category.item_label} already exists: "{existing.title}"')
-                return render(request, 'catalog/add_item.html', {
-                    'form': form,
-                    'category': category,
-                })
-
-            # Validate that the IMDB title type matches this category.
-            # e.g. prevent adding a TV series to the Movies category.
-            title_type = movie_data.get('title_type')
-            allowed_types = CATEGORY_ALLOWED_IMDB_TYPES.get(category.slug)
-            if allowed_types and title_type and title_type not in allowed_types:
-                friendly_type = IMDB_TYPE_LABELS.get(title_type, title_type)
-                form.add_error(
-                    'imdb_url',
-                    f'That IMDB link is for a {friendly_type}, not a {category.item_label}. '
-                    f'Please add it to the correct category.'
-                )
-                return render(request, 'catalog/add_item.html', {
-                    'form': form,
-                    'category': category,
-                })
-
-            # Download image locally so we serve it ourselves
-            imdb_id = movie_data['imdb_id']
-            raw_source = movie_data.get('image_source_url') or ''
-            local_image = download_poster(raw_source, imdb_id) if raw_source and imdb_id else None
-
-            # Create the item
-            item = Item.objects.create(
-                category=category,
-                title=movie_data['title'],
-                year=movie_data['year'],
-                years_running=movie_data.get('years_running') or '',
-                director=movie_data.get('director') or '',
-                genre=movie_data.get('genre') or '',
-                imdb_id=imdb_id,
-                imdb_url=movie_data['imdb_url'],
-                image_source_url=raw_source,
-                image_local_url=local_image or '',
-                added_by=request.user,
-            )
-
-            messages.success(request, f'"{item.title}" has been added!')
-            return redirect('category_detail', slug=slug)
+            if imdb_id:
+                return self._handle_imdb(request, form, category, slug, url)
+            elif mb_id:
+                return self._handle_musicbrainz(request, form, category, slug, url)
 
         return render(request, 'catalog/add_item.html', {
             'form': form,
             'category': category,
         })
+
+    def _handle_imdb(self, request, form, category, slug, url):
+        """Handle adding an item via IMDB URL."""
+        # Fetch movie data from IMDB
+        movie_data = fetch_movie_data(url)
+
+        if not movie_data:
+            form.add_error('url', 'Could not fetch data from IMDB. Please check the URL and try again.')
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        # Check if item already exists
+        existing = Item.objects.filter(imdb_id=movie_data['imdb_id']).first()
+        if existing:
+            form.add_error('url', f'This {category.item_label} already exists: "{existing.title}"')
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        # Validate that the IMDB title type matches this category.
+        title_type = movie_data.get('title_type')
+        allowed_types = CATEGORY_ALLOWED_IMDB_TYPES.get(category.slug)
+        if allowed_types and title_type and title_type not in allowed_types:
+            friendly_type = IMDB_TYPE_LABELS.get(title_type, title_type)
+            form.add_error(
+                'url',
+                f'That IMDB link is for a {friendly_type}, not a {category.item_label}. '
+                f'Please add it to the correct category.'
+            )
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        # Download image locally so we serve it ourselves
+        fetched_imdb_id = movie_data['imdb_id']
+        raw_source = movie_data.get('image_source_url') or ''
+        local_image = download_poster(raw_source, fetched_imdb_id) if raw_source and fetched_imdb_id else None
+
+        # Create the item
+        item = Item.objects.create(
+            category=category,
+            title=movie_data['title'],
+            year=movie_data['year'],
+            years_running=movie_data.get('years_running') or '',
+            director=movie_data.get('director') or '',
+            genre=movie_data.get('genre') or '',
+            imdb_id=fetched_imdb_id,
+            imdb_url=movie_data['imdb_url'],
+            image_source_url=raw_source,
+            image_local_url=local_image or '',
+            added_by=request.user,
+        )
+
+        messages.success(request, f'"{item.title}" has been added!')
+        return redirect('category_detail', slug=slug)
+
+    def _handle_musicbrainz(self, request, form, category, slug, url):
+        """Handle adding an artist via MusicBrainz URL."""
+        data = fetch_artist_data(url, fetch_songs=True, max_songs=50)
+
+        if not data:
+            form.add_error('url', 'Could not fetch artist data from MusicBrainz. Please check the URL and try again.')
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        # Check if artist already exists
+        existing = Item.objects.filter(musicbrainz_id=data['musicbrainz_id']).first()
+        if existing:
+            form.add_error('url', f'This artist already exists: "{existing.title}"')
+            return render(request, 'catalog/add_item.html', {
+                'form': form,
+                'category': category,
+            })
+
+        # Create the artist item
+        item = Item.objects.create(
+            category=category,
+            title=data['title'],
+            year=None,
+            musicbrainz_id=data['musicbrainz_id'],
+            image_source_url=data['poster_url'] or '',
+            added_by=request.user,
+        )
+
+        # Create songs if any were fetched
+        songs_count = 0
+        if 'songs' in data and data['songs']:
+            for song_data in data['songs']:
+                Song.objects.create(
+                    artist=item,
+                    title=song_data['title'],
+                    musicbrainz_id=song_data.get('musicbrainz_id'),
+                    year=song_data.get('year'),
+                    album=song_data.get('album', ''),
+                )
+                songs_count += 1
+
+        messages.success(request, f'"{item.title}" has been added with {songs_count} songs!')
+        return redirect('category_detail', slug=slug)
 
 
 class AddByDirectorView(LoginRequiredMixin, View):
@@ -648,7 +705,7 @@ class StatsView(TemplateView):
 
 
 class DecadeStatsView(TemplateView):
-    """View showing movies ranked by decade using simple averages."""
+    """View showing movies/songs ranked by decade."""
     template_name = 'catalog/decades.html'
 
     def get_context_data(self, **kwargs):
@@ -656,7 +713,52 @@ class DecadeStatsView(TemplateView):
         category = get_object_or_404(Category, slug=self.kwargs['slug'])
         context['category'] = category
 
-        # Get all items with rating statistics
+        # Check if this is a music category
+        is_music = 'music' in category.slug.lower() or 'artist' in category.slug.lower()
+        context['is_music'] = is_music
+
+        if is_music:
+            self._build_music_decades(context, category)
+        else:
+            self._build_item_decades(context, category)
+
+        context['all_categories'] = Category.objects.all()
+        context['url_name'] = 'decades'
+        return context
+
+    def _build_music_decades(self, context, category):
+        """Build decade stats for music categories (songs grouped by decade)."""
+        songs = Song.objects.filter(artist__category=category).prefetch_related('upvotes')
+
+        decades = {}
+        no_year = []
+
+        for song in songs:
+            upvote_count = song.upvotes.count()
+            song_data = {
+                'song': song,
+                'upvote_count': upvote_count,
+            }
+
+            if song.year:
+                decade = (song.year // 10) * 10
+                if decade not in decades:
+                    decades[decade] = []
+                decades[decade].append(song_data)
+            else:
+                no_year.append(song_data)
+
+        # Sort songs within each decade by upvote count
+        for decade in decades:
+            decades[decade].sort(key=lambda x: (-x['upvote_count'], x['song'].title.lower()))
+
+        sorted_decades = sorted(decades.items(), key=lambda x: -x[0])
+
+        context['decades'] = sorted_decades
+        context['no_year'] = no_year
+
+    def _build_item_decades(self, context, category):
+        """Build decade stats for non-music categories (items with ratings)."""
         items = Item.objects.filter(category=category).annotate(
             loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
             liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
@@ -665,7 +767,6 @@ class DecadeStatsView(TemplateView):
             hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
         )
 
-        # Group movies by decade
         decades = {}
         no_year = []
 
@@ -674,7 +775,6 @@ class DecadeStatsView(TemplateView):
                            item.disliked_count + item.hated_count)
 
             if total_ratings > 0:
-                # Simple average
                 total_value = (item.loved_count * 2 + item.liked_count * 1 +
                              item.okay_count * 0 + item.disliked_count * -1 +
                              item.hated_count * -2)
@@ -720,7 +820,6 @@ class DecadeStatsView(TemplateView):
             else:
                 no_year.append(movie_data)
 
-        # Sort movies within each decade by score
         for decade in decades:
             decades[decade].sort(key=lambda x: (
                 x['score'] is None,
@@ -729,15 +828,10 @@ class DecadeStatsView(TemplateView):
                 x['item'].title.lower()
             ))
 
-        # Sort decades (most recent first)
         sorted_decades = sorted(decades.items(), key=lambda x: -x[0])
 
         context['decades'] = sorted_decades
         context['no_year'] = no_year
-        context['all_categories'] = Category.objects.all()
-        context['url_name'] = 'decades'
-
-        return context
 
 
 class EclecticView(TemplateView):
@@ -924,6 +1018,10 @@ class ItemDetailView(TemplateView):
         context['category'] = category
         context['item'] = item
 
+        # Check if this is an artist (has musicbrainz_id)
+        is_artist = bool(item.musicbrainz_id)
+        context['is_artist'] = is_artist
+
         # Get current user's rating if authenticated
         user_rating = None
         if self.request.user.is_authenticated:
@@ -1004,4 +1102,58 @@ class ItemDetailView(TemplateView):
             context['disliked_percent'] = 0
             context['hated_percent'] = 0
 
+        # If this is an artist, get songs with upvote data
+        if is_artist:
+            songs = Song.objects.filter(artist=item).prefetch_related('upvotes__user')
+
+            songs_with_upvotes = []
+            for song in songs:
+                upvotes = list(song.upvotes.all())
+                user_upvoted = any(u.user == self.request.user for u in upvotes) if self.request.user.is_authenticated else False
+
+                songs_with_upvotes.append({
+                    'song': song,
+                    'upvote_count': len(upvotes),
+                    'user_upvoted': user_upvoted,
+                    'upvoted_by': [u.user for u in upvotes],
+                })
+
+            # Sort by upvote count (most upvoted first)
+            songs_with_upvotes.sort(key=lambda x: (-x['upvote_count'], x['song'].title.lower()))
+
+            context['songs'] = songs_with_upvotes
+
         return context
+
+
+class AddSongView(LoginRequiredMixin, View):
+    """View to manually add a song to an artist."""
+
+    def get(self, request, category_slug, item_id):
+        category = get_object_or_404(Category, slug=category_slug)
+        artist = get_object_or_404(Item, id=item_id, category=category)
+        form = AddSongForm()
+        return render(request, 'catalog/add_song.html', {
+            'form': form,
+            'category': category,
+            'artist': artist,
+        })
+
+    def post(self, request, category_slug, item_id):
+        category = get_object_or_404(Category, slug=category_slug)
+        artist = get_object_or_404(Item, id=item_id, category=category)
+        form = AddSongForm(request.POST)
+
+        if form.is_valid():
+            song = form.save(commit=False)
+            song.artist = artist
+            song.save()
+
+            messages.success(request, f'"{song.title}" has been added!')
+            return redirect('item_detail', category_slug=category_slug, item_id=item_id)
+
+        return render(request, 'catalog/add_song.html', {
+            'form': form,
+            'category': category,
+            'artist': artist,
+        })
