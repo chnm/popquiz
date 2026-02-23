@@ -436,7 +436,7 @@ def fetch_release_tracks(release_group_id):
             'release-group': release_group_id,
             'inc': 'recordings',
             'fmt': 'json',
-            'limit': 1,
+            'limit': 10,
         })
         if resp is None or resp.status_code != 200:
             return []
@@ -446,10 +446,19 @@ def fetch_release_tracks(release_group_id):
         if not releases:
             return []
 
+        # Prefer the first Official release that has tracks; fall back to any
+        # release with tracks if none are marked Official.
+        def _has_tracks(r):
+            return any(r.get('media', []))
+
+        chosen = next((r for r in releases if r.get('status') == 'Official' and _has_tracks(r)), None)
+        if chosen is None:
+            chosen = next((r for r in releases if _has_tracks(r)), releases[0])
+
         tracks = []
         seen_ids = set()
         seen_titles = set()
-        for medium in releases[0].get('media', []):
+        for medium in chosen.get('media', []):
             for track in medium.get('tracks', []):
                 recording = track.get('recording', {})
                 rec_id = recording.get('id')
