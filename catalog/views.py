@@ -873,7 +873,7 @@ class AddMusicView(LoginRequiredMixin, View):
             messages.info(request, f'"{existing.title}" is already added.')
             return redirect('item_detail', category_slug=existing.category.slug, item_id=existing.id)
 
-        data = fetch_artist_data(mb_id, fetch_songs=True, max_songs=50)
+        data = fetch_artist_data(mb_id, fetch_songs=False)
         if not data:
             messages.error(request, 'Could not fetch artist data from MusicBrainz. Please try again.')
             return redirect('add_music')
@@ -886,17 +886,7 @@ class AddMusicView(LoginRequiredMixin, View):
             image_source_url=data.get('poster_url') or '',
             added_by=request.user,
         )
-        songs_count = 0
-        for song_data in data.get('songs', []):
-            Song.objects.create(
-                artist=item,
-                title=song_data['title'],
-                musicbrainz_id=song_data.get('musicbrainz_id'),
-                year=song_data.get('year'),
-                album=song_data.get('album', ''),
-            )
-            songs_count += 1
-        messages.success(request, f'"{item.title}" has been added with {songs_count} songs!')
+        messages.success(request, f'"{item.title}" has been added!')
         return redirect('item_detail', category_slug=artists_cat.slug, item_id=item.id)
 
     @transaction.atomic
