@@ -57,19 +57,20 @@
         <div class="space-y-2">
             {% for result in search_results %}
             <label class="block p-4 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
-                <div class="flex items-start">
+                <div class="flex items-start gap-3">
+                    {% if result.profile_url %}
+                        <img src="{{ result.profile_url }}" alt="{{ result.name }}"
+                             class="w-12 h-16 object-cover rounded flex-shrink-0"
+                             loading="lazy"
+                             onerror="this.style.display='none'">
+                    {% endif %}
                     <input type="radio"
-                           name="director_id"
-                           value="{{ result.imdb_id }}"
+                           name="tmdb_person_id"
+                           value="{{ result.tmdb_id }}"
                            required
-                           class="mt-1 w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                    <div class="ml-3 flex-1">
-                        <div class="font-semibold text-gray-900">
-                            {{ result.name }}
-                            {% if result.birth_year %}
-                                <span class="text-gray-500 font-normal text-sm">({{ result.birth_year }})</span>
-                            {% endif %}
-                        </div>
+                           class="mt-1 w-5 h-5 text-indigo-600 border-gray-300 focus:ring-indigo-500 flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="font-semibold text-gray-900">{{ result.name }}</div>
                         {% if result.known_for %}
                             <div class="text-sm text-gray-600 mt-0.5">{{ result.known_for }}</div>
                         {% endif %}

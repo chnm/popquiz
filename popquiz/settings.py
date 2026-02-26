@@ -147,6 +147,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# TMDB (The Movie Database) API key — free at https://www.themoviedb.org/settings/api
+# Required for Add by Actor / Add by Director bulk features
+TMDB_API_KEY = os.getenv('TMDB_API_KEY', '')
+
 # WhiteNoise configuration for serving static files in production
 STORAGES = {
     "default": {

@@ -14,7 +14,9 @@ from django.db.models import Count, Q, Case, When, IntegerField, Value
 from accounts.models import User
 from .models import Category, Item, Song, SongUpvote
 from .forms import AddItemForm, AddSongForm
-from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, fetch_actor_filmography, download_poster
+from django.conf import settings as django_settings
+from .imdb_utils import fetch_movie_data, extract_imdb_id, download_poster
+from .tmdb_utils import search_people, fetch_director_filmography_tmdb, fetch_actor_filmography_tmdb, fetch_movie_details_tmdb
 from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id, search_artists, search_release_groups, search_recordings, fetch_release_tracks
 from ratings.models import Rating
 
@@ -488,302 +490,200 @@ class AddItemView(LoginRequiredMixin, View):
         return redirect('category_detail', slug=slug)
 
 
+def _bulk_add_from_tmdb(movies, category, user, api_key):
+    """
+    Given a list of TMDB movie dicts (with tmdb_id/title/year), fetch details
+    and add to the database.  Returns (added, skipped, failed) counts.
+    """
+    added_count = 0
+    skipped_count = 0
+    failed_count = 0
+
+    for movie in movies:
+        tmdb_id = movie['tmdb_id']
+
+        # Fetch full details from TMDB (includes imdb_id, director, genre, poster)
+        movie_data = fetch_movie_details_tmdb(tmdb_id, api_key)
+        if not movie_data:
+            failed_count += 1
+            continue
+
+        imdb_id = movie_data.get('imdb_id') or ''
+
+        # Skip duplicates — check by IMDB ID if available
+        if imdb_id and Item.objects.filter(imdb_id=imdb_id).exists():
+            skipped_count += 1
+            continue
+
+        # Download poster
+        raw_source = movie_data.get('image_source_url') or ''
+        local_image = download_poster(raw_source, imdb_id or str(tmdb_id)) if raw_source else None
+
+        Item.objects.create(
+            category=category,
+            title=movie_data['title'],
+            year=movie_data.get('year'),
+            years_running=movie_data.get('years_running') or '',
+            director=movie_data.get('director') or '',
+            genre=movie_data.get('genre') or '',
+            imdb_id=imdb_id or None,
+            imdb_url=movie_data.get('imdb_url') or '',
+            image_source_url=raw_source,
+            image_local_url=local_image or '',
+            added_by=user,
+        )
+        added_count += 1
+
+    return added_count, skipped_count, failed_count
+
+
+def _bulk_result_message(request, person_name, category, added, skipped, failed):
+    """Show appropriate flash message after a bulk add operation."""
+    label = category.item_label
+    if added > 0:
+        messages.success(request, f'Done, I have added {added} {person_name} {label}{"s" if added != 1 else ""} to {category.name}!')
+    elif skipped > 0 and failed == 0:
+        messages.info(request, f'All {person_name} {label}s are already in your {category.name} collection.')
+    elif failed > 0 and added == 0:
+        messages.warning(request, f'Could not add any {person_name} {label}s — {failed} failed to fetch.')
+    else:
+        parts = []
+        if added:
+            parts.append(f'added {added}')
+        if skipped:
+            parts.append(f'skipped {skipped} (already in database)')
+        if failed:
+            parts.append(f'{failed} failed')
+        messages.info(request, f'{person_name}: {", ".join(parts)}')
+
+
 class AddByDirectorView(LoginRequiredMixin, View):
-    """View to add all movies by a director automatically by searching IMDB by name."""
+    """View to add all movies by a director using TMDB for complete filmographies."""
 
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        return render(request, 'catalog/add_by_director.html', {
-            'category': category,
-        })
+        return render(request, 'catalog/add_by_director.html', {'category': category})
 
     def post(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
+        api_key = django_settings.TMDB_API_KEY
 
-        # Check if user is selecting from search results
-        if 'director_id' in request.POST:
-            return self._add_movies_by_director_id(request, category, slug)
+        if not api_key:
+            messages.error(request, 'This feature is not yet fully set up. Please check back soon.')
+            return render(request, 'catalog/add_by_director.html', {'category': category})
 
-        # Otherwise, search for director by name
+        if 'tmdb_person_id' in request.POST:
+            return self._add_movies(request, category, slug, api_key)
+
         director_name = request.POST.get('director_name', '').strip()
-
         if not director_name:
             messages.error(request, 'Please enter a director name.')
-            return render(request, 'catalog/add_by_director.html', {
-                'category': category,
-            })
+            return render(request, 'catalog/add_by_director.html', {'category': category})
 
-        # Search IMDB for directors matching this name
-        search_results = search_directors_by_name(director_name)
-
+        search_results = search_people(director_name, api_key)
         if not search_results:
             messages.error(request, f'No directors found matching "{director_name}". Please check the spelling and try again.')
             return render(request, 'catalog/add_by_director.html', {
-                'category': category,
-                'director_name': director_name,
+                'category': category, 'director_name': director_name,
             })
 
-        # If exactly one result, proceed automatically
         if len(search_results) == 1:
-            director_id = search_results[0]['imdb_id']
-            return self._add_movies_by_director_id(request, category, slug, director_id)
+            return self._add_movies(request, category, slug, api_key, tmdb_person_id=search_results[0]['tmdb_id'])
 
-        # Multiple results - show selection page
         return render(request, 'catalog/add_by_director.html', {
             'category': category,
             'director_name': director_name,
             'search_results': search_results,
         })
 
-    def _add_movies_by_director_id(self, request, category, slug, director_id=None):
-        """Helper method to add movies once director is determined."""
-        if director_id is None:
-            director_id = request.POST.get('director_id', '').strip()
+    def _add_movies(self, request, category, slug, api_key, tmdb_person_id=None):
+        if tmdb_person_id is None:
+            try:
+                tmdb_person_id = int(request.POST.get('tmdb_person_id', ''))
+            except (ValueError, TypeError):
+                messages.error(request, 'No director selected.')
+                return redirect('add_by_director', slug=slug)
 
-        if not director_id:
-            messages.error(request, 'No director selected.')
-            return redirect('add_by_director', slug=slug)
-
-        # Fetch filmography using the director's IMDB ID
-        filmography = fetch_director_filmography(director_id)
-
+        filmography = fetch_director_filmography_tmdb(tmdb_person_id, api_key)
         if not filmography:
-            messages.error(request, 'Could not fetch director filmography. Please try again.')
+            messages.error(request, 'Could not fetch filmography. Please try again.')
             return redirect('add_by_director', slug=slug)
 
-        director_name = filmography['name']
+        person_name = filmography['name']
         movies = filmography['movies']
-
         if not movies:
-            messages.warning(request, f'No {category.item_label}s found for {director_name}.')
+            messages.warning(request, f'No {category.item_label}s found for {person_name}.')
             return redirect('add_by_director', slug=slug)
 
-        # Automatically add all movies that don't already exist
-        added_count = 0
-        skipped_count = 0
-        failed_count = 0
-
-        for movie in movies:
-            imdb_id = movie['imdb_id']
-
-            # Check if already exists
-            if Item.objects.filter(imdb_id=imdb_id).exists():
-                skipped_count += 1
-                continue
-
-            # Fetch full movie data
-            movie_data = fetch_movie_data(imdb_id)
-
-            if not movie_data:
-                failed_count += 1
-                continue
-
-            # Double-check: Filter out TV shows and other non-movies that slipped through
-            # IMDB sometimes doesn't include type info in aria-labels on director pages
-            title = movie_data['title']
-            is_not_movie = (
-                'TV Series' in title or
-                'TV Mini-Series' in title or
-                'TV Movie' in title or
-                'TV Episode' in title or
-                'TV Special' in title or
-                'Music Video' in title or
-                'Video Game' in title or
-                'Short' in title or
-                '(Short' in title
-            )
-            if is_not_movie:
-                skipped_count += 1
-                continue
-
-            # CRITICAL: Verify this person was actually the director of this movie
-            # Many people (like John Hughes) wrote/produced movies they didn't direct
-            movie_director = movie_data.get('director') or ''
-            if movie_director and director_name not in movie_director:
-                # Director name doesn't match - this person was NOT the director
-                # They might have been the writer or producer
-                skipped_count += 1
-                continue
-
-            # Download image locally
-            bulk_imdb_id = movie_data['imdb_id']
-            bulk_raw_source = movie_data.get('image_source_url') or ''
-            bulk_local_image = download_poster(bulk_raw_source, bulk_imdb_id) if bulk_raw_source and bulk_imdb_id else None
-
-            # Create the item
-            Item.objects.create(
-                category=category,
-                title=movie_data['title'],
-                year=movie_data['year'],
-                director=movie_data.get('director') or '',
-                genre=movie_data.get('genre') or '',
-                imdb_id=bulk_imdb_id,
-                imdb_url=movie_data['imdb_url'],
-                image_source_url=bulk_raw_source,
-                image_local_url=bulk_local_image or '',
-                added_by=request.user,
-            )
-            added_count += 1
-
-        # Show completion message
-        if added_count > 0:
-            label = category.item_label
-            messages.success(request, f'Done, I have added {added_count} {director_name} {label}{"s" if added_count != 1 else ""} to {category.name}!')
-        elif skipped_count > 0 and failed_count == 0:
-            label = category.item_label
-            messages.info(request, f'All {skipped_count} {director_name} {label}s are already in your {category.name} collection.')
-        elif failed_count > 0 and added_count == 0:
-            label = category.item_label
-            messages.warning(request, f'Could not add {director_name} {label}s. {failed_count} {label}{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
-        else:
-            message_parts = []
-            if added_count > 0:
-                message_parts.append(f'added {added_count}')
-            if skipped_count > 0:
-                message_parts.append(f'skipped {skipped_count} (already in database)')
-            if failed_count > 0:
-                message_parts.append(f'{failed_count} failed')
-            messages.info(request, f'{director_name}: {", ".join(message_parts)}')
-
+        added_count, skipped_count, failed_count = _bulk_add_from_tmdb(
+            movies, category, request.user, api_key
+        )
+        _bulk_result_message(request, person_name, category, added_count, skipped_count, failed_count)
         return redirect('category_detail', slug=slug)
 
 
 class AddByActorView(LoginRequiredMixin, View):
-    """View to add all movies starring an actor automatically by searching IMDB by name."""
+    """View to add all movies starring an actor using TMDB for complete filmographies."""
 
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
-        return render(request, 'catalog/add_by_actor.html', {
-            'category': category,
-        })
+        return render(request, 'catalog/add_by_actor.html', {'category': category})
 
     def post(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
+        api_key = django_settings.TMDB_API_KEY
 
-        # Check if user is selecting from search results
-        if 'actor_id' in request.POST:
-            return self._add_movies_by_actor_id(request, category, slug)
+        if not api_key:
+            messages.error(request, 'This feature is not yet fully set up. Please check back soon.')
+            return render(request, 'catalog/add_by_actor.html', {'category': category})
 
-        # Otherwise, search for actor by name
+        if 'tmdb_person_id' in request.POST:
+            return self._add_movies(request, category, slug, api_key)
+
         actor_name = request.POST.get('actor_name', '').strip()
-
         if not actor_name:
             messages.error(request, 'Please enter an actor name.')
-            return render(request, 'catalog/add_by_actor.html', {
-                'category': category,
-            })
+            return render(request, 'catalog/add_by_actor.html', {'category': category})
 
-        # Search IMDB for people matching this name
-        search_results = search_directors_by_name(actor_name)
-
+        search_results = search_people(actor_name, api_key)
         if not search_results:
             messages.error(request, f'No actors found matching "{actor_name}". Please check the spelling and try again.')
             return render(request, 'catalog/add_by_actor.html', {
-                'category': category,
-                'actor_name': actor_name,
+                'category': category, 'actor_name': actor_name,
             })
 
-        # If exactly one result, proceed automatically
         if len(search_results) == 1:
-            actor_id = search_results[0]['imdb_id']
-            return self._add_movies_by_actor_id(request, category, slug, actor_id)
+            return self._add_movies(request, category, slug, api_key, tmdb_person_id=search_results[0]['tmdb_id'])
 
-        # Multiple results - show selection page
         return render(request, 'catalog/add_by_actor.html', {
             'category': category,
             'actor_name': actor_name,
             'search_results': search_results,
         })
 
-    def _add_movies_by_actor_id(self, request, category, slug, actor_id=None):
-        """Helper method to add movies once actor is determined."""
-        if actor_id is None:
-            actor_id = request.POST.get('actor_id', '').strip()
+    def _add_movies(self, request, category, slug, api_key, tmdb_person_id=None):
+        if tmdb_person_id is None:
+            try:
+                tmdb_person_id = int(request.POST.get('tmdb_person_id', ''))
+            except (ValueError, TypeError):
+                messages.error(request, 'No actor selected.')
+                return redirect('add_by_actor', slug=slug)
 
-        if not actor_id:
-            messages.error(request, 'No actor selected.')
-            return redirect('add_by_actor', slug=slug)
-
-        # Fetch filmography using the actor's IMDB ID
-        filmography = fetch_actor_filmography(actor_id)
-
+        filmography = fetch_actor_filmography_tmdb(tmdb_person_id, api_key)
         if not filmography:
-            messages.error(request, 'Could not fetch actor filmography. Please try again.')
+            messages.error(request, 'Could not fetch filmography. Please try again.')
             return redirect('add_by_actor', slug=slug)
 
-        actor_name = filmography['name']
+        person_name = filmography['name']
         movies = filmography['movies']
-
         if not movies:
-            messages.warning(request, f'No {category.item_label}s found for {actor_name}.')
+            messages.warning(request, f'No {category.item_label}s found for {person_name}.')
             return redirect('add_by_actor', slug=slug)
 
-        # Automatically add all movies that don't already exist
-        added_count = 0
-        skipped_count = 0
-        failed_count = 0
-
-        allowed_types = CATEGORY_ALLOWED_IMDB_TYPES.get(category.slug)
-
-        for movie in movies:
-            imdb_id = movie['imdb_id']
-
-            # Check if already exists (duplicate check)
-            if Item.objects.filter(imdb_id=imdb_id).exists():
-                skipped_count += 1
-                continue
-
-            # Fetch full movie data
-            movie_data = fetch_movie_data(imdb_id)
-
-            if not movie_data:
-                failed_count += 1
-                continue
-
-            # Filter by allowed IMDB types for this category (e.g. only Movie/TVMovie for movies)
-            title_type = movie_data.get('title_type')
-            if allowed_types and title_type and title_type not in allowed_types:
-                skipped_count += 1
-                continue
-
-            # Download image locally
-            bulk_imdb_id = movie_data['imdb_id']
-            bulk_raw_source = movie_data.get('image_source_url') or ''
-            bulk_local_image = download_poster(bulk_raw_source, bulk_imdb_id) if bulk_raw_source and bulk_imdb_id else None
-
-            # Create the item
-            Item.objects.create(
-                category=category,
-                title=movie_data['title'],
-                year=movie_data['year'],
-                director=movie_data.get('director') or '',
-                genre=movie_data.get('genre') or '',
-                imdb_id=bulk_imdb_id,
-                imdb_url=movie_data['imdb_url'],
-                image_source_url=bulk_raw_source,
-                image_local_url=bulk_local_image or '',
-                added_by=request.user,
-            )
-            added_count += 1
-
-        # Show completion message
-        label = category.item_label
-        if added_count > 0:
-            messages.success(request, f'Done, I have added {added_count} {actor_name} {label}{"s" if added_count != 1 else ""} to {category.name}!')
-        elif skipped_count > 0 and failed_count == 0:
-            messages.info(request, f'All {skipped_count} {actor_name} {label}s are already in your {category.name} collection.')
-        elif failed_count > 0 and added_count == 0:
-            messages.warning(request, f'Could not add {actor_name} {label}s. {failed_count} {label}{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
-        else:
-            message_parts = []
-            if added_count > 0:
-                message_parts.append(f'added {added_count}')
-            if skipped_count > 0:
-                message_parts.append(f'skipped {skipped_count} (already in database)')
-            if failed_count > 0:
-                message_parts.append(f'{failed_count} failed')
-            messages.info(request, f'{actor_name}: {", ".join(message_parts)}')
-
+        added_count, skipped_count, failed_count = _bulk_add_from_tmdb(
+            movies, category, request.user, api_key
+        )
+        _bulk_result_message(request, person_name, category, added_count, skipped_count, failed_count)
         return redirect('category_detail', slug=slug)
 
 
