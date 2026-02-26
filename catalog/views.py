@@ -510,6 +510,12 @@ def _bulk_add_from_tmdb(movies, category, user, api_key):
 
         imdb_id = movie_data.get('imdb_id') or ''
 
+        # Skip TV movies / made-for-TV productions
+        genre_str = movie_data.get('genre') or ''
+        if 'TV Movie' in genre_str:
+            skipped_count += 1
+            continue
+
         # Skip duplicates — check by IMDB ID if available
         if imdb_id and Item.objects.filter(imdb_id=imdb_id).exists():
             skipped_count += 1
