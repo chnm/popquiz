@@ -294,47 +294,19 @@ def search_directors_by_name(director_name):
                     professions = [html.unescape(p.strip()) for p in profession_items]
                     known_for = ', '.join(professions)
 
-            # Try to extract birth/death year — IMDB often shows "(1911–1993)" or "(born 1911)"
-            birth_year = ""
-            # Modern IMDB: look for a year-range or single year near the result
-            year_range_match = re.search(r'\((\d{4})[–\-](\d{4})\)', context)
-            if year_range_match:
-                birth_year = f"{year_range_match.group(1)}–{year_range_match.group(2)}"
-            else:
-                born_match = re.search(r'\((\d{4})[–\-]\s*\)', context)
-                if born_match:
-                    birth_year = f"b. {born_match.group(1)}"
-                else:
-                    # Also try data attributes or label patterns
-                    born_label = re.search(r'(?:born|Born)[^0-9]*(\d{4})', context)
-                    if born_label:
-                        birth_year = f"b. {born_label.group(1)}"
+            birth_year = ""  # Not available on search results page
 
-            # Try to extract known-for titles (movies they're famous for)
+            # Extract known-for titles using IMDB's nlib-known-for-title data-testid
             known_titles = ""
-            # Modern IMDB uses data-testid="nlib-known-for" or similar
-            known_for_section = re.search(
-                r'data-testid="nlib-known-for"[^>]*>(.*?)</(?:ul|div|section)>',
-                context, re.DOTALL
+            title_matches = re.findall(
+                r'data-testid="nlib-known-for-title"[^>]*>([^<]+)</a>',
+                context
             )
-            if known_for_section:
-                title_items = re.findall(r'<(?:li|span|a)[^>]*>([^<]{3,60})</(?:li|span|a)>', known_for_section.group(1))
-                cleaned = [html.unescape(t.strip()) for t in title_items if t.strip() and not t.strip().isdigit()]
-                if cleaned:
-                    known_titles = ', '.join(cleaned[:4])
-
-            # Fallback: look for title links (tt######) in the context with aria-labels
-            if not known_titles:
-                title_matches = re.findall(r'aria-label="([^"]+(?:\(\d{4}\))[^"]*)"', context)
-                titles = []
-                for t in title_matches:
-                    t = html.unescape(t).strip()
-                    # Remove year suffix
-                    t = re.sub(r'\s*\(\d{4}\)\s*$', '', t).strip()
-                    if t and t != name and len(t) > 1:
-                        titles.append(t)
-                if titles:
-                    known_titles = ', '.join(titles[:4])
+            if title_matches:
+                titles = [html.unescape(t.strip()) for t in title_matches]
+                # Strip year suffix e.g. "The Fly (1958)" -> "The Fly"
+                titles = [re.sub(r'\s*\(\d{4}\)\s*$', '', t).strip() for t in titles]
+                known_titles = ', '.join(t for t in titles[:4] if t)
 
             results.append({
                 'name': name,
