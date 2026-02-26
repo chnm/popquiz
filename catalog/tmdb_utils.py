@@ -237,4 +237,6 @@ def fetch_movie_details_tmdb(tmdb_id, api_key):
         'genre': genre,
         'image_source_url': image_source_url,
         'imdb_url': f"https://www.imdb.com/title/{imdb_id}/",
+        'adult': data.get('adult', False),
+        'runtime': data.get('runtime') or 0,
     }

@@ -510,9 +510,20 @@ def _bulk_add_from_tmdb(movies, category, user, api_key):
 
         imdb_id = movie_data.get('imdb_id') or ''
 
+        # Skip adult / X-rated content
+        if movie_data.get('adult'):
+            skipped_count += 1
+            continue
+
         # Skip TV movies / made-for-TV productions
         genre_str = movie_data.get('genre') or ''
         if 'TV Movie' in genre_str:
+            skipped_count += 1
+            continue
+
+        # Skip short films and music videos (runtime known and under 40 minutes)
+        runtime = movie_data.get('runtime') or 0
+        if 0 < runtime < 40:
             skipped_count += 1
             continue
 
