@@ -69,7 +69,7 @@ def search_people(name, api_key):
     return results
 
 
-def fetch_actor_filmography_tmdb(tmdb_person_id, api_key, limit=75):
+def fetch_actor_filmography_tmdb(tmdb_person_id, api_key, limit=50):
     """
     Fetch the most popular movies where this person acted.
 
