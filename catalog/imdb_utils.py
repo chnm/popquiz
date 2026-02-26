@@ -238,12 +238,14 @@ def fetch_movie_data(imdb_url):
 
 def search_directors_by_name(director_name):
     """
-    Search IMDB for directors by name.
+    Search IMDB for people by name.
 
     Returns a list of dicts, each with:
     - name: str (person's full name)
     - imdb_id: str (nm#######)
-    - known_for: str (description of what they're known for)
+    - known_for: str (professions, e.g. "Actor, Director")
+    - birth_year: str or "" (e.g. "1911" or "1911–1993")
+    - known_titles: str or "" (e.g. "The Fly, House of Wax")
 
     Returns empty list if search fails or no results found.
     """
@@ -277,9 +279,9 @@ def search_directors_by_name(director_name):
                 continue
             seen_ids.add(imdb_id)
 
-            # Try to extract profession information from nearby context
+            # Try to extract additional information from nearby context
             start_pos = max(0, match.start() - 1000)
-            end_pos = min(len(page_html), match.end() + 1000)
+            end_pos = min(len(page_html), match.end() + 2000)
             context = page_html[start_pos:end_pos]
 
             # Look for profession data in nlib-professions element
@@ -287,17 +289,59 @@ def search_directors_by_name(director_name):
             professions_match = re.search(r'data-testid="nlib-professions"[^>]*>(.*?)</ul>', context, re.DOTALL)
             if professions_match:
                 professions_html = professions_match.group(1)
-                # Extract all <li> items
                 profession_items = re.findall(r'<li[^>]*>([^<]+)</li>', professions_html)
                 if profession_items:
-                    # Clean and join professions
                     professions = [html.unescape(p.strip()) for p in profession_items]
                     known_for = ', '.join(professions)
+
+            # Try to extract birth/death year — IMDB often shows "(1911–1993)" or "(born 1911)"
+            birth_year = ""
+            # Modern IMDB: look for a year-range or single year near the result
+            year_range_match = re.search(r'\((\d{4})[–\-](\d{4})\)', context)
+            if year_range_match:
+                birth_year = f"{year_range_match.group(1)}–{year_range_match.group(2)}"
+            else:
+                born_match = re.search(r'\((\d{4})[–\-]\s*\)', context)
+                if born_match:
+                    birth_year = f"b. {born_match.group(1)}"
+                else:
+                    # Also try data attributes or label patterns
+                    born_label = re.search(r'(?:born|Born)[^0-9]*(\d{4})', context)
+                    if born_label:
+                        birth_year = f"b. {born_label.group(1)}"
+
+            # Try to extract known-for titles (movies they're famous for)
+            known_titles = ""
+            # Modern IMDB uses data-testid="nlib-known-for" or similar
+            known_for_section = re.search(
+                r'data-testid="nlib-known-for"[^>]*>(.*?)</(?:ul|div|section)>',
+                context, re.DOTALL
+            )
+            if known_for_section:
+                title_items = re.findall(r'<(?:li|span|a)[^>]*>([^<]{3,60})</(?:li|span|a)>', known_for_section.group(1))
+                cleaned = [html.unescape(t.strip()) for t in title_items if t.strip() and not t.strip().isdigit()]
+                if cleaned:
+                    known_titles = ', '.join(cleaned[:4])
+
+            # Fallback: look for title links (tt######) in the context with aria-labels
+            if not known_titles:
+                title_matches = re.findall(r'aria-label="([^"]+(?:\(\d{4}\))[^"]*)"', context)
+                titles = []
+                for t in title_matches:
+                    t = html.unescape(t).strip()
+                    # Remove year suffix
+                    t = re.sub(r'\s*\(\d{4}\)\s*$', '', t).strip()
+                    if t and t != name and len(t) > 1:
+                        titles.append(t)
+                if titles:
+                    known_titles = ', '.join(titles[:4])
 
             results.append({
                 'name': name,
                 'imdb_id': imdb_id,
                 'known_for': known_for,
+                'birth_year': birth_year,
+                'known_titles': known_titles,
             })
 
             # Limit to top 10 results
