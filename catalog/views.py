@@ -14,7 +14,7 @@ from django.db.models import Count, Q, Case, When, IntegerField, Value
 from accounts.models import User
 from .models import Category, Item, Song, SongUpvote
 from .forms import AddItemForm, AddSongForm
-from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, download_poster
+from .imdb_utils import fetch_movie_data, extract_imdb_id, search_directors_by_name, fetch_director_filmography, fetch_actor_filmography, download_poster
 from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id, search_artists, search_release_groups, search_recordings, fetch_release_tracks
 from ratings.models import Rating
 
@@ -644,6 +644,145 @@ class AddByDirectorView(LoginRequiredMixin, View):
             if failed_count > 0:
                 message_parts.append(f'{failed_count} failed')
             messages.info(request, f'{director_name}: {", ".join(message_parts)}')
+
+        return redirect('category_detail', slug=slug)
+
+
+class AddByActorView(LoginRequiredMixin, View):
+    """View to add all movies starring an actor automatically by searching IMDB by name."""
+
+    def get(self, request, slug):
+        category = get_object_or_404(Category, slug=slug)
+        return render(request, 'catalog/add_by_actor.html', {
+            'category': category,
+        })
+
+    def post(self, request, slug):
+        category = get_object_or_404(Category, slug=slug)
+
+        # Check if user is selecting from search results
+        if 'actor_id' in request.POST:
+            return self._add_movies_by_actor_id(request, category, slug)
+
+        # Otherwise, search for actor by name
+        actor_name = request.POST.get('actor_name', '').strip()
+
+        if not actor_name:
+            messages.error(request, 'Please enter an actor name.')
+            return render(request, 'catalog/add_by_actor.html', {
+                'category': category,
+            })
+
+        # Search IMDB for people matching this name
+        search_results = search_directors_by_name(actor_name)
+
+        if not search_results:
+            messages.error(request, f'No actors found matching "{actor_name}". Please check the spelling and try again.')
+            return render(request, 'catalog/add_by_actor.html', {
+                'category': category,
+                'actor_name': actor_name,
+            })
+
+        # If exactly one result, proceed automatically
+        if len(search_results) == 1:
+            actor_id = search_results[0]['imdb_id']
+            return self._add_movies_by_actor_id(request, category, slug, actor_id)
+
+        # Multiple results - show selection page
+        return render(request, 'catalog/add_by_actor.html', {
+            'category': category,
+            'actor_name': actor_name,
+            'search_results': search_results,
+        })
+
+    def _add_movies_by_actor_id(self, request, category, slug, actor_id=None):
+        """Helper method to add movies once actor is determined."""
+        if actor_id is None:
+            actor_id = request.POST.get('actor_id', '').strip()
+
+        if not actor_id:
+            messages.error(request, 'No actor selected.')
+            return redirect('add_by_actor', slug=slug)
+
+        # Fetch filmography using the actor's IMDB ID
+        filmography = fetch_actor_filmography(actor_id)
+
+        if not filmography:
+            messages.error(request, 'Could not fetch actor filmography. Please try again.')
+            return redirect('add_by_actor', slug=slug)
+
+        actor_name = filmography['name']
+        movies = filmography['movies']
+
+        if not movies:
+            messages.warning(request, f'No {category.item_label}s found for {actor_name}.')
+            return redirect('add_by_actor', slug=slug)
+
+        # Automatically add all movies that don't already exist
+        added_count = 0
+        skipped_count = 0
+        failed_count = 0
+
+        allowed_types = CATEGORY_ALLOWED_IMDB_TYPES.get(category.slug)
+
+        for movie in movies:
+            imdb_id = movie['imdb_id']
+
+            # Check if already exists (duplicate check)
+            if Item.objects.filter(imdb_id=imdb_id).exists():
+                skipped_count += 1
+                continue
+
+            # Fetch full movie data
+            movie_data = fetch_movie_data(imdb_id)
+
+            if not movie_data:
+                failed_count += 1
+                continue
+
+            # Filter by allowed IMDB types for this category (e.g. only Movie/TVMovie for movies)
+            title_type = movie_data.get('title_type')
+            if allowed_types and title_type and title_type not in allowed_types:
+                skipped_count += 1
+                continue
+
+            # Download image locally
+            bulk_imdb_id = movie_data['imdb_id']
+            bulk_raw_source = movie_data.get('image_source_url') or ''
+            bulk_local_image = download_poster(bulk_raw_source, bulk_imdb_id) if bulk_raw_source and bulk_imdb_id else None
+
+            # Create the item
+            Item.objects.create(
+                category=category,
+                title=movie_data['title'],
+                year=movie_data['year'],
+                director=movie_data.get('director') or '',
+                genre=movie_data.get('genre') or '',
+                imdb_id=bulk_imdb_id,
+                imdb_url=movie_data['imdb_url'],
+                image_source_url=bulk_raw_source,
+                image_local_url=bulk_local_image or '',
+                added_by=request.user,
+            )
+            added_count += 1
+
+        # Show completion message
+        label = category.item_label
+        if added_count > 0:
+            messages.success(request, f'Done, I have added {added_count} {actor_name} {label}{"s" if added_count != 1 else ""} to {category.name}!')
+        elif skipped_count > 0 and failed_count == 0:
+            messages.info(request, f'All {skipped_count} {actor_name} {label}s are already in your {category.name} collection.')
+        elif failed_count > 0 and added_count == 0:
+            messages.warning(request, f'Could not add {actor_name} {label}s. {failed_count} {label}{"s" if failed_count != 1 else ""} failed to fetch from IMDB.')
+        else:
+            message_parts = []
+            if added_count > 0:
+                message_parts.append(f'added {added_count}')
+            if skipped_count > 0:
+                message_parts.append(f'skipped {skipped_count} (already in database)')
+            if failed_count > 0:
+                message_parts.append(f'{failed_count} failed')
+            messages.info(request, f'{actor_name}: {", ".join(message_parts)}')
 
         return redirect('category_detail', slug=slug)
 

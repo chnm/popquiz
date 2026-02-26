@@ -310,6 +310,146 @@ def search_directors_by_name(director_name):
         return []
 
 
+def fetch_actor_filmography(actor_id):
+    """
+    Fetch an actor's filmography — movies they acted in.
+
+    Isolates the acting credits section on IMDB to avoid picking up
+    producer/writer/director credits. Filters out TV content and shorts.
+
+    Returns a dict with:
+    - name: str (actor's name)
+    - movies: list of dicts, each with:
+      - title: str
+      - year: int or None
+      - imdb_id: str (tt#######)
+
+    Returns None if fetch fails.
+    """
+    if not actor_id:
+        return None
+
+    # Extract just the ID if a URL was passed
+    if actor_id.startswith('http'):
+        id_match = re.search(r'(nm\d+)', actor_id)
+        if id_match:
+            actor_id = id_match.group(1)
+        else:
+            return None
+
+    # Ensure it starts with nm
+    if not re.match(r'^nm\d+$', actor_id):
+        return None
+
+    canonical_url = f"https://www.imdb.com/name/{actor_id}/"
+
+    try:
+        resp = requests.get(canonical_url, headers=HEADERS, timeout=15)
+        if resp.status_code != 200:
+            return None
+
+        page_html = resp.text
+
+        # Extract actor name from og:title meta tag
+        name = None
+        name_match = re.search(r'<meta property="og:title" content="([^"]+)"', page_html)
+        if name_match:
+            name = name_match.group(1).replace(' - IMDb', '').strip()
+
+        if not name:
+            return None
+
+        # Isolate the acting credits section to avoid picking up directing/writing credits.
+        # Strategy 1: modern IMDB uses data-testid="nm-flmg-section-act"
+        section_html = None
+        modern_match = re.search(r'data-testid="nm-flmg-section-act"', page_html)
+        if modern_match:
+            start = modern_match.start()
+            # Find the next section boundary
+            next_section = re.search(r'data-testid="nm-flmg-section-(?!act)', page_html[start + 1:])
+            end = start + 1 + next_section.start() if next_section else len(page_html)
+            section_html = page_html[start:end]
+        else:
+            # Strategy 2: older IMDB layout uses id="filmo-head-act"
+            older_match = re.search(r'id="filmo-head-act"', page_html)
+            if older_match:
+                start = older_match.start()
+                next_section = re.search(r'id="filmo-head-', page_html[start + 1:])
+                end = start + 1 + next_section.start() if next_section else len(page_html)
+                section_html = page_html[start:end]
+            else:
+                # Fallback: use entire page (same as director feature)
+                section_html = page_html
+
+        # Find all movie links with titles from the acting section
+        movie_pattern = r'<a[^>]+href="/title/(tt\d+)/\?[^"]*"[^>]*aria-label="([^"]+)"'
+
+        potential_movies = []
+        matches = re.finditer(movie_pattern, section_html)
+        seen_ids = set()
+
+        for match in matches:
+            imdb_id = match.group(1)
+            aria_label = html.unescape(match.group(2)).strip()
+
+            # Skip duplicates
+            if imdb_id in seen_ids:
+                continue
+
+            # Filter out TV content and non-movies
+            is_not_movie = (
+                'TV Series' in aria_label or
+                'TV Mini-Series' in aria_label or
+                'TV Mini Series' in aria_label or
+                'TV Movie' in aria_label or
+                'TV Episode' in aria_label or
+                'TV Special' in aria_label or
+                '(TV Series' in aria_label or
+                '(TV Mini-Series' in aria_label or
+                '(TV Movie' in aria_label or
+                'Short' in aria_label or
+                '(Short' in aria_label or
+                'Video Game' in aria_label or
+                '(Video Game' in aria_label or
+                '(Video' in aria_label or
+                'Music Video' in aria_label or
+                '(Music Video' in aria_label
+            )
+
+            if is_not_movie:
+                continue
+
+            seen_ids.add(imdb_id)
+
+            # Extract year from aria-label
+            year = None
+            year_match = re.search(r'\((\d{4})\)', aria_label)
+            if year_match:
+                year = int(year_match.group(1))
+
+            # Clean up title
+            title = re.sub(r'\s*\(\d{4}\)\s*$', '', aria_label)
+            title = title.strip()
+
+            if title:
+                potential_movies.append({
+                    'title': title,
+                    'year': year,
+                    'imdb_id': imdb_id,
+                })
+
+        # Sort by year (newest first), then by title
+        potential_movies.sort(key=lambda x: (-x['year'] if x['year'] else 0, x['title'].lower()))
+
+        return {
+            'name': name,
+            'movies': potential_movies,
+        }
+
+    except requests.RequestException:
+        return None
+
+
 def fetch_director_filmography(director_id):
     """
     Fetch a director's filmography - movies they directed.
