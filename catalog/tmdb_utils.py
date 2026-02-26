@@ -69,13 +69,16 @@ def search_people(name, api_key):
     return results
 
 
-def fetch_actor_filmography_tmdb(tmdb_person_id, api_key):
+def fetch_actor_filmography_tmdb(tmdb_person_id, api_key, limit=75):
     """
-    Fetch all movies where this person acted.
+    Fetch the most popular movies where this person acted.
 
     Returns a dict with:
     - name: str (person's name from TMDB)
     - movies: list of dicts, each with tmdb_id, title, year
+
+    Sorted by TMDB popularity score and capped at `limit` (default 50)
+    so actors with huge filmographies don't flood the database.
 
     Returns None if fetch fails.
     """
@@ -113,9 +116,14 @@ def fetch_actor_filmography_tmdb(tmdb_person_id, api_key):
             'tmdb_id': tmdb_id,
             'title': entry.get('title', ''),
             'year': year,
+            'popularity': entry.get('popularity') or 0,
         })
 
-    # Sort newest first
+    # Sort by TMDB popularity (highest first) and take top N
+    movies.sort(key=lambda x: -x['popularity'])
+    movies = movies[:limit]
+
+    # Re-sort the final list by year (newest first) for display
     movies.sort(key=lambda x: -(x['year'] or 0))
     return {'name': name, 'movies': movies}
 
