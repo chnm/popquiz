@@ -107,6 +107,9 @@ def fetch_actor_filmography_tmdb(tmdb_person_id, api_key, limit=75):
         # Skip TV Movies / TV Specials (TMDB genre ID 10770)
         if 10770 in (entry.get('genre_ids') or []):
             continue
+        # Skip minor roles and cameos — only include top 10 billed cast
+        if (entry.get('order') or 0) > 10:
+            continue
         seen_ids.add(tmdb_id)
         year = None
         release = entry.get('release_date') or ''
