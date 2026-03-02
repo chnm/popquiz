@@ -28,10 +28,7 @@ class AddItemForm(forms.Form):
                 self.fields['url'].widget.attrs['placeholder'] = 'https://musicbrainz.org/release-group/...'
                 self.fields['url'].label = 'MusicBrainz Release URL'
             else:
-                self.fields['url'].widget.attrs['placeholder'] = (
-                    'https://www.imdb.com/title/tt0111161/  or  '
-                    'https://www.themoviedb.org/movie/550'
-                )
+                self.fields['url'].widget.attrs['placeholder'] = 'Paste an IMDB or TMDB link…'
                 self.fields['url'].label = 'IMDB or TMDB URL'
 
     def clean_url(self):
