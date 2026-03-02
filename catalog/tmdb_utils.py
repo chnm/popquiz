@@ -243,3 +243,107 @@ def fetch_movie_details_tmdb(tmdb_id, api_key):
         'adult': data.get('adult', False),
         'runtime': data.get('runtime') or 0,
     }
+
+
+def extract_tmdb_id(url):
+    """
+    Extract a TMDB movie or TV series ID and media type from a TMDB URL.
+
+    Accepts URLs like:
+    - https://www.themoviedb.org/movie/550
+    - https://www.themoviedb.org/movie/550-fight-club
+    - https://www.themoviedb.org/tv/1396
+    - https://www.themoviedb.org/tv/1396-breaking-bad
+    - 550 (bare integer treated as movie ID when media_type hint provided)
+
+    Returns (tmdb_id: int, media_type: str) where media_type is 'movie' or 'tv',
+    or (None, None) if not a recognisable TMDB URL.
+    """
+    import re
+    if not url:
+        return None, None
+
+    url = url.strip()
+
+    # Match https://www.themoviedb.org/movie/12345 or /tv/12345
+    match = re.search(r'themoviedb\.org/(movie|tv)/(\d+)', url)
+    if match:
+        return int(match.group(2)), match.group(1)
+
+    return None, None
+
+
+def fetch_tv_details_tmdb(tmdb_id, api_key):
+    """
+    Fetch full TV series details from TMDB.
+
+    Returns a dict compatible with what _handle_imdb() expects, or None on failure.
+    Fields returned:
+    - imdb_id, title, year, years_running, director (creator), genre,
+      image_source_url, imdb_url, title_type ('TVSeries' or 'TVMiniSeries')
+    """
+    data = _get(f'/tv/{tmdb_id}', api_key, append_to_response='external_ids')
+    if not data:
+        return None
+
+    external_ids = data.get('external_ids') or {}
+    imdb_id = external_ids.get('imdb_id') or ''
+
+    # Year / years_running
+    first_air = data.get('first_air_date') or ''
+    last_air = data.get('last_air_date') or ''
+    year = None
+    years_running = ''
+
+    if first_air and len(first_air) >= 4:
+        try:
+            year = int(first_air[:4])
+        except ValueError:
+            pass
+
+    if year:
+        status = data.get('status') or ''
+        if last_air and len(last_air) >= 4:
+            try:
+                last_year = int(last_air[:4])
+                if last_year == year and status in ('Ended', 'Canceled'):
+                    years_running = str(year)
+                elif last_year > year:
+                    years_running = f"{year}\u2013{last_year}"
+                else:
+                    years_running = f"{year}\u2013"
+            except ValueError:
+                years_running = f"{year}\u2013"
+        else:
+            years_running = f"{year}\u2013"
+
+    # Creator (stored in director field)
+    creators = data.get('created_by') or []
+    director = creators[0].get('name', '') if creators else ''
+
+    # Genres (up to 3)
+    genres = [g['name'] for g in data.get('genres', [])[:3]]
+    genre = ', '.join(genres)
+
+    # Poster
+    poster_path = data.get('poster_path') or ''
+    image_source_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else ''
+
+    # Determine title type
+    num_episodes = data.get('number_of_episodes') or 0
+    num_seasons = data.get('number_of_seasons') or 0
+    series_type = data.get('type') or ''
+    is_mini = series_type == 'Miniseries' or (num_seasons == 1 and num_episodes <= 10)
+    title_type = 'TVMiniSeries' if is_mini else 'TVSeries'
+
+    return {
+        'imdb_id': imdb_id or None,
+        'title': data.get('name', ''),
+        'year': year,
+        'years_running': years_running,
+        'director': director,
+        'genre': genre,
+        'image_source_url': image_source_url,
+        'imdb_url': f"https://www.imdb.com/title/{imdb_id}/" if imdb_id else '',
+        'title_type': title_type,
+    }

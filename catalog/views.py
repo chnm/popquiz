@@ -16,7 +16,8 @@ from .models import Category, Item, Song, SongUpvote
 from .forms import AddItemForm, AddSongForm
 from django.conf import settings as django_settings
 from .imdb_utils import fetch_movie_data, extract_imdb_id, download_poster
-from .tmdb_utils import search_people, fetch_director_filmography_tmdb, fetch_actor_filmography_tmdb, fetch_movie_details_tmdb
+from .tmdb_utils import search_people, fetch_director_filmography_tmdb, fetch_actor_filmography_tmdb, fetch_movie_details_tmdb, extract_tmdb_id, fetch_tv_details_tmdb
+
 from .musicbrainz_utils import fetch_artist_data, extract_musicbrainz_id, fetch_release_data, extract_musicbrainz_release_id, search_artists, search_release_groups, search_recordings, fetch_release_tracks
 from ratings.models import Rating
 
@@ -345,34 +346,63 @@ class AddItemView(LoginRequiredMixin, View):
         })
 
     def _handle_imdb(self, request, form, category, slug, url):
-        """Handle adding an item via IMDB URL."""
-        # Fetch movie data from IMDB
-        movie_data = fetch_movie_data(url)
+        """Handle adding an item via IMDB or TMDB URL."""
+        from django.conf import settings as _settings
+        api_key = _settings.TMDB_API_KEY
 
-        if not movie_data:
-            form.add_error('url', 'Could not fetch data from IMDB. Please check the URL and try again.')
-            return render(request, 'catalog/add_item.html', {
-                'form': form,
-                'category': category,
-            })
+        # Detect whether this is a TMDB URL
+        tmdb_id, tmdb_media_type = extract_tmdb_id(url)
 
-        # Check if item already exists
-        existing = Item.objects.filter(imdb_id=movie_data['imdb_id']).first()
-        if existing:
-            form.add_error('url', f'This {category.item_label} already exists: "{existing.title}"')
-            return render(request, 'catalog/add_item.html', {
-                'form': form,
-                'category': category,
-            })
+        if tmdb_id is not None:
+            # --- TMDB path ---
+            if tmdb_media_type == 'tv':
+                movie_data = fetch_tv_details_tmdb(tmdb_id, api_key)
+            else:
+                movie_data = fetch_movie_details_tmdb(tmdb_id, api_key)
+                # fetch_movie_details_tmdb requires an IMDB id, but we can still
+                # proceed if the movie has no IMDB id — just skip that field.
+                if movie_data and not movie_data.get('imdb_id'):
+                    movie_data['imdb_id'] = None
 
-        # Validate that the IMDB title type matches this category.
+            if not movie_data:
+                form.add_error('url', 'Could not fetch data from TMDB. Please check the URL and try again.')
+                return render(request, 'catalog/add_item.html', {
+                    'form': form,
+                    'category': category,
+                })
+        else:
+            # --- IMDB path (original behaviour) ---
+            movie_data = fetch_movie_data(url)
+            if not movie_data:
+                form.add_error(
+                    'url',
+                    'Could not fetch data from IMDB. '
+                    'Try using a TMDB link instead (https://www.themoviedb.org).'
+                )
+                return render(request, 'catalog/add_item.html', {
+                    'form': form,
+                    'category': category,
+                })
+
+        # Check for duplicate by IMDB ID (if available)
+        imdb_id = movie_data.get('imdb_id') or None
+        if imdb_id:
+            existing = Item.objects.filter(imdb_id=imdb_id).first()
+            if existing:
+                form.add_error('url', f'This {category.item_label} already exists: "{existing.title}"')
+                return render(request, 'catalog/add_item.html', {
+                    'form': form,
+                    'category': category,
+                })
+
+        # Validate that the title type matches this category
         title_type = movie_data.get('title_type')
         allowed_types = CATEGORY_ALLOWED_IMDB_TYPES.get(category.slug)
         if allowed_types and title_type and title_type not in allowed_types:
             friendly_type = IMDB_TYPE_LABELS.get(title_type, title_type)
             form.add_error(
                 'url',
-                f'That IMDB link is for a {friendly_type}, not a {category.item_label}. '
+                f'That link is for a {friendly_type}, not a {category.item_label}. '
                 f'Please add it to the correct category.'
             )
             return render(request, 'catalog/add_item.html', {
@@ -380,21 +410,21 @@ class AddItemView(LoginRequiredMixin, View):
                 'category': category,
             })
 
-        # Download image locally so we serve it ourselves
-        fetched_imdb_id = movie_data['imdb_id']
+        # Download poster image locally
         raw_source = movie_data.get('image_source_url') or ''
-        local_image = download_poster(raw_source, fetched_imdb_id) if raw_source and fetched_imdb_id else None
+        poster_key = imdb_id or str(tmdb_id or 'unknown')
+        local_image = download_poster(raw_source, poster_key) if raw_source else None
 
         # Create the item
         item = Item.objects.create(
             category=category,
             title=movie_data['title'],
-            year=movie_data['year'],
+            year=movie_data.get('year'),
             years_running=movie_data.get('years_running') or '',
             director=movie_data.get('director') or '',
             genre=movie_data.get('genre') or '',
-            imdb_id=fetched_imdb_id,
-            imdb_url=movie_data['imdb_url'],
+            imdb_id=imdb_id or None,
+            imdb_url=movie_data.get('imdb_url') or '',
             image_source_url=raw_source,
             image_local_url=local_image or '',
             added_by=request.user,
