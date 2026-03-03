@@ -182,14 +182,20 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Email configuration
-# Disable email sending - no SMTP server configured
-EMAIL_BACKEND = 'django.core.mail.backends.dummy.DummyEmailBackend'
+EMAIL_BACKEND = 'popquiz.email_backend.EmailBackend'
+EMAIL_HOST = '129.174.131.138'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
+EMAIL_LOCAL_HOSTNAME = 'popquiz.rrchnm.org'
+DEFAULT_FROM_EMAIL = 'PopQuiz <noreply@popquiz.rrchnm.org>'
+SERVER_EMAIL = 'noreply@popquiz.rrchnm.org'
 
 # django-allauth configuration
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Force HTTPS for OAuth callbacks
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}  # Allow login with email or username
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']  # Required signup fields
-ACCOUNT_EMAIL_VERIFICATION = 'none'  # Disable email verification (no SMTP configured)
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Email verification disabled (users sign in via Slack)
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create accounts on social login
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'accounts.adapter.CustomSocialAccountAdapter'  # Custom adapter for profile data
