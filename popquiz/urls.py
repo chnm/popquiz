@@ -7,8 +7,8 @@ from accounts.views import ProfileView, CompareUsersView, CompareThreeUsersView,
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),  # django-allauth URLs (must come before accounts.urls)
-    path('accounts/', include('accounts.urls')),
+    path('accounts/', include('accounts.urls')),  # our custom views take priority over allauth
+    path('accounts/', include('allauth.urls')),
     path('team/', TeamView.as_view(), name='team'),
     path('profile/<str:username>/', ProfileView.as_view(), name='profile'),
     path('compare/<str:username1>/<str:username2>/', CompareUsersView.as_view(), name='compare_users'),
