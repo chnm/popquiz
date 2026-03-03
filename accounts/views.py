@@ -862,8 +862,12 @@ class MagicLinkVerifyView(View):
             messages.error(request, 'This login link is invalid.')
             return redirect('magic_link_request')
 
-        if not magic.is_valid:
-            messages.error(request, 'This login link has expired or has already been used. Please request a new one.')
+        if magic.used:
+            messages.error(request, 'This login link has already been used. Please request a new one.')
+            return redirect('magic_link_request')
+
+        if magic.expires_at <= timezone.now():
+            messages.error(request, 'This login link has expired (links are valid for 20 minutes). Please request a new one.')
             return redirect('magic_link_request')
 
         # Mark as used before logging in
