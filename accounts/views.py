@@ -789,3 +789,96 @@ class TeamView(ListView):
                 output_field=IntegerField()
             )
         ).order_by('-has_last_name', 'last_name', 'first_name', 'username')
+
+
+class MagicLinkRequestView(View):
+    """Step 1 — user enters their email to request a magic link."""
+
+    def get(self, request):
+        return render(request, 'accounts/magic_link_request.html')
+
+    def post(self, request):
+        import secrets
+        from django.utils import timezone
+        from datetime import timedelta
+        from django.core.mail import send_mail
+        from django.conf import settings as django_settings
+        from .models import MagicLink
+
+        email = request.POST.get('email', '').strip().lower()
+
+        # Always show the same message regardless of whether the account exists
+        # (prevents email enumeration)
+        success_msg = "If an account exists for that email address, you'll receive a login link shortly."
+
+        if email:
+            try:
+                user = User.objects.get(email__iexact=email, is_active=True)
+            except User.DoesNotExist:
+                user = None
+
+            if user:
+                # Invalidate any existing unused links for this user
+                MagicLink.objects.filter(user=user, used=False).update(used=True)
+
+                # Create a new token (48 bytes → 64 hex chars)
+                token = secrets.token_hex(48)
+                expires_at = timezone.now() + timedelta(minutes=20)
+                MagicLink.objects.create(user=user, token=token, expires_at=expires_at)
+
+                link = request.build_absolute_uri(
+                    reverse('magic_link_verify', args=[token])
+                )
+
+                send_mail(
+                    subject='Your PopQuiz login link',
+                    message=(
+                        f"Hi {user.first_name or user.username},\n\n"
+                        f"Click the link below to log in to PopQuiz. "
+                        f"This link expires in 20 minutes and can only be used once.\n\n"
+                        f"{link}\n\n"
+                        f"If you didn't request this, you can safely ignore this email.\n\n"
+                        f"— PopQuiz"
+                    ),
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
+
+        messages.success(request, success_msg)
+        return redirect('magic_link_request')
+
+
+class MagicLinkVerifyView(View):
+    """Step 2 — user clicks the link from their email."""
+
+    def get(self, request, token):
+        from django.utils import timezone
+        from .models import MagicLink
+
+        try:
+            magic = MagicLink.objects.select_related('user').get(token=token)
+        except MagicLink.DoesNotExist:
+            messages.error(request, 'This login link is invalid.')
+            return redirect('magic_link_request')
+
+        if not magic.is_valid:
+            messages.error(request, 'This login link has expired or has already been used. Please request a new one.')
+            return redirect('magic_link_request')
+
+        # Mark as used before logging in
+        magic.used = True
+        magic.save(update_fields=['used'])
+
+        user = magic.user
+        # Log the user in (specify backend explicitly)
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+
+        # Short-lived session: expire when the browser closes, with a hard
+        # server-side cutoff of 8 hours from now
+        request.session.set_expiry(8 * 60 * 60)
+
+        display_name = user.first_name if user.first_name else user.username
+        messages.success(request, f'Welcome back, {display_name}!')
+        return redirect('home')
