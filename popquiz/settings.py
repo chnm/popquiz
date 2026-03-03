@@ -183,7 +183,7 @@ AUTHENTICATION_BACKENDS = [
 
 # Email configuration
 EMAIL_BACKEND = 'popquiz.email_backend.EmailBackend'
-EMAIL_HOST = '172.27.0.113'  # Docker host gateway — relays onward to hermes (129.174.131.138)
+EMAIL_HOST = '10.112.113.210'  # Docker host — relays onward to hermes (129.174.131.138)
 EMAIL_PORT = 25
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = False
