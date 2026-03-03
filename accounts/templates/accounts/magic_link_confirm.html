@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Log In - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-8 text-center">
+    <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Ready to log in?</h1>
+    <p class="text-gray-600 mb-6">Click the button below to complete your login to PopQuiz.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium text-lg">
+            Log In to PopQuiz
+        </button>
+    </form>
+
+    <p class="mt-4 text-sm text-gray-500">This link expires 20 minutes after it was sent.</p>
+</div>
+{% endblock %}

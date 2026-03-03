@@ -850,37 +850,55 @@ class MagicLinkRequestView(View):
 
 
 class MagicLinkVerifyView(View):
-    """Step 2 — user clicks the link from their email."""
+    """Step 2 — user clicks the link from their email.
 
-    def get(self, request, token):
+    GET:  Validate the token and show a confirmation page.
+          Does NOT consume the token — email link-scanners (Outlook SafeLinks,
+          Gmail, etc.) perform a GET on every link in an email to check for
+          malware. If we consumed the token on GET, the scanner would use it
+          up before the real user ever clicks it.
+
+    POST: The confirmation button submits here. Only now do we mark the
+          token as used and log the user in.
+    """
+
+    def _get_magic_link(self, token):
+        """Fetch and validate a magic link token, returning (magic, error_msg)."""
         from django.utils import timezone
         from .models import MagicLink
-
         try:
             magic = MagicLink.objects.select_related('user').get(token=token)
         except MagicLink.DoesNotExist:
-            messages.error(request, 'This login link is invalid.')
-            return redirect('magic_link_request')
-
+            return None, 'This login link is invalid.'
         if magic.used:
-            messages.error(request, 'This login link has already been used. Please request a new one.')
-            return redirect('magic_link_request')
-
+            return None, 'This login link has already been used. Please request a new one.'
         if magic.expires_at <= timezone.now():
-            messages.error(request, 'This login link has expired (links are valid for 20 minutes). Please request a new one.')
+            return None, 'This login link has expired (links are valid for 20 minutes). Please request a new one.'
+        return magic, None
+
+    def get(self, request, token):
+        magic, error = self._get_magic_link(token)
+        if error:
+            messages.error(request, error)
+            return redirect('magic_link_request')
+        # Show confirmation page — token is NOT consumed yet
+        return render(request, 'accounts/magic_link_confirm.html', {'token': token})
+
+    def post(self, request, token):
+        magic, error = self._get_magic_link(token)
+        if error:
+            messages.error(request, error)
             return redirect('magic_link_request')
 
-        # Mark as used before logging in
+        # Mark as used before logging in (atomic against double-submit)
         magic.used = True
         magic.save(update_fields=['used'])
 
         user = magic.user
-        # Log the user in (specify backend explicitly)
         user.backend = 'django.contrib.auth.backends.ModelBackend'
         login(request, user)
 
-        # Short-lived session: expire when the browser closes, with a hard
-        # server-side cutoff of 8 hours from now
+        # Hard session expiry of 8 hours
         request.session.set_expiry(8 * 60 * 60)
 
         display_name = user.first_name if user.first_name else user.username
