@@ -1717,3 +1717,70 @@ class AddSongView(LoginRequiredMixin, View):
             'category': category,
             'artist': artist,
         })
+
+
+class VisualizationsView(TemplateView):
+    """Interactive D3.js visualizations of rating data."""
+    template_name = 'catalog/visualizations.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # --- Dataset 1: stacked rating breakdown per user ---
+        users = User.objects.filter(is_staff=False).order_by('last_name', 'first_name')
+        user_bars = []
+        for u in users:
+            counts = {
+                r['rating']: r['n']
+                for r in Rating.objects.filter(user=u)
+                    .exclude(rating=Rating.Level.NO_RATING)
+                    .values('rating')
+                    .annotate(n=Count('id'))
+            }
+            total = sum(counts.values())
+            if total == 0:
+                continue
+            user_bars.append({
+                'name': u.first_name if u.first_name else u.username,
+                'loved':    counts.get('loved',    0),
+                'liked':    counts.get('liked',    0),
+                'okay':     counts.get('okay',     0),
+                'disliked': counts.get('disliked', 0),
+                'hated':    counts.get('hated',    0),
+                'total':    total,
+            })
+        user_bars.sort(key=lambda x: -x['total'])
+        context['user_bars_json'] = json.dumps(user_bars)
+
+        # --- Dataset 2: movie score vs. number of ratings (scatter) ---
+        from catalog.models import Category as Cat
+        movies_cat = Cat.objects.filter(slug='movies').first()
+        scatter_points = []
+        if movies_cat:
+            items = (
+                Item.objects
+                .filter(category=movies_cat)
+                .annotate(
+                    loved=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
+                    liked=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
+                    okay=Count('ratings',  filter=Q(ratings__rating=Rating.Level.OKAY)),
+                    disliked=Count('ratings', filter=Q(ratings__rating=Rating.Level.DISLIKED)),
+                    hated=Count('ratings',  filter=Q(ratings__rating=Rating.Level.HATED)),
+                )
+            )
+            for item in items:
+                total = item.loved + item.liked + item.okay + item.disliked + item.hated
+                if total < 2:
+                    continue
+                val = (item.loved*2 + item.liked*1 + item.okay*0
+                       + item.disliked*-1 + item.hated*-2) / total
+                score = round(((val + 2) / 4) * 100, 1)
+                scatter_points.append({
+                    'title': item.title,
+                    'year':  item.year or 0,
+                    'n':     total,
+                    'score': score,
+                })
+        context['scatter_json'] = json.dumps(scatter_points)
+
+        return context

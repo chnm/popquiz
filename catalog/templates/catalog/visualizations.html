@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block title %}Visualizations - PopQuiz{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'home' %}" class="text-indigo-600 hover:underline">&larr; Back to home</a>
+</div>
+
+<h1 class="text-3xl font-bold text-gray-800 mb-2">Visualizations</h1>
+<p class="text-gray-500 mb-8">Interactive charts built from everyone's ratings.</p>
+
+<!-- ── Chart 1: Stacked bar — ratings per person ── -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+  <h2 class="text-xl font-semibold text-gray-800 mb-1">Ratings by Person</h2>
+  <p class="text-gray-500 text-sm mb-4">How many of each rating each person has given, sorted by total.</p>
+
+  <!-- Legend -->
+  <div class="flex flex-wrap gap-4 mb-4 text-sm">
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#7c3aed"></span> 🤩 Loved</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#16a34a"></span> 🙂 Liked</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ca8a04"></span> 😐 Okay</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ea580c"></span> 😕 Disliked</span>
+    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#dc2626"></span> 😡 Hated</span>
+  </div>
+
+  <div id="bar-chart" class="w-full overflow-x-auto"></div>
+</div>
+
+<!-- ── Chart 2: Scatter — score vs popularity ── -->
+<div class="bg-white rounded-xl shadow-md p-6 mb-8">
+  <h2 class="text-xl font-semibold text-gray-800 mb-1">Movie Score vs. Number of Ratings</h2>
+  <p class="text-gray-500 text-sm mb-4">Each dot is a movie. X = how many people rated it, Y = team score (0–100). Hover for details.</p>
+  <div id="scatter-chart" class="w-full overflow-x-auto"></div>
+</div>
+
+<!-- Tooltip (shared) -->
+<div id="tooltip"
+     class="fixed z-50 pointer-events-none bg-gray-900 text-white text-sm rounded-lg px-3 py-2 shadow-lg opacity-0 transition-opacity duration-150 max-w-xs"
+     style="top:0;left:0"></div>
+
+<!-- D3 v7 from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+
+<script>
+const tooltip = d3.select('#tooltip');
+
+function showTip(html, event) {
+  tooltip.html(html)
+    .style('opacity', '1')
+    .style('left', (event.clientX + 14) + 'px')
+    .style('top',  (event.clientY - 10) + 'px');
+}
+function hideTip() {
+  tooltip.style('opacity', '0');
+}
+
+/* ══════════════════════════════════════════════
+   Chart 1 — Horizontal stacked bar
+══════════════════════════════════════════════ */
+(function () {
+  const data = {{ user_bars_json|safe }};
+  const keys = ['loved','liked','okay','disliked','hated'];
+  const colors = {
+    loved:    '#7c3aed',
+    liked:    '#16a34a',
+    okay:     '#ca8a04',
+    disliked: '#ea580c',
+    hated:    '#dc2626',
+  };
+  const labels = {
+    loved: '🤩 Loved', liked: '🙂 Liked', okay: '😐 Okay',
+    disliked: '😕 Disliked', hated: '😡 Hated',
+  };
+
+  const container = document.getElementById('bar-chart');
+  const margin = { top: 10, right: 60, bottom: 10, left: 110 };
+  const rowH  = 36;
+  const width  = Math.max(container.clientWidth || 700, 480) - margin.left - margin.right;
+  const height = data.length * rowH;
+
+  const svg = d3.select('#bar-chart')
+    .append('svg')
+      .attr('width',  width  + margin.left + margin.right)
+      .attr('height', height + margin.top  + margin.bottom)
+    .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.total)])
+    .range([0, width]);
+
+  const y = d3.scaleBand()
+    .domain(data.map(d => d.name))
+    .range([0, height])
+    .padding(0.25);
+
+  // Stacked bars
+  const stacked = d3.stack().keys(keys)(data);
+
+  stacked.forEach(layer => {
+    svg.selectAll(`.bar-${layer.key}`)
+      .data(layer)
+      .enter().append('rect')
+        .attr('class', `bar-${layer.key}`)
+        .attr('x',      d => x(d[0]))
+        .attr('y',      d => y(d.data.name))
+        .attr('width',  d => Math.max(0, x(d[1]) - x(d[0])))
+        .attr('height', y.bandwidth())
+        .attr('fill',   colors[layer.key])
+        .attr('rx', 2)
+        .on('mousemove', function(event, d) {
+          const count = d[1] - d[0];
+          const pct   = Math.round(count / d.data.total * 100);
+          showTip(
+            `<strong>${d.data.name}</strong><br>
+             ${labels[layer.key]}: ${count} (${pct}%)<br>
+             Total: ${d.data.total}`,
+            event
+          );
+        })
+        .on('mouseleave', hideTip);
+  });
+
+  // Y-axis labels
+  svg.append('g')
+    .call(d3.axisLeft(y).tickSize(0))
+    .call(g => g.select('.domain').remove())
+    .selectAll('text')
+      .attr('class', 'text-sm')
+      .style('font-size', '13px')
+      .style('fill', '#374151');
+
+  // Total labels at end of bar
+  svg.selectAll('.total-label')
+    .data(data)
+    .enter().append('text')
+      .attr('class', 'total-label')
+      .attr('x', d => x(d.total) + 5)
+      .attr('y', d => y(d.name) + y.bandwidth() / 2 + 4)
+      .style('font-size', '11px')
+      .style('fill', '#6b7280')
+      .text(d => d.total);
+})();
+
+/* ══════════════════════════════════════════════
+   Chart 2 — Scatter plot
+══════════════════════════════════════════════ */
+(function () {
+  const data = {{ scatter_json|safe }};
+
+  const container = document.getElementById('scatter-chart');
+  const margin = { top: 20, right: 30, bottom: 50, left: 55 };
+  const width  = Math.max(container.clientWidth || 700, 480) - margin.left - margin.right;
+  const height = 420;
+
+  const svg = d3.select('#scatter-chart')
+    .append('svg')
+      .attr('width',  width  + margin.left + margin.right)
+      .attr('height', height + margin.top  + margin.bottom)
+    .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const x = d3.scaleLinear()
+    .domain([0, d3.max(data, d => d.n) + 1])
+    .range([0, width]);
+
+  const y = d3.scaleLinear()
+    .domain([0, 100])
+    .range([height, 0]);
+
+  // Color by score
+  const color = d3.scaleSequential()
+    .domain([30, 85])
+    .interpolator(d3.interpolateRdYlGn);
+
+  // Gridlines
+  svg.append('g')
+    .attr('class', 'grid')
+    .call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
+    .call(g => {
+      g.select('.domain').remove();
+      g.selectAll('line').style('stroke', '#e5e7eb').style('stroke-dasharray', '3,3');
+    });
+
+  // Axes
+  svg.append('g')
+    .attr('transform', `translate(0,${height})`)
+    .call(d3.axisBottom(x).ticks(8).tickFormat(d3.format('d')))
+    .call(g => g.select('.domain').style('stroke', '#d1d5db'))
+    .selectAll('text').style('font-size', '12px').style('fill', '#6b7280');
+
+  svg.append('g')
+    .call(d3.axisLeft(y).ticks(8))
+    .call(g => g.select('.domain').style('stroke', '#d1d5db'))
+    .selectAll('text').style('font-size', '12px').style('fill', '#6b7280');
+
+  // Axis labels
+  svg.append('text')
+    .attr('x', width / 2).attr('y', height + 42)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '13px').style('fill', '#374151')
+    .text('Number of ratings');
+
+  svg.append('text')
+    .attr('transform', 'rotate(-90)')
+    .attr('x', -height / 2).attr('y', -42)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '13px').style('fill', '#374151')
+    .text('Team score (0–100)');
+
+  // Dots
+  svg.selectAll('circle')
+    .data(data)
+    .enter().append('circle')
+      .attr('cx', d => x(d.n))
+      .attr('cy', d => y(d.score))
+      .attr('r',  5)
+      .attr('fill', d => color(d.score))
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .style('cursor', 'pointer')
+      .on('mousemove', function(event, d) {
+        d3.select(this).attr('r', 8);
+        showTip(
+          `<strong>${d.title}</strong>${d.year ? ' <span class="opacity-60">('+d.year+')</span>' : ''}<br>
+           Score: ${d.score}/100<br>
+           Ratings: ${d.n}`,
+          event
+        );
+      })
+      .on('mouseleave', function() {
+        d3.select(this).attr('r', 5);
+        hideTip();
+      });
+})();
+</script>
+{% endblock %}
