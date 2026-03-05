@@ -10,229 +10,398 @@
 <h1 class="text-3xl font-bold text-gray-800 mb-2">Charts</h1>
 <p class="text-gray-500 mb-8">Interactive charts built from everyone's ratings.</p>
 
-<!-- ── Chart 1: Stacked bar — ratings per person ── -->
-<div class="bg-white rounded-xl shadow-md p-6 mb-8">
-  <h2 class="text-xl font-semibold text-gray-800 mb-1">Ratings by Person</h2>
-  <p class="text-gray-500 text-sm mb-4">How many of each rating each person has given, sorted by total.</p>
+<!-- Grid wrapper for charts -->
+<div class="space-y-8">
 
-  <!-- Legend -->
-  <div class="flex flex-wrap gap-4 mb-4 text-sm">
-    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#7c3aed"></span> 🤩 Loved</span>
-    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#16a34a"></span> 🙂 Liked</span>
-    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ca8a04"></span> 😐 Okay</span>
-    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ea580c"></span> 😕 Disliked</span>
-    <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#dc2626"></span> 😡 Hated</span>
+  <!-- Row 1: two full-width charts -->
+
+  <!-- Chart 1: Stacked bar — ratings per person -->
+  <div class="bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-xl font-semibold text-gray-800 mb-1">Ratings by Person</h2>
+    <p class="text-gray-500 text-sm mb-4">Everyone's rating breakdown, sorted by total.</p>
+    <div class="flex flex-wrap gap-4 mb-4 text-sm">
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#7c3aed"></span> 🤩 Loved</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#16a34a"></span> 🙂 Liked</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ca8a04"></span> 😐 Okay</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#ea580c"></span> 😕 Disliked</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm" style="background:#dc2626"></span> 😡 Hated</span>
+    </div>
+    <div id="bar-chart" class="w-full overflow-x-auto"></div>
   </div>
 
-  <div id="bar-chart" class="w-full overflow-x-auto"></div>
-</div>
+  <!-- Chart 2: Scatter — score vs popularity -->
+  <div class="bg-white rounded-xl shadow-md p-6">
+    <h2 class="text-xl font-semibold text-gray-800 mb-1">Movie Score vs. Number of Ratings</h2>
+    <p class="text-gray-500 text-sm mb-4">Each dot is a movie. X = how many people rated it, Y = team score (0–100). Hover for details.</p>
+    <div id="scatter-chart" class="w-full overflow-x-auto"></div>
+  </div>
 
-<!-- ── Chart 2: Scatter — score vs popularity ── -->
-<div class="bg-white rounded-xl shadow-md p-6 mb-8">
-  <h2 class="text-xl font-semibold text-gray-800 mb-1">Movie Score vs. Number of Ratings</h2>
-  <p class="text-gray-500 text-sm mb-4">Each dot is a movie. X = how many people rated it, Y = team score (0–100). Hover for details.</p>
-  <div id="scatter-chart" class="w-full overflow-x-auto"></div>
-</div>
+  <!-- Row 2: two side-by-side charts -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-<!-- Tooltip (shared) -->
+    <!-- Chart 3: Genre scores -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-1">Score by Genre</h2>
+      <p class="text-gray-500 text-sm mb-4">Average team score per movie genre (genres with 8+ rated movies).</p>
+      <div id="genre-chart" class="w-full overflow-x-auto"></div>
+    </div>
+
+    <!-- Chart 4: Decade scores -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-1">Score by Decade</h2>
+      <p class="text-gray-500 text-sm mb-4">Average team score for movies from each decade. Bubble size = number of movies.</p>
+      <div id="decade-chart" class="w-full overflow-x-auto"></div>
+    </div>
+
+  </div>
+
+  <!-- Row 3: two more side-by-side charts -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- Chart 5: Most divisive movies -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-1">Most Divisive Movies</h2>
+      <p class="text-gray-500 text-sm mb-4">Movies with the highest disagreement — each dot's position shows its score, width shows how divided people were.</p>
+      <div id="divisive-chart" class="w-full overflow-x-auto"></div>
+    </div>
+
+    <!-- Chart 6: Rating activity over time -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-1">Rating Activity Over Time</h2>
+      <p class="text-gray-500 text-sm mb-4">Total ratings submitted each month across all categories.</p>
+      <div id="timeline-chart" class="w-full overflow-x-auto"></div>
+    </div>
+
+  </div>
+
+</div><!-- end space-y-8 -->
+
+<!-- Shared tooltip -->
 <div id="tooltip"
      class="fixed z-50 pointer-events-none bg-gray-900 text-white text-sm rounded-lg px-3 py-2 shadow-lg opacity-0 transition-opacity duration-150 max-w-xs"
      style="top:0;left:0"></div>
 
-<!-- D3 v7 from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-
 <script>
+/* ── shared tooltip ── */
 const tooltip = d3.select('#tooltip');
-
 function showTip(html, event) {
   tooltip.html(html)
-    .style('opacity', '1')
+    .style('opacity','1')
     .style('left', (event.clientX + 14) + 'px')
     .style('top',  (event.clientY - 10) + 'px');
 }
-function hideTip() {
-  tooltip.style('opacity', '0');
-}
+function hideTip() { tooltip.style('opacity','0'); }
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════
    Chart 1 — Horizontal stacked bar
-══════════════════════════════════════════════ */
-(function () {
-  const data = {{ user_bars_json|safe }};
-  const keys = ['loved','liked','okay','disliked','hated'];
-  const colors = {
-    loved:    '#7c3aed',
-    liked:    '#16a34a',
-    okay:     '#ca8a04',
-    disliked: '#ea580c',
-    hated:    '#dc2626',
-  };
-  const labels = {
-    loved: '🤩 Loved', liked: '🙂 Liked', okay: '😐 Okay',
-    disliked: '😕 Disliked', hated: '😡 Hated',
-  };
+══════════════════════════════════════ */
+(function(){
+  const data   = {{ user_bars_json|safe }};
+  const keys   = ['loved','liked','okay','disliked','hated'];
+  const colors = {loved:'#7c3aed',liked:'#16a34a',okay:'#ca8a04',disliked:'#ea580c',hated:'#dc2626'};
+  const labels = {loved:'🤩 Loved',liked:'🙂 Liked',okay:'😐 Okay',disliked:'😕 Disliked',hated:'😡 Hated'};
 
-  const container = document.getElementById('bar-chart');
-  const margin = { top: 10, right: 60, bottom: 10, left: 110 };
-  const rowH  = 36;
-  const width  = Math.max(container.clientWidth || 700, 480) - margin.left - margin.right;
-  const height = data.length * rowH;
+  const el   = document.getElementById('bar-chart');
+  const m    = {top:6,right:50,bottom:6,left:110};
+  const rowH = 34;
+  const W    = Math.max(el.clientWidth||680,420) - m.left - m.right;
+  const H    = data.length * rowH;
 
-  const svg = d3.select('#bar-chart')
-    .append('svg')
-      .attr('width',  width  + margin.left + margin.right)
-      .attr('height', height + margin.top  + margin.bottom)
-    .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+  const svg = d3.select('#bar-chart').append('svg')
+    .attr('width', W+m.left+m.right).attr('height', H+m.top+m.bottom)
+    .append('g').attr('transform',`translate(${m.left},${m.top})`);
 
-  const x = d3.scaleLinear()
-    .domain([0, d3.max(data, d => d.total)])
-    .range([0, width]);
+  const x = d3.scaleLinear().domain([0,d3.max(data,d=>d.total)]).range([0,W]);
+  const y = d3.scaleBand().domain(data.map(d=>d.name)).range([0,H]).padding(0.28);
 
-  const y = d3.scaleBand()
-    .domain(data.map(d => d.name))
-    .range([0, height])
-    .padding(0.25);
-
-  // Stacked bars
-  const stacked = d3.stack().keys(keys)(data);
-
-  stacked.forEach(layer => {
-    svg.selectAll(`.bar-${layer.key}`)
-      .data(layer)
-      .enter().append('rect')
-        .attr('class', `bar-${layer.key}`)
-        .attr('x',      d => x(d[0]))
-        .attr('y',      d => y(d.data.name))
-        .attr('width',  d => Math.max(0, x(d[1]) - x(d[0])))
-        .attr('height', y.bandwidth())
-        .attr('fill',   colors[layer.key])
-        .attr('rx', 2)
-        .on('mousemove', function(event, d) {
-          const count = d[1] - d[0];
-          const pct   = Math.round(count / d.data.total * 100);
-          showTip(
-            `<strong>${d.data.name}</strong><br>
-             ${labels[layer.key]}: ${count} (${pct}%)<br>
-             Total: ${d.data.total}`,
-            event
-          );
-        })
-        .on('mouseleave', hideTip);
+  d3.stack().keys(keys)(data).forEach(layer=>{
+    svg.selectAll(null).data(layer).enter().append('rect')
+      .attr('x',d=>x(d[0])).attr('y',d=>y(d.data.name))
+      .attr('width',d=>Math.max(0,x(d[1])-x(d[0]))).attr('height',y.bandwidth())
+      .attr('fill',colors[layer.key]).attr('rx',2)
+      .on('mousemove',(ev,d)=>showTip(
+        `<strong>${d.data.name}</strong><br>${labels[layer.key]}: ${d[1]-d[0]} (${Math.round((d[1]-d[0])/d.data.total*100)}%)<br>Total: ${d.data.total}`,ev))
+      .on('mouseleave',hideTip);
   });
 
-  // Y-axis labels
-  svg.append('g')
-    .call(d3.axisLeft(y).tickSize(0))
-    .call(g => g.select('.domain').remove())
-    .selectAll('text')
-      .attr('class', 'text-sm')
-      .style('font-size', '13px')
-      .style('fill', '#374151');
+  svg.append('g').call(d3.axisLeft(y).tickSize(0))
+    .call(g=>g.select('.domain').remove())
+    .selectAll('text').style('font-size','13px').style('fill','#374151');
 
-  // Total labels at end of bar
-  svg.selectAll('.total-label')
-    .data(data)
-    .enter().append('text')
-      .attr('class', 'total-label')
-      .attr('x', d => x(d.total) + 5)
-      .attr('y', d => y(d.name) + y.bandwidth() / 2 + 4)
-      .style('font-size', '11px')
-      .style('fill', '#6b7280')
-      .text(d => d.total);
+  svg.selectAll('.tlabel').data(data).enter().append('text')
+    .attr('x',d=>x(d.total)+5).attr('y',d=>y(d.name)+y.bandwidth()/2+4)
+    .style('font-size','11px').style('fill','#9ca3af').text(d=>d.total);
 })();
 
-/* ══════════════════════════════════════════════
-   Chart 2 — Scatter plot
-══════════════════════════════════════════════ */
-(function () {
+/* ══════════════════════════════════════
+   Chart 2 — Scatter: score vs # ratings
+══════════════════════════════════════ */
+(function(){
   const data = {{ scatter_json|safe }};
+  const el   = document.getElementById('scatter-chart');
+  const m    = {top:16,right:24,bottom:48,left:52};
+  const W    = Math.max(el.clientWidth||680,420) - m.left - m.right;
+  const H    = 380;
 
-  const container = document.getElementById('scatter-chart');
-  const margin = { top: 20, right: 30, bottom: 50, left: 55 };
-  const width  = Math.max(container.clientWidth || 700, 480) - margin.left - margin.right;
-  const height = 420;
+  const svg = d3.select('#scatter-chart').append('svg')
+    .attr('width',W+m.left+m.right).attr('height',H+m.top+m.bottom)
+    .append('g').attr('transform',`translate(${m.left},${m.top})`);
 
-  const svg = d3.select('#scatter-chart')
-    .append('svg')
-      .attr('width',  width  + margin.left + margin.right)
-      .attr('height', height + margin.top  + margin.bottom)
-    .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleLinear().domain([0,d3.max(data,d=>d.n)+1]).range([0,W]);
+  const y = d3.scaleLinear().domain([0,100]).range([H,0]);
+  const color = d3.scaleSequential().domain([30,85]).interpolator(d3.interpolateRdYlGn);
 
-  const x = d3.scaleLinear()
-    .domain([0, d3.max(data, d => d.n) + 1])
-    .range([0, width]);
+  svg.append('g').call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
+    .call(g=>{g.select('.domain').remove();g.selectAll('line').style('stroke','#f3f4f6');});
 
-  const y = d3.scaleLinear()
-    .domain([0, 100])
-    .range([height, 0]);
+  svg.append('g').attr('transform',`translate(0,${H})`)
+    .call(d3.axisBottom(x).ticks(8).tickFormat(d3.format('d')))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','12px').style('fill','#6b7280');
+
+  svg.append('g').call(d3.axisLeft(y).ticks(8))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','12px').style('fill','#6b7280');
+
+  svg.append('text').attr('x',W/2).attr('y',H+40).attr('text-anchor','middle')
+    .style('font-size','12px').style('fill','#6b7280').text('Number of ratings');
+  svg.append('text').attr('transform','rotate(-90)').attr('x',-H/2).attr('y',-40)
+    .attr('text-anchor','middle').style('font-size','12px').style('fill','#6b7280').text('Team score (0–100)');
+
+  svg.selectAll('circle').data(data).enter().append('circle')
+    .attr('cx',d=>x(d.n)).attr('cy',d=>y(d.score)).attr('r',5)
+    .attr('fill',d=>color(d.score)).attr('stroke','white').attr('stroke-width',1)
+    .style('cursor','pointer')
+    .on('mousemove',(ev,d)=>showTip(
+      `<strong>${d.title}</strong>${d.year?' <span class="opacity-60">('+d.year+')</span>':''}<br>Score: ${d.score}/100<br>Ratings: ${d.n}`,ev))
+    .on('mouseleave',function(){d3.select(this).attr('r',5);hideTip();})
+    .on('mouseover',function(){d3.select(this).attr('r',8);});
+})();
+
+/* ══════════════════════════════════════
+   Chart 3 — Genre bar (horizontal)
+══════════════════════════════════════ */
+(function(){
+  const data = {{ genre_json|safe }};
+  const el   = document.getElementById('genre-chart');
+  const m    = {top:6,right:48,bottom:6,left:100};
+  const rowH = 30;
+  const W    = Math.max(el.clientWidth||420,300) - m.left - m.right;
+  const H    = data.length * rowH;
+
+  const svg = d3.select('#genre-chart').append('svg')
+    .attr('width',W+m.left+m.right).attr('height',H+m.top+m.bottom)
+    .append('g').attr('transform',`translate(${m.left},${m.top})`);
+
+  const x = d3.scaleLinear().domain([50, d3.max(data,d=>d.avg)+2]).range([0,W]).clamp(true);
+  const y = d3.scaleBand().domain(data.map(d=>d.genre)).range([0,H]).padding(0.28);
 
   // Color by score
-  const color = d3.scaleSequential()
-    .domain([30, 85])
-    .interpolator(d3.interpolateRdYlGn);
+  const color = d3.scaleSequential().domain([58,74]).interpolator(d3.interpolateRdYlGn);
 
-  // Gridlines
-  svg.append('g')
-    .attr('class', 'grid')
-    .call(d3.axisLeft(y).tickSize(-width).tickFormat(''))
-    .call(g => {
-      g.select('.domain').remove();
-      g.selectAll('line').style('stroke', '#e5e7eb').style('stroke-dasharray', '3,3');
-    });
+  svg.selectAll('rect').data(data).enter().append('rect')
+    .attr('x',0).attr('y',d=>y(d.genre))
+    .attr('width',d=>Math.max(0,x(d.avg))).attr('height',y.bandwidth())
+    .attr('fill',d=>color(d.avg)).attr('rx',3)
+    .on('mousemove',(ev,d)=>showTip(
+      `<strong>${d.genre}</strong><br>Avg score: ${d.avg}/100<br>Movies: ${d.count}`,ev))
+    .on('mouseleave',hideTip);
+
+  // Score labels
+  svg.selectAll('.slabel').data(data).enter().append('text')
+    .attr('x',d=>x(d.avg)+5).attr('y',d=>y(d.genre)+y.bandwidth()/2+4)
+    .style('font-size','11px').style('fill','#6b7280').text(d=>d.avg);
+
+  svg.append('g').call(d3.axisLeft(y).tickSize(0))
+    .call(g=>g.select('.domain').remove())
+    .selectAll('text').style('font-size','12px').style('fill','#374151');
+})();
+
+/* ══════════════════════════════════════
+   Chart 4 — Decade bubble chart
+══════════════════════════════════════ */
+(function(){
+  const data = {{ decade_json|safe }};
+  const el   = document.getElementById('decade-chart');
+  const m    = {top:20,right:20,bottom:48,left:52};
+  const W    = Math.max(el.clientWidth||420,300) - m.left - m.right;
+  const H    = 260;
+
+  const svg = d3.select('#decade-chart').append('svg')
+    .attr('width',W+m.left+m.right).attr('height',H+m.top+m.bottom)
+    .append('g').attr('transform',`translate(${m.left},${m.top})`);
+
+  const x = d3.scaleBand().domain(data.map(d=>d.label)).range([0,W]).padding(0.2);
+  const y = d3.scaleLinear().domain([50,76]).range([H,0]).clamp(true);
+  const r = d3.scaleSqrt().domain([0,d3.max(data,d=>d.count)]).range([4,28]);
+  const color = d3.scaleSequential().domain([55,72]).interpolator(d3.interpolateRdYlGn);
+
+  // Y gridlines
+  svg.append('g').call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
+    .call(g=>{g.select('.domain').remove();g.selectAll('line').style('stroke','#f3f4f6');});
 
   // Axes
-  svg.append('g')
-    .attr('transform', `translate(0,${height})`)
-    .call(d3.axisBottom(x).ticks(8).tickFormat(d3.format('d')))
-    .call(g => g.select('.domain').style('stroke', '#d1d5db'))
-    .selectAll('text').style('font-size', '12px').style('fill', '#6b7280');
+  svg.append('g').attr('transform',`translate(0,${H})`)
+    .call(d3.axisBottom(x))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','12px').style('fill','#6b7280');
 
-  svg.append('g')
-    .call(d3.axisLeft(y).ticks(8))
-    .call(g => g.select('.domain').style('stroke', '#d1d5db'))
-    .selectAll('text').style('font-size', '12px').style('fill', '#6b7280');
+  svg.append('g').call(d3.axisLeft(y).ticks(5))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','12px').style('fill','#6b7280');
 
-  // Axis labels
-  svg.append('text')
-    .attr('x', width / 2).attr('y', height + 42)
-    .attr('text-anchor', 'middle')
-    .style('font-size', '13px').style('fill', '#374151')
-    .text('Number of ratings');
+  svg.append('text').attr('x',W/2).attr('y',H+40).attr('text-anchor','middle')
+    .style('font-size','12px').style('fill','#6b7280').text('Decade');
+  svg.append('text').attr('transform','rotate(-90)').attr('x',-H/2).attr('y',-40)
+    .attr('text-anchor','middle').style('font-size','12px').style('fill','#6b7280').text('Avg score');
 
-  svg.append('text')
-    .attr('transform', 'rotate(-90)')
-    .attr('x', -height / 2).attr('y', -42)
-    .attr('text-anchor', 'middle')
-    .style('font-size', '13px').style('fill', '#374151')
-    .text('Team score (0–100)');
+  // Bubbles
+  svg.selectAll('circle').data(data).enter().append('circle')
+    .attr('cx',d=>x(d.label)+x.bandwidth()/2)
+    .attr('cy',d=>y(d.avg))
+    .attr('r',d=>r(d.count))
+    .attr('fill',d=>color(d.avg))
+    .attr('stroke','white').attr('stroke-width',1.5)
+    .style('cursor','pointer')
+    .on('mousemove',(ev,d)=>showTip(
+      `<strong>${d.label}</strong><br>Avg score: ${d.avg}/100<br>Movies: ${d.count}`,ev))
+    .on('mouseleave',hideTip);
+
+  // Score labels inside bubbles
+  svg.selectAll('.blabel').data(data).enter().append('text')
+    .attr('x',d=>x(d.label)+x.bandwidth()/2)
+    .attr('y',d=>y(d.avg)+4)
+    .attr('text-anchor','middle')
+    .style('font-size','11px').style('fill','white').style('font-weight','600')
+    .style('pointer-events','none')
+    .text(d=>d.avg);
+})();
+
+/* ══════════════════════════════════════
+   Chart 5 — Most divisive movies (dot plot)
+══════════════════════════════════════ */
+(function(){
+  const data = {{ divisive_json|safe }};
+  const el   = document.getElementById('divisive-chart');
+  const m    = {top:6,right:16,bottom:44,left:16};
+  const W    = Math.max(el.clientWidth||420,300) - m.left - m.right;
+  const H    = data.length * 26 + 10;
+
+  const svg = d3.select('#divisive-chart').append('svg')
+    .attr('width',W+m.left+m.right).attr('height',H+m.top+m.bottom)
+    .append('g').attr('transform',`translate(${m.left},${m.top})`);
+
+  // X = team score, dot size = std dev (disagreement)
+  const x = d3.scaleLinear().domain([0,100]).range([0,W]);
+  const y = d3.scaleBand().domain(data.map((_,i)=>i)).range([0,H]).padding(0.35);
+  const r = d3.scaleLinear().domain([0.5,1.3]).range([5,14]).clamp(true);
+  const color = d3.scaleSequential().domain([30,85]).interpolator(d3.interpolateRdYlGn);
+
+  // Light score axis
+  svg.append('g').attr('transform',`translate(0,${H})`)
+    .call(d3.axisBottom(x).ticks(6))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','11px').style('fill','#9ca3af');
+
+  svg.append('text').attr('x',W/2).attr('y',H+38).attr('text-anchor','middle')
+    .style('font-size','11px').style('fill','#9ca3af').text('Team score (0–100) — dot size = how divided people were');
+
+  // Baseline per row
+  svg.selectAll('.baseline').data(data).enter().append('line')
+    .attr('x1',0).attr('x2',W)
+    .attr('y1',(_,i)=>y(i)+y.bandwidth()/2)
+    .attr('y2',(_,i)=>y(i)+y.bandwidth()/2)
+    .style('stroke','#f3f4f6').style('stroke-width',1);
+
+  // Title label (left)
+  svg.selectAll('.movietitle').data(data).enter().append('text')
+    .attr('x',0).attr('y',(_,i)=>y(i)+y.bandwidth()/2+4)
+    .style('font-size','11px').style('fill','#374151')
+    .text(d=>`${d.title}${d.year?' ('+d.year+')':''}`)
+    .each(function(d){ // truncate if too wide
+      const maxW = x(d.score) - r(d.std) - 6;
+      let el = d3.select(this);
+      while(this.getComputedTextLength && this.getComputedTextLength() > maxW && el.text().length > 4){
+        el.text(el.text().slice(0,-4)+'…');
+      }
+    });
 
   // Dots
-  svg.selectAll('circle')
-    .data(data)
-    .enter().append('circle')
-      .attr('cx', d => x(d.n))
-      .attr('cy', d => y(d.score))
-      .attr('r',  5)
-      .attr('fill', d => color(d.score))
-      .attr('stroke', 'white')
-      .attr('stroke-width', 1)
-      .style('cursor', 'pointer')
-      .on('mousemove', function(event, d) {
-        d3.select(this).attr('r', 8);
-        showTip(
-          `<strong>${d.title}</strong>${d.year ? ' <span class="opacity-60">('+d.year+')</span>' : ''}<br>
-           Score: ${d.score}/100<br>
-           Ratings: ${d.n}`,
-          event
-        );
-      })
-      .on('mouseleave', function() {
-        d3.select(this).attr('r', 5);
-        hideTip();
-      });
+  svg.selectAll('circle').data(data).enter().append('circle')
+    .attr('cx',d=>x(d.score))
+    .attr('cy',(_,i)=>y(i)+y.bandwidth()/2)
+    .attr('r',d=>r(d.std))
+    .attr('fill',d=>color(d.score))
+    .attr('stroke','white').attr('stroke-width',1.5)
+    .style('cursor','pointer')
+    .on('mousemove',(ev,d)=>showTip(
+      `<strong>${d.title}</strong>${d.year?' ('+d.year+')':''}<br>Score: ${d.score}/100<br>Std dev: ${d.std} (${d.n} raters)`,ev))
+    .on('mouseleave',hideTip);
+})();
+
+/* ══════════════════════════════════════
+   Chart 6 — Activity area chart
+══════════════════════════════════════ */
+(function(){
+  const raw  = {{ monthly_json|safe }};
+  const data = raw.map(d=>({month: new Date(d.month+'-01'), n: d.n}));
+  const el   = document.getElementById('timeline-chart');
+  const m    = {top:16,right:16,bottom:48,left:52};
+  const W    = Math.max(el.clientWidth||420,300) - m.left - m.right;
+  const H    = 220;
+
+  const svg = d3.select('#timeline-chart').append('svg')
+    .attr('width',W+m.left+m.right).attr('height',H+m.top+m.bottom)
+    .append('g').attr('transform',`translate(${m.left},${m.top})`);
+
+  const x = d3.scaleTime().domain(d3.extent(data,d=>d.month)).range([0,W]);
+  const y = d3.scaleLinear().domain([0,d3.max(data,d=>d.n)*1.1]).range([H,0]);
+
+  // Gridlines
+  svg.append('g').call(d3.axisLeft(y).tickSize(-W).tickFormat(''))
+    .call(g=>{g.select('.domain').remove();g.selectAll('line').style('stroke','#f3f4f6');});
+
+  // Area
+  const area = d3.area().x(d=>x(d.month)).y0(H).y1(d=>y(d.n)).curve(d3.curveCatmullRom);
+  const line = d3.line().x(d=>x(d.month)).y(d=>y(d.n)).curve(d3.curveCatmullRom);
+
+  svg.append('defs').append('linearGradient').attr('id','areaGrad')
+    .attr('gradientUnits','userSpaceOnUse').attr('x1',0).attr('x2',0).attr('y1',0).attr('y2',H)
+    .selectAll('stop').data([
+      {offset:'0%',color:'#6366f1',opacity:0.35},
+      {offset:'100%',color:'#6366f1',opacity:0.02},
+    ]).enter().append('stop')
+      .attr('offset',d=>d.offset)
+      .attr('stop-color',d=>d.color)
+      .attr('stop-opacity',d=>d.opacity);
+
+  svg.append('path').datum(data).attr('fill','url(#areaGrad)').attr('d',area);
+  svg.append('path').datum(data).attr('fill','none').attr('stroke','#6366f1')
+    .attr('stroke-width',2.5).attr('d',line);
+
+  // Dots
+  svg.selectAll('circle').data(data).enter().append('circle')
+    .attr('cx',d=>x(d.month)).attr('cy',d=>y(d.n)).attr('r',4)
+    .attr('fill','#6366f1').attr('stroke','white').attr('stroke-width',2)
+    .style('cursor','pointer')
+    .on('mousemove',(ev,d)=>showTip(
+      `<strong>${d3.timeFormat('%B %Y')(d.month)}</strong><br>Ratings submitted: ${d.n.toLocaleString()}`,ev))
+    .on('mouseleave',hideTip);
+
+  // Axes
+  svg.append('g').attr('transform',`translate(0,${H})`)
+    .call(d3.axisBottom(x).ticks(d3.timeMonth.every(1)).tickFormat(d3.timeFormat('%b %Y')))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','11px').style('fill','#6b7280')
+    .attr('transform','rotate(-35)').attr('text-anchor','end');
+
+  svg.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d=>d>=1000?d/1000+'k':d))
+    .call(g=>g.select('.domain').style('stroke','#e5e7eb'))
+    .selectAll('text').style('font-size','11px').style('fill','#6b7280');
+
+  svg.append('text').attr('transform','rotate(-90)').attr('x',-H/2).attr('y',-40)
+    .attr('text-anchor','middle').style('font-size','12px').style('fill','#6b7280').text('Ratings submitted');
 })();
 </script>
 {% endblock %}

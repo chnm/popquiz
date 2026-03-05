@@ -1783,4 +1783,103 @@ class VisualizationsView(TemplateView):
                 })
         context['scatter_json'] = json.dumps(scatter_points)
 
+        # --- Dataset 3: avg score per genre (movies, min 8 rated) ---
+        genre_acc = {}
+        for item in items:  # reuse annotated items from scatter query
+            total = item.loved + item.liked + item.okay + item.disliked + item.hated
+            if total < 2:
+                continue
+            val = (item.loved*2 + item.liked - item.disliked - item.hated*2) / total
+            score = round(((val + 2) / 4) * 100, 1)
+            for g in (item.genre or '').split(','):
+                g = g.strip()
+                if not g:
+                    continue
+                if g not in genre_acc:
+                    genre_acc[g] = []
+                genre_acc[g].append(score)
+
+        genre_bars = []
+        for g, scores in genre_acc.items():
+            if len(scores) < 8:
+                continue
+            genre_bars.append({
+                'genre': g,
+                'avg':   round(sum(scores) / len(scores), 1),
+                'count': len(scores),
+            })
+        genre_bars.sort(key=lambda x: -x['avg'])
+        context['genre_json'] = json.dumps(genre_bars)
+
+        # --- Dataset 4: avg score per decade (movies) ---
+        import math as _math
+        decade_acc = {}
+        for item in items:
+            total = item.loved + item.liked + item.okay + item.disliked + item.hated
+            if total < 2 or not item.year:
+                continue
+            val = (item.loved*2 + item.liked - item.disliked - item.hated*2) / total
+            score = round(((val + 2) / 4) * 100, 1)
+            decade = (item.year // 10) * 10
+            if decade not in decade_acc:
+                decade_acc[decade] = []
+            decade_acc[decade].append(score)
+
+        decade_bars = []
+        for decade in sorted(decade_acc):
+            scores = decade_acc[decade]
+            decade_bars.append({
+                'decade': decade,
+                'label':  f"{decade}s",
+                'avg':    round(sum(scores) / len(scores), 1),
+                'count':  len(scores),
+            })
+        context['decade_json'] = json.dumps(decade_bars)
+
+        # --- Dataset 5: most divisive movies (std dev, min 8 ratings) ---
+        divisive_items = (
+            Item.objects
+            .filter(category=movies_cat)
+            .prefetch_related('ratings')
+        )
+        divisive_list = []
+        for item in divisive_items:
+            vals = []
+            for r in item.ratings.all():
+                if r.rating == Rating.Level.LOVED:    vals.append(2)
+                elif r.rating == Rating.Level.LIKED:  vals.append(1)
+                elif r.rating == Rating.Level.OKAY:   vals.append(0)
+                elif r.rating == Rating.Level.DISLIKED: vals.append(-1)
+                elif r.rating == Rating.Level.HATED:  vals.append(-2)
+            if len(vals) < 8:
+                continue
+            mean = sum(vals) / len(vals)
+            std  = _math.sqrt(sum((v - mean) ** 2 for v in vals) / len(vals))
+            score = round(((mean + 2) / 4) * 100, 1)
+            divisive_list.append({
+                'title': item.title,
+                'year':  item.year or 0,
+                'std':   round(std, 3),
+                'score': score,
+                'n':     len(vals),
+            })
+        divisive_list.sort(key=lambda x: -x['std'])
+        context['divisive_json'] = json.dumps(divisive_list[:20])
+
+        # --- Dataset 6: monthly rating activity ---
+        from django.db.models.functions import TruncMonth
+        monthly_qs = (
+            Rating.objects
+            .exclude(rating=Rating.Level.NO_RATING)
+            .annotate(month=TruncMonth('updated_at'))
+            .values('month')
+            .annotate(n=Count('id'))
+            .order_by('month')
+        )
+        monthly = [
+            {'month': r['month'].strftime('%Y-%m'), 'n': r['n']}
+            for r in monthly_qs
+        ]
+        context['monthly_json'] = json.dumps(monthly)
+
         return context
