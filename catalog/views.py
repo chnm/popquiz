@@ -1740,8 +1740,18 @@ class VisualizationsView(TemplateView):
             total = sum(counts.values())
             if total == 0:
                 continue
+            # Build a display name that won't collide between users.
+            # Use "First L." if both first and last name are set, else username.
+            if u.first_name and u.last_name:
+                display_name = f"{u.first_name} {u.last_name[0]}."
+            elif u.first_name:
+                display_name = u.first_name
+            else:
+                display_name = u.username
+
             user_bars.append({
-                'name': u.first_name if u.first_name else u.username,
+                'id':       u.id,
+                'name':     display_name,
                 'loved':    counts.get('loved',    0),
                 'liked':    counts.get('liked',    0),
                 'okay':     counts.get('okay',     0),

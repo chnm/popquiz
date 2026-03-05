@@ -113,11 +113,12 @@ function hideTip() { tooltip.style('opacity','0'); }
     .append('g').attr('transform',`translate(${m.left},${m.top})`);
 
   const x = d3.scaleLinear().domain([0,d3.max(data,d=>d.total)]).range([0,W]);
-  const y = d3.scaleBand().domain(data.map(d=>d.name)).range([0,H]).padding(0.28);
+  // Key the band scale by unique user id to prevent name collisions
+  const y = d3.scaleBand().domain(data.map(d=>d.id)).range([0,H]).padding(0.28);
 
   d3.stack().keys(keys)(data).forEach(layer=>{
     svg.selectAll(null).data(layer).enter().append('rect')
-      .attr('x',d=>x(d[0])).attr('y',d=>y(d.data.name))
+      .attr('x',d=>x(d[0])).attr('y',d=>y(d.data.id))
       .attr('width',d=>Math.max(0,x(d[1])-x(d[0]))).attr('height',y.bandwidth())
       .attr('fill',colors[layer.key]).attr('rx',2)
       .on('mousemove',(ev,d)=>showTip(
@@ -125,12 +126,17 @@ function hideTip() { tooltip.style('opacity','0'); }
       .on('mouseleave',hideTip);
   });
 
-  svg.append('g').call(d3.axisLeft(y).tickSize(0))
+  // Use name for the visible tick labels, id for the scale domain
+  const yAxis = d3.axisLeft(y).tickSize(0).tickFormat(id=>{
+    const d = data.find(r=>r.id===id);
+    return d ? d.name : id;
+  });
+  svg.append('g').call(yAxis)
     .call(g=>g.select('.domain').remove())
     .selectAll('text').style('font-size','13px').style('fill','#374151');
 
   svg.selectAll('.tlabel').data(data).enter().append('text')
-    .attr('x',d=>x(d.total)+5).attr('y',d=>y(d.name)+y.bandwidth()/2+4)
+    .attr('x',d=>x(d.total)+5).attr('y',d=>y(d.id)+y.bandwidth()/2+4)
     .style('font-size','11px').style('fill','#9ca3af').text(d=>d.total);
 })();
 
