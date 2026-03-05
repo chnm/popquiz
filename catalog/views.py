@@ -1727,7 +1727,7 @@ class VisualizationsView(TemplateView):
         context = super().get_context_data(**kwargs)
 
         # --- Dataset 1: stacked rating breakdown per user ---
-        users = User.objects.filter(is_staff=False).order_by('last_name', 'first_name')
+        users = User.objects.filter(is_active=True).order_by('last_name', 'first_name')
         user_bars = []
         for u in users:
             counts = {
