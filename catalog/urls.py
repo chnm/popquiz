@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import RedirectView
-from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, AddByActorView, AddMusicSearchView, AddMusicView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView, AddSongView, VisualizationsView
+from .views import HomeView, CategoryDetailView, AddItemView, AddByDirectorView, AddByActorView, AddMusicSearchView, AddMusicView, SwipeRatingView, StatsView, DecadeStatsView, EclecticView, DivisiveView, ItemDetailView, AddSongView, VisualizationsView, MediaCarouselView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
@@ -19,4 +19,5 @@ urlpatterns = [
     path('category/<slug:category_slug>/item/<int:item_id>/add-song/', AddSongView.as_view(), name='add_song'),
     path('category/<slug:category_slug>/movie/<int:item_id>/', RedirectView.as_view(pattern_name='item_detail', permanent=True)),
     path('visualizations/', VisualizationsView.as_view(), name='visualizations'),
+    path('media-carousel/', MediaCarouselView.as_view(), name='media_carousel'),
 ]
