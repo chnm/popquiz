@@ -57,9 +57,6 @@
     Home
 </a>
 
-<!-- Slide counter + dot indicators (top-right) -->
-<div class="fixed top-4 right-4 z-50 flex items-center gap-2" id="dot-container"></div>
-
 <!-- Progress bar (very bottom) -->
 <div class="fixed bottom-0 left-0 right-0 z-50 h-1 bg-white/10">
     <div id="progress-bar" class="h-full bg-white/60 rounded-full"></div>
@@ -205,27 +202,6 @@
     var paused   = false;
     var timer    = null;
     var barEl    = document.getElementById('progress-bar');
-    var dotWrap  = document.getElementById('dot-container');
-
-    /* ---------- dots ---------- */
-    function buildDots() {
-        dotWrap.innerHTML = '';
-        for (var i = 0; i < total; i++) {
-            var d = document.createElement('button');
-            d.className = 'w-2 h-2 rounded-full transition-all duration-300 ' +
-                          (i === current ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70');
-            d.setAttribute('data-i', i);
-            d.addEventListener('click', (function(idx){ return function(){ goTo(idx); }; })(i));
-            dotWrap.appendChild(d);
-        }
-    }
-    function updateDots() {
-        var ds = dotWrap.querySelectorAll('button');
-        ds.forEach(function(d, i) {
-            d.className = 'w-2 h-2 rounded-full transition-all duration-300 ' +
-                          (i === current ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70');
-        });
-    }
 
     /* ---------- progress bar ---------- */
     function startBar() {
@@ -251,7 +227,6 @@
         slides[current].classList.remove('active');
         current = ((index % total) + total) % total;
         slides[current].classList.add('active');
-        updateDots();
         clearTimeout(timer);
         if (!skipReset) resetBar();
         if (!paused) {
@@ -293,7 +268,6 @@
     }, {passive:true});
 
     /* ---------- init ---------- */
-    buildDots();
     startBar();
     timer = setTimeout(advance, DURATION);
 })();
