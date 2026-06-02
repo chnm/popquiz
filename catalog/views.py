@@ -1893,3 +1893,42 @@ class VisualizationsView(TemplateView):
         context['monthly_json'] = json.dumps(monthly)
 
         return context
+
+
+class MediaCarouselView(TemplateView):
+    """Full-page, full-viewport featured-media carousel."""
+    template_name = 'catalog/media_carousel.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        base_featured_qs = Item.objects.exclude(
+            image_local_url='', image_source_url=''
+        ).annotate(
+            loved_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LOVED)),
+            liked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.LIKED)),
+            okay_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.OKAY)),
+            disliked_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.DISLIKED)),
+            hated_count=Count('ratings', filter=Q(ratings__rating=Rating.Level.HATED)),
+            total_ratings=Count('ratings', filter=~Q(ratings__rating=Rating.Level.NO_RATING))
+        ).filter(total_ratings__gt=0)
+
+        all_items = list(base_featured_qs)
+        random.shuffle(all_items)
+
+        featured_items = []
+        for item in all_items:
+            total = item.total_ratings
+            if total > 0:
+                item.loved_percent    = round((item.loved_count    / total) * 100)
+                item.liked_percent    = round((item.liked_count    / total) * 100)
+                item.okay_percent     = round((item.okay_count     / total) * 100)
+                item.disliked_percent = round((item.disliked_count / total) * 100)
+                item.hated_percent    = round((item.hated_count    / total) * 100)
+            else:
+                item.loved_percent = item.liked_percent = item.okay_percent = \
+                    item.disliked_percent = item.hated_percent = 0
+            featured_items.append(item)
+
+        context['featured_items'] = featured_items
+        return context
