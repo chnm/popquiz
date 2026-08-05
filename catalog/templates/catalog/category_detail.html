@@ -11,7 +11,9 @@
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">{{ category.name }}</h1>
-            <p class="text-gray-600 mt-1">{{ item_count }} {% if item_count == 1 %}{{ category.item_label }}{% else %}{{ category.item_label_plural }}{% endif %}</p>
+            <p class="text-gray-600 mt-1" id="item-count-label">
+                {{ item_count }} {% if item_count == 1 %}{{ category.item_label }}{% else %}{{ category.item_label_plural }}{% endif %}
+            </p>
         </div>
         {% if user.is_authenticated %}
         <div class="flex flex-wrap gap-2">
@@ -21,16 +23,45 @@
             <a href="{% url 'add_item' category.slug %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200 text-sm font-medium">
                 Add {{ category.item_label|capfirst }}
             </a>
-
         </div>
         {% endif %}
+    </div>
+
+    <!-- Filter input -->
+    <div class="mt-4 relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+            </svg>
+        </div>
+        <input
+            type="text"
+            id="item-filter"
+            placeholder="Filter {{ category.item_label_plural }}…"
+            autocomplete="off"
+            class="w-full pl-9 pr-9 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 bg-white"
+        >
+        <button
+            id="filter-clear"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden"
+            type="button"
+            aria-label="Clear filter"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
 </div>
 
 {% if items_with_ratings %}
-    <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100">
+    <div class="bg-white rounded-lg shadow-md divide-y divide-gray-100" id="item-list">
         {% for item_data in items_with_ratings %}
-            <div class="p-3 sm:p-4">
+            <div class="item-row p-3 sm:p-4"
+                 data-title="{{ item_data.item.title|lower }}"
+                 data-year="{{ item_data.item.display_year|default:'' }}"
+                 data-director="{{ item_data.item.director|default:''|lower }}"
+                 data-genre="{{ item_data.item.genre|default:''|lower }}">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 
                     <!-- Poster + title -->
@@ -147,6 +178,16 @@
             </div>
         {% endfor %}
     </div>
+
+    <!-- No-results message (hidden by default) -->
+    <div id="no-results" class="hidden bg-white rounded-lg shadow-md p-8 text-center text-gray-500 mt-0">
+        <svg class="w-10 h-10 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <p class="font-medium">No matches found</p>
+        <p class="text-sm mt-1">Try a different search term.</p>
+    </div>
+
 {% else %}
     <div class="bg-white rounded-lg shadow-md p-6 text-center text-gray-600">
         <p>No items in this category yet.</p>
@@ -155,4 +196,84 @@
         {% endif %}
     </div>
 {% endif %}
+
+<script>
+(function () {
+    var input     = document.getElementById('item-filter');
+    var clearBtn  = document.getElementById('filter-clear');
+    var list      = document.getElementById('item-list');
+    var noResults = document.getElementById('no-results');
+    var countLabel = document.getElementById('item-count-label');
+    var totalCount = {{ item_count }};
+    var itemLabel  = '{{ category.item_label }}';
+    var itemLabelPlural = '{{ category.item_label_plural }}';
+
+    if (!input || !list) return;
+
+    var rows = Array.from(list.querySelectorAll('.item-row'));
+
+    function updateCountLabel(visible) {
+        if (!countLabel) return;
+        if (visible === totalCount) {
+            countLabel.textContent = totalCount + ' ' + (totalCount === 1 ? itemLabel : itemLabelPlural);
+        } else {
+            countLabel.textContent = visible + ' of ' + totalCount + ' ' + itemLabelPlural;
+        }
+    }
+
+    function applyFilter() {
+        var q = input.value.trim().toLowerCase();
+
+        // Show/hide clear button
+        if (q) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+
+        var visibleCount = 0;
+
+        rows.forEach(function (row) {
+            var haystack = [
+                row.dataset.title   || '',
+                row.dataset.year    || '',
+                row.dataset.director || '',
+                row.dataset.genre   || ''
+            ].join(' ');
+
+            var match = !q || haystack.indexOf(q) !== -1;
+            row.classList.toggle('hidden', !match);
+            if (match) visibleCount++;
+        });
+
+        // Toggle "no results" message and the list border
+        if (visibleCount === 0 && q) {
+            noResults.classList.remove('hidden');
+            list.classList.add('hidden');
+        } else {
+            noResults.classList.add('hidden');
+            list.classList.remove('hidden');
+        }
+
+        updateCountLabel(visibleCount);
+    }
+
+    input.addEventListener('input', applyFilter);
+
+    clearBtn.addEventListener('click', function () {
+        input.value = '';
+        applyFilter();
+        input.focus();
+    });
+
+    // Focus filter with / key (unless already in an input)
+    document.addEventListener('keydown', function (e) {
+        if (e.key === '/' && document.activeElement !== input &&
+            !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            input.focus();
+        }
+    });
+})();
+</script>
 {% endblock %}
