@@ -5,15 +5,22 @@ from django.db import migrations, models
 
 
 def convert_vote_data(apps, schema_editor):
-    """Convert old vote choices to new rating levels."""
-    # Get the model using the old name since it's the same table
-    db_alias = schema_editor.connection.alias
+    """Convert old vote choices to new rating levels.
 
-    # Run raw SQL to update the data
+    Uses the model's actual table name from migration state rather than a
+    hardcoded value: on a fresh install the table is 'ratings_vote' (it only
+    becomes 'votes_vote' in migration 0003), so hardcoding broke new clones.
+    The conversion is a no-op on an empty fresh table.
+    """
+    Vote = apps.get_model('ratings', 'Vote')
+    table = Vote._meta.db_table
+
     with schema_editor.connection.cursor() as cursor:
-        # Convert old values to new values
-        cursor.execute("""
-            UPDATE votes_vote
+        # Skip if the table doesn't exist (defensive; nothing to convert)
+        if table not in schema_editor.connection.introspection.table_names(cursor):
+            return
+        cursor.execute(f"""
+            UPDATE {table}
             SET choice = CASE
                 WHEN choice = 'no' THEN 'disliked'
                 WHEN choice = 'meh' THEN 'okay'
@@ -26,11 +33,14 @@ def convert_vote_data(apps, schema_editor):
 
 def reverse_convert_vote_data(apps, schema_editor):
     """Reverse conversion for rollback."""
-    db_alias = schema_editor.connection.alias
+    Vote = apps.get_model('ratings', 'Vote')
+    table = Vote._meta.db_table
 
     with schema_editor.connection.cursor() as cursor:
-        cursor.execute("""
-            UPDATE votes_vote
+        if table not in schema_editor.connection.introspection.table_names(cursor):
+            return
+        cursor.execute(f"""
+            UPDATE {table}
             SET choice = CASE
                 WHEN choice = 'disliked' THEN 'no'
                 WHEN choice = 'okay' THEN 'meh'
